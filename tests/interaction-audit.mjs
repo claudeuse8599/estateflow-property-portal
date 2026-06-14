@@ -107,6 +107,10 @@ assert.match(app, /state\.data = cloneData\(\)/, "Demo data reset should restore
 assert.match(app, /case "resetData"/, "Data reset should open a confirmation modal.");
 assert.match(app, /data-action="confirm-reset-data"/, "Data reset confirmation should be wired.");
 assert.match(app, /pullToReset:\s*\{/, "Portal should track pull-to-reset gesture state.");
+assert.match(app, /const PULL_RESET_START_DISTANCE = 44;/, "Pull-to-reset should require a deliberate pull before showing progress.");
+assert.match(app, /const PULL_RESET_THRESHOLD = 168;/, "Pull-to-reset should use a longer release threshold to avoid Mac momentum triggers.");
+assert.match(app, /const PULL_RESET_WHEEL_STEP_MAX = 26;/, "Trackpad pull-to-reset should accumulate cautiously per wheel event.");
+assert.match(app, /const PULL_RESET_WHEEL_RESISTANCE = 0\.38;/, "Trackpad pull-to-reset should apply resistance against momentum scrolling.");
 assert.match(app, /function openResetDataModal/, "Reset modal opening should be reusable across button and gesture flows.");
 assert.match(app, /function resetDemoData/, "Demo data reset should use one shared reset helper.");
 assert.match(app, /if \(action === "reset-data"\) \{\s+openResetDataModal\(\);/, "Reset Data button should use the shared reset modal helper.");
@@ -218,6 +222,6 @@ assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared t
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-39/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-40/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

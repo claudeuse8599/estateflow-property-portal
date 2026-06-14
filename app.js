@@ -35,11 +35,14 @@ function defaultFilters() {
 
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
-const PULL_RESET_START_DISTANCE = 24;
-const PULL_RESET_THRESHOLD = 96;
-const PULL_RESET_MAX_DISTANCE = 128;
+const PULL_RESET_START_DISTANCE = 44;
+const PULL_RESET_THRESHOLD = 168;
+const PULL_RESET_MAX_DISTANCE = 210;
 const PULL_RESET_COOLDOWN = 1200;
 const PULL_RESET_WHEEL_RELEASE_DELAY = 180;
+const PULL_RESET_WHEEL_STEP_MAX = 26;
+const PULL_RESET_WHEEL_RESISTANCE = 0.38;
+const PULL_RESET_RELEASE_RESISTANCE = 0.72;
 
 const state = {
   auth: false,
@@ -4742,7 +4745,7 @@ function handlePullResetTouchMove(event) {
 
   if (deltaY <= PULL_RESET_START_DISTANCE) return;
   event.preventDefault();
-  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * 0.72);
+  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * PULL_RESET_RELEASE_RESISTANCE);
 }
 
 function handlePullResetTouchEnd() {
@@ -4767,9 +4770,9 @@ function handlePullResetWheel(event) {
   if (!pull.tracking) startPullToReset("wheel", event.clientX, event.clientY);
   event.preventDefault();
 
-  pull.rawDistance += Math.min(38, Math.abs(event.deltaY) * 0.55);
+  pull.rawDistance += Math.min(PULL_RESET_WHEEL_STEP_MAX, Math.abs(event.deltaY) * PULL_RESET_WHEEL_RESISTANCE);
   if (pull.rawDistance > PULL_RESET_START_DISTANCE) {
-    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * 0.9);
+    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * PULL_RESET_RELEASE_RESISTANCE);
   }
 
   window.clearTimeout(pullResetWheelTimer);
