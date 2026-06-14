@@ -133,15 +133,12 @@ assert.match(app, /data-command="dismiss-card"/, "Dismissible Action Center card
 assert.match(app, /aria-label="Dismiss update"/, "Dismissible Action Center cards should expose an accessible close label.");
 assert.match(app, /command === "dismiss-card"/, "Action Center should handle card dismiss commands.");
 assert.match(app, /function renderPreservingScroll/, "Dismiss flows should be able to preserve the current viewport.");
-assert.match(app, /function actionDismissViewportLock/, "Dismiss flows should capture the clicked control position before rerendering.");
-assert.match(app, /actionDismissViewportLock\(actionButton\)/, "Action Center dismiss clicks should pass a viewport lock.");
-assert.match(app, /const clickedRect = actionButton\.getBoundingClientRect\(\)/, "Dismiss viewport lock should use the clicked X button position.");
-assert.match(app, /cards\[index \+ 1\] \|\| cards\[index - 1\]/, "Dismiss viewport lock should choose the next card, then the previous card.");
-assert.match(app, /lockItemId/, "Dismiss scroll restoration should align the next available dismiss control.");
-assert.match(app, /lockSelector:\s*"\.action-dismiss"/, "Dismiss viewport lock should target the next dismiss button.");
+assert.match(app, /function actionCardViewportAnchor/, "Dismiss flows should capture the next card position before rerendering.");
+assert.match(app, /actionCardViewportAnchor\(actionButton\)/, "Action Center dismiss clicks should pass a viewport anchor.");
+assert.match(app, /anchorItemId/, "Dismiss scroll restoration should align the next available card.");
 assert.match(app, /preserveActionListHeight/, "Dismissing Action Center cards should guard against list-height scroll jumps.");
 assert.match(app, /window\.requestAnimationFrame\(restoreScroll\)/, "Dismiss scroll restoration should run after browser scroll anchoring.");
-assert.match(app, /showToast\("Update dismissed\."\);\s+renderPreservingScroll\(\{ preserveActionListHeight: true, \.\.\.\(options\.viewportLock \|\| \{\}\) \}\);/, "Dismissing an Action Center card should preserve the clicked target after feedback.");
+assert.match(app, /showToast\("Update dismissed\."\);\s+renderPreservingScroll\(\{ preserveActionListHeight: true, \.\.\.\(options\.viewportAnchor \|\| \{\}\) \}\);/, "Dismissing an Action Center card should preserve scroll after feedback.");
 assert.match(app, /showToast\("Update dismissed\."\)/, "Dismissing an update should give clear feedback.");
 assert.doesNotMatch(app, /<span class="action-type">\$\{escapeHtml\(item\.type\)\}<\/span>/, "Action Center cards should not show a generic static type pill.");
 assert.doesNotMatch(app, /item\.tenant \|\| "N\/A"/, "Action Center metadata should not render blank tenant placeholders.");
@@ -206,6 +203,6 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-37/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-36/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
