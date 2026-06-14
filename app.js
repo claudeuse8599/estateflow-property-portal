@@ -1688,10 +1688,10 @@ function renderPreservingScroll(options = {}) {
   }
 
   const restoreScroll = () => {
-    if (options.anchorItemId && typeof options.anchorTop === "number") {
-      const anchorCard = document.querySelector(`.action-center-item[data-item-id="${options.anchorItemId}"]`);
-      if (anchorCard) {
-        window.scrollBy({ top: anchorCard.getBoundingClientRect().top - options.anchorTop, left: 0 });
+    if (options.lockItemId && typeof options.lockTop === "number") {
+      const lockedControl = document.querySelector(`.action-center-item[data-item-id="${options.lockItemId}"] ${options.lockSelector || ".action-dismiss"}`);
+      if (lockedControl) {
+        window.scrollBy({ top: lockedControl.getBoundingClientRect().top - options.lockTop, left: 0 });
         return;
       }
     }
@@ -1701,19 +1701,21 @@ function renderPreservingScroll(options = {}) {
 
   restoreScroll();
   window.requestAnimationFrame(restoreScroll);
+  window.setTimeout(restoreScroll, 0);
 }
 
-function actionCardViewportAnchor(actionButton) {
+function actionDismissViewportLock(actionButton) {
   const card = actionButton.closest(".action-center-item");
   if (!card) return null;
-  const sibling = card.nextElementSibling?.classList.contains("action-center-item")
-    ? card.nextElementSibling
-    : card.previousElementSibling?.classList.contains("action-center-item")
-      ? card.previousElementSibling
-      : null;
+  const cards = [...document.querySelectorAll(".action-center-item")];
+  const index = cards.indexOf(card);
+  const targetCard = cards[index + 1] || cards[index - 1] || null;
+  const clickedRect = actionButton.getBoundingClientRect();
   return {
-    anchorTop: card.getBoundingClientRect().top,
-    anchorItemId: sibling?.dataset.itemId || ""
+    lockTop: clickedRect.top,
+    lockLeft: clickedRect.left,
+    lockItemId: targetCard?.dataset.itemId || "",
+    lockSelector: ".action-dismiss"
   };
 }
 
@@ -2563,7 +2565,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
     appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Update dismissed", "Hidden from Action Center.");
     saveData();
     showToast("Update dismissed.");
-    renderPreservingScroll({ preserveActionListHeight: true, ...(options.viewportAnchor || {}) });
+    renderPreservingScroll({ preserveActionListHeight: true, ...(options.viewportLock || {}) });
     return;
   }
 
@@ -4639,8 +4641,8 @@ document.addEventListener("click", (event) => {
   }
 
   if (action === "action-center") {
-    const viewportAnchor = actionButton.dataset.command === "dismiss-card" ? actionCardViewportAnchor(actionButton) : null;
-    applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command, { viewportAnchor });
+    const viewportLock = actionButton.dataset.command === "dismiss-card" ? actionDismissViewportLock(actionButton) : null;
+    applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command, { viewportLock });
     return;
   }
 
