@@ -1908,9 +1908,12 @@ function pageFocus() {
       actionCenter: {
         eyebrow: "Action Center",
         title: actionCount ? `${actionCount} items need attention` : "No open tenant actions",
-        body: "Track requests, rent updates, messages, and company responses.",
+        body: "",
         value: String(actionCount),
-        meta: ["Requests", "Payment updates", "Status history"],
+        valueLabel: actionCount === 1 ? "tenant action" : "tenant actions",
+        valueClassName: "attention-count",
+        className: "action-center-focus",
+        meta: [],
         actions: [{ label: "View rent", icon: "wallet", page: "rent", variant: "secondary" }]
       },
       rent: {
@@ -2061,19 +2064,22 @@ function pageFocus() {
 
 function renderScreenFocus() {
   const focus = pageFocus();
+  const classes = ["screen-focus"];
+  if (focus.className) classes.push(focus.className);
+  const meta = focus.meta || [];
+  const valueClass = focus.valueClassName ? ` class="${escapeHtml(focus.valueClassName)}"` : "";
+  const valueLabel = focus.valueLabel || (state.role === "tenant" ? "Tenant action" : "Operating focus");
   return `
-    <section class="screen-focus" aria-label="Current task summary">
+    <section class="${classes.join(" ")}" aria-label="Current task summary">
       <div class="screen-focus-copy">
         <span class="focus-eyebrow">${escapeHtml(focus.eyebrow)}</span>
         <h2>${escapeHtml(focus.title)}</h2>
-        <p>${escapeHtml(focus.body)}</p>
-        <div class="focus-meta">
-          ${(focus.meta || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
-        </div>
+        ${focus.body ? `<p>${escapeHtml(focus.body)}</p>` : ""}
+        ${meta.length ? `<div class="focus-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
       </div>
       <div class="screen-focus-side">
-        <strong>${escapeHtml(focus.value)}</strong>
-        <span>${state.role === "tenant" ? "Tenant action" : "Operating focus"}</span>
+        <strong${valueClass}>${escapeHtml(focus.value)}</strong>
+        <span>${escapeHtml(valueLabel)}</span>
         ${renderActionButtons(focus.actions)}
       </div>
     </section>
@@ -2171,7 +2177,7 @@ function renderActionCenterItem(item) {
             <span class="action-type">${escapeHtml(item.type)}</span>
             ${unread ? `<span class="unread-dot">Unread</span>` : ""}
           </div>
-          <h3>${escapeHtml(item.title)}</h3>
+          <h3 class="action-item-title">${escapeHtml(item.title)}</h3>
           <p>${escapeHtml(item.description)}</p>
         </div>
         ${badgeSlot(item.status, actionStatusLabel(item.status))}
@@ -2224,7 +2230,7 @@ function renderActionCenterGroups(items) {
       const groupItems = items.filter((item) => actionGroupKey(item) === group.key);
       if (!groupItems.length) return "";
       return `
-        <section class="action-group" aria-label="${escapeHtml(group.title)}">
+        <section class="action-group action-group-${escapeHtml(group.key)}" aria-label="${escapeHtml(group.title)}">
           <div class="action-group-header">
             <div>
               <h3>${escapeHtml(group.title)}</h3>
@@ -2262,7 +2268,7 @@ function renderActionCenter() {
         <div class="section-header">
           <div>
             <h2>Action Center</h2>
-            <p>${state.role === "tenant" ? "Your requests, rent updates, messages, and company responses." : "All tenant requests, approvals, messages, and operational updates."}</p>
+            <p>${state.role === "tenant" ? "Search and filter your current action items." : "Search and filter tenant action items."}</p>
           </div>
         </div>
         <div class="control-row">
