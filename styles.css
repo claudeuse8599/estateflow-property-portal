@@ -1261,6 +1261,62 @@ button:focus-visible {
   background: var(--apple-green-soft);
 }
 
+.metric-card.metric-status-warning {
+  border: 1px solid var(--apple-orange-border);
+  color: var(--apple-orange-text);
+  background: var(--apple-orange-soft);
+}
+
+.metric-card.metric-status-warning .label,
+.metric-card.metric-status-warning .metric-value,
+.metric-card.metric-status-warning .metric-note {
+  color: var(--apple-orange-text);
+}
+
+.metric-card.metric-status-warning .metric-icon {
+  color: var(--apple-orange-text);
+  background: rgba(255, 149, 0, 0.18);
+}
+
+.metric-card.metric-status-warning .metric-action {
+  border-color: var(--apple-orange-border);
+  color: var(--apple-orange-text);
+  background: rgba(255, 149, 0, 0.12);
+}
+
+.metric-card.metric-status-warning:hover {
+  border-color: var(--apple-orange-border);
+  background: var(--apple-orange-soft);
+}
+
+.metric-card.metric-status-critical {
+  border: 1px solid var(--apple-red-border);
+  color: var(--apple-red-text);
+  background: var(--apple-red-soft);
+}
+
+.metric-card.metric-status-critical .label,
+.metric-card.metric-status-critical .metric-value,
+.metric-card.metric-status-critical .metric-note {
+  color: var(--apple-red-text);
+}
+
+.metric-card.metric-status-critical .metric-icon {
+  color: var(--apple-red-text);
+  background: rgba(255, 59, 48, 0.16);
+}
+
+.metric-card.metric-status-critical .metric-action {
+  border-color: var(--apple-red-border);
+  color: var(--apple-red-text);
+  background: rgba(255, 59, 48, 0.11);
+}
+
+.metric-card.metric-status-critical:hover {
+  border-color: var(--apple-red-border);
+  background: var(--apple-red-soft);
+}
+
 .metric-top {
   display: flex;
   align-items: center;

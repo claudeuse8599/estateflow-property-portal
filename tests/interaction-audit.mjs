@@ -139,7 +139,12 @@ assert.match(app, /const showScreenFocus = !\(state\.role === "tenant" && state\
 assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the compact tenant overview strip.");
 assert.match(app, /function contractHealthClass\(endDate\)/, "Tenant contract status should be derived from the contract end date.");
 assert.match(app, /class="contract-health \$\{contractHealth\}"/, "Tenant dashboard contract fact should render a health color class.");
+assert.match(app, /function paymentHealthClass\(summary\)/, "Tenant payment status should be derived from due date and payment state.");
+assert.match(app, /daysRemaining <= 1\) return "metric-status-critical"/, "Tenant payment status should turn critical when overdue or one day from due.");
+assert.match(app, /daysRemaining <= 7\) return "metric-status-warning"/, "Tenant payment status should turn warning when close to due.");
 assert.match(app, /metricStatusPaid|metric-status-paid|className: "metric-status-paid"/, "Tenant paid payment status should render the paid metric class.");
+assert.match(app, /metric-status-warning/, "Tenant payment status should support a near-due warning class.");
+assert.match(app, /metric-status-critical/, "Tenant payment status should support an overdue or one-day critical class.");
 assert.match(app, /tenant-dashboard-lower/, "Tenant dashboard should arrange actions and activity in a balanced lower grid.");
 assert.doesNotMatch(app, /<h2>\$\{escapeHtml\(profile\.name\.split\(" "\)\[0\]\)\}, \$\{escapeHtml\(summary\.title\)\}<\/h2>/, "Tenant dashboard should not lead with the rent-review welcome sentence.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Tenant quick actions should render as two-column mini cards.");
@@ -152,11 +157,13 @@ assert.match(styles, /\.tenant-action-grid \.quick-card:last-child:nth-child\(od
 assert.doesNotMatch(styles, /\.tenant-action-grid \.quick-card:last-child:nth-child\(odd\)::after\s*\{[^}]*position:\s*static/, "Tenant quick action Open affordance should not use the misaligned static layout.");
 assert.match(styles, /--apple-green:\s*#34c759/, "Apple green should be available for paid tenant states.");
 assert.match(styles, /\.metric-card\.metric-status-paid\s*\{[\s\S]*border:\s*1px solid var\(--apple-green-border\);[\s\S]*background:\s*var\(--apple-green-soft\)/, "Paid payment metric should use the Apple-green paid treatment.");
+assert.match(styles, /\.metric-card\.metric-status-warning\s*\{[\s\S]*border:\s*1px solid var\(--apple-orange-border\);[\s\S]*background:\s*var\(--apple-orange-soft\)/, "Near-due payment metric should use the Apple-orange warning treatment.");
+assert.match(styles, /\.metric-card\.metric-status-critical\s*\{[\s\S]*border:\s*1px solid var\(--apple-red-border\);[\s\S]*background:\s*var\(--apple-red-soft\)/, "Overdue payment metric should use the Apple-red critical treatment.");
 assert.match(styles, /\.tenant-summary-facts \.contract-warning/, "Contract health should include the orange warning state.");
 assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract health should include the red critical state.");
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-30/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-31/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

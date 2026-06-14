@@ -1307,6 +1307,15 @@ function contractHealthClass(endDate) {
   return "contract-safe";
 }
 
+function paymentHealthClass(summary) {
+  if (summary.isPaid) return "metric-status-paid";
+  if (summary.status === "Late" || summary.status === "Rejected") return "metric-status-critical";
+  const daysRemaining = daysUntilDate(summary.rent?.dueDate);
+  if (daysRemaining <= 1) return "metric-status-critical";
+  if (daysRemaining <= 7) return "metric-status-warning";
+  return "";
+}
+
 function statusLabel(status) {
   const labels = {
     "Info Requested": "Needs Info"
@@ -2583,6 +2592,7 @@ function renderTenantDashboard() {
   const profile = tenant.profile;
   const summary = tenantRentSummary();
   const contractHealth = contractHealthClass(profile.contractEnd);
+  const paymentHealth = paymentHealthClass(summary);
   return `
     <div class="content-stack">
       <section class="tenant-summary-strip" aria-label="Tenant overview">
@@ -2612,7 +2622,7 @@ function renderTenantDashboard() {
       <section class="metric-grid five insight-metrics">
         ${metricCard("Rent Due", summary.dueAmount, "Current cycle", "wallet", "rent")}
         ${metricCard("Due Date", summary.rent.dueDate, "Next payment", "file", "rent")}
-        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh", "payments", summary.isPaid ? { className: "metric-status-paid" } : {})}
+        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh", "payments", paymentHealth ? { className: paymentHealth } : {})}
         ${metricCard("Contract Expiry", profile.contractEnd, "Renewal available", "file", "renewal")}
         ${metricCard("Maintenance Status", summary.maintenanceStatus, summary.maintenanceNote, "tool", "maintenance")}
       </section>
