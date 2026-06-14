@@ -122,15 +122,16 @@ assert.match(app, /valueClassName:\s*"attention-count"/, "Tenant Action Center f
 assert.match(app, /class="action-group action-group-\$\{escapeHtml\(group\.key\)\}"/, "Action Center groups should expose reusable group styling hooks.");
 assert.match(app, /function actionCardPresentation/, "Action Center cards should use data-driven presentation copy.");
 assert.match(app, /function renderActionMeta/, "Action Center metadata should be rendered conditionally.");
-assert.match(app, /function isDismissibleActionItem/, "Message Action Center cards should expose a reusable dismissibility rule.");
+assert.match(app, /function isDismissibleActionItem/, "Action Center cards should expose a reusable dismissibility rule.");
+assert.match(app, /state\.role === "tenant" \|\| item\.type === "Message"/, "Tenant Action Center cards and message-type cards should be dismissible.");
 assert.match(app, /dismissedBy\?\.includes\(state\.role\)/, "Dismissed Action Center items should be hidden for the current role.");
 assert.match(app, /class="action-state-row"/, "Action Center cards should place state badges in a dedicated row.");
 assert.match(app, /class="action-card-topline"/, "Action Center cards should use a top row for status and dismiss controls.");
 assert.match(app, /<h3 class="action-item-title">/, "Action Center item headings should use a reusable title class.");
-assert.match(app, /data-command="dismiss-message"/, "Dismissible message cards should render a close command.");
-assert.match(app, /aria-label="Dismiss message"/, "Dismissible message cards should expose an accessible close label.");
-assert.match(app, /command === "dismiss-message"/, "Action Center should handle message dismiss commands.");
-assert.match(app, /showToast\("Message dismissed\."\)/, "Dismissing a message should give clear feedback.");
+assert.match(app, /data-command="dismiss-card"/, "Dismissible Action Center cards should render a close command.");
+assert.match(app, /aria-label="Dismiss update"/, "Dismissible Action Center cards should expose an accessible close label.");
+assert.match(app, /command === "dismiss-card"/, "Action Center should handle card dismiss commands.");
+assert.match(app, /showToast\("Update dismissed\."\)/, "Dismissing an update should give clear feedback.");
 assert.doesNotMatch(app, /<span class="action-type">\$\{escapeHtml\(item\.type\)\}<\/span>/, "Action Center cards should not show a generic static type pill.");
 assert.doesNotMatch(app, /item\.tenant \|\| "N\/A"/, "Action Center metadata should not render blank tenant placeholders.");
 assert.doesNotMatch(app, /item\.property \|\| "N\/A"/, "Action Center metadata should not render blank property placeholders.");
@@ -194,6 +195,6 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-34/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-35/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

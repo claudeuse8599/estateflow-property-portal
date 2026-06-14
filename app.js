@@ -922,7 +922,7 @@ function actionButtonsForItem(item) {
 }
 
 function isDismissibleActionItem(item) {
-  return item.type === "Message" && roleCanActOnItem(item);
+  return roleCanActOnItem(item) && (state.role === "tenant" || item.type === "Message");
 }
 
 function actionNeedsAttention(item, role = state.role) {
@@ -2342,7 +2342,7 @@ function renderActionCenterItem(item) {
   const unread = !item.readBy?.includes(state.role);
   const presentation = actionCardPresentation(item);
   const dismissButton = isDismissibleActionItem(item)
-    ? `<button class="action-dismiss" type="button" data-action="action-center" data-command="dismiss-message" data-id="${escapeHtml(item.id)}" aria-label="Dismiss message">${icon.close}</button>`
+    ? `<button class="action-dismiss" type="button" data-action="action-center" data-command="dismiss-card" data-id="${escapeHtml(item.id)}" aria-label="Dismiss update">${icon.close}</button>`
     : "";
   return `
     <article class="action-center-item ${unread ? "unread" : ""}">
@@ -2509,7 +2509,7 @@ function applyActionCenterCommand(itemId, command) {
     return;
   }
 
-  if (command === "dismiss-message") {
+  if (command === "dismiss-card") {
     if (!isDismissibleActionItem(item)) {
       showToast("Action unavailable.");
       return;
@@ -2517,9 +2517,9 @@ function applyActionCenterCommand(itemId, command) {
     item.dismissedBy = Array.isArray(item.dismissedBy) ? item.dismissedBy : [];
     if (!item.dismissedBy.includes(role)) item.dismissedBy.push(role);
     markActionRead(item, role);
-    appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Message dismissed", "Message hidden from Action Center.");
+    appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Update dismissed", "Hidden from Action Center.");
     saveData();
-    showToast("Message dismissed.");
+    showToast("Update dismissed.");
     render();
     return;
   }
