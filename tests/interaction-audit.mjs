@@ -135,9 +135,13 @@ assert.match(app, /aria-expanded="\$\{state\.notificationPanelOpen\}"/, "Notific
 assert.doesNotMatch(app, /showToast\("3 notifications\."\)/, "Notification button should not be toast-only.");
 assert.match(app, /\.filter\(\(toast\) => toast\.textContent === message\)/, "Repeated toast messages should be deduplicated.");
 assert.match(app, /function renderLogin\(\)[\s\S]*login-actions[\s\S]*renderThemeToggle\(\)/, "Login screen should include the theme toggle.");
+assert.match(app, /const showScreenFocus = !\(state\.role === "tenant" && state\.page === "dashboard"\)/, "Tenant dashboard should not render the redundant global focus hero.");
+assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the compact tenant overview strip.");
+assert.match(app, /tenant-dashboard-lower/, "Tenant dashboard should arrange actions and activity in a balanced lower grid.");
+assert.doesNotMatch(app, /<h2>\$\{escapeHtml\(profile\.name\.split\(" "\)\[0\]\)\}, \$\{escapeHtml\(summary\.title\)\}<\/h2>/, "Tenant dashboard should not lead with the rent-review welcome sentence.");
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260614-26/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260614-27/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

@@ -1045,6 +1045,73 @@ button:focus-visible {
   box-shadow: none;
 }
 
+.tenant-summary-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.35fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.tenant-summary-profile {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.tenant-summary-profile h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.tenant-summary-profile p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tenant-summary-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tenant-summary-facts span {
+  display: grid;
+  gap: 3px;
+  min-height: 58px;
+  align-content: center;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.tenant-summary-facts strong {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 620;
+  line-height: 1.25;
+}
+
+.tenant-summary-facts em {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 640;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .hero-facts {
   display: flex;
   flex-wrap: wrap;
@@ -1367,6 +1434,47 @@ button:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(300px, 0.96fr);
   gap: 20px;
+}
+
+.tenant-dashboard-lower {
+  align-items: start;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+}
+
+.tenant-action-grid {
+  grid-template-columns: 1fr;
+}
+
+.tenant-action-grid .quick-card {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 3px 12px;
+  align-content: center;
+  align-items: center;
+  min-height: 72px;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+}
+
+.tenant-action-grid .quick-card:first-child {
+  border-top: 0;
+}
+
+.tenant-action-grid .metric-icon {
+  grid-row: 1 / span 2;
+}
+
+.tenant-action-grid .quick-card strong,
+.tenant-action-grid .quick-card span {
+  grid-column: 2;
+}
+
+.tenant-action-grid .quick-card::after {
+  position: static;
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  align-self: center;
+  justify-self: end;
+  width: max-content;
 }
 
 .layout-three {
@@ -1943,8 +2051,13 @@ tbody tr:hover td {
   .login-page,
   .portal-layout,
   .layout-two,
+  .tenant-summary-strip,
   .hero-card {
     grid-template-columns: 1fr;
+  }
+
+  .tenant-summary-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .portal-layout {
@@ -2041,6 +2154,7 @@ tbody tr:hover td {
   .document-grid,
   .property-grid,
   .visual-grid,
+  .tenant-summary-facts,
   .detail-grid {
     grid-template-columns: 1fr;
   }

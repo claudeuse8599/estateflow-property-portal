@@ -1654,6 +1654,7 @@ function renderNotificationPanel() {
 function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
+  const showScreenFocus = !(state.role === "tenant" && state.page === "dashboard");
   return `
     <div class="portal-layout">
       ${renderSidebar(profile)}
@@ -1677,7 +1678,7 @@ function renderPortal() {
             </div>
           </div>
         </header>
-        ${renderScreenFocus()}
+        ${showScreenFocus ? renderScreenFocus() : ""}
         ${renderRouteChips()}
         ${state.role === "tenant" ? renderTenantPage() : renderManagerPage()}
       </main>
@@ -2543,31 +2544,28 @@ function renderTenantDashboard() {
   const summary = tenantRentSummary();
   return `
     <div class="content-stack">
-      <section class="home-grid tenant-home">
-        <article class="focus-block primary-block">
-          <div class="tenant-hero-intro">
-            ${renderAvatar(profile, "hero-avatar")}
-            <div>
-              <span class="focus-eyebrow">Welcome back</span>
-              <h2>${escapeHtml(profile.name.split(" ")[0])}, ${escapeHtml(summary.title)}</h2>
-              <p>${escapeHtml(summary.body)}</p>
-            </div>
+      <section class="tenant-summary-strip" aria-label="Tenant overview">
+        <div class="tenant-summary-profile">
+          ${renderAvatar(profile, "hero-avatar")}
+          <div>
+            <h2>${escapeHtml(profile.name)}</h2>
+            <p>Unit ${escapeHtml(profile.unit)} · ${escapeHtml(profile.property)}</p>
           </div>
-          <div class="focus-meta">
-            <span>Unit ${escapeHtml(profile.unit)}</span>
-            <span>${escapeHtml(profile.property)}</span>
-            <span>Contract ${escapeHtml(profile.contractEnd)}</span>
-          </div>
-        </article>
-        <article class="focus-block action-block">
-          <span class="focus-eyebrow">After that</span>
-          <h3>Next tenant tasks</h3>
-          <p>Maintenance and renewal actions are ready when needed.</p>
-          ${renderActionButtons([
-            { label: "Request maintenance", icon: "tool", page: "maintenance", variant: "secondary" },
-            { label: "Request renewal", icon: "refresh", page: "renewal", variant: "secondary" }
-          ], "stack-actions")}
-        </article>
+        </div>
+        <div class="tenant-summary-facts">
+          <span>
+            <strong>Contract</strong>
+            <em>Active until ${escapeHtml(profile.contractEnd)}</em>
+          </span>
+          <span>
+            <strong>Rent cycle</strong>
+            <em>${escapeHtml(summary.rent.month)} · due ${escapeHtml(summary.rent.dueDate)}</em>
+          </span>
+          <span>
+            <strong>Maintenance</strong>
+            <em>${escapeHtml(summary.maintenanceStatus)}</em>
+          </span>
+        </div>
       </section>
 
       <section class="metric-grid five insight-metrics">
@@ -2578,66 +2576,68 @@ function renderTenantDashboard() {
         ${metricCard("Maintenance Status", summary.maintenanceStatus, summary.maintenanceNote, "tool", "maintenance")}
       </section>
 
-      <section class="section-band action-section">
-        <div class="section-header">
-          <div>
-            <h2>Quick Actions</h2>
-            <p>Open the next task.</p>
+      <div class="layout-two tenant-dashboard-lower">
+        <section class="section-band action-section">
+          <div class="section-header">
+            <div>
+              <h2>Quick Actions</h2>
+              <p>Open the next task.</p>
+            </div>
           </div>
-        </div>
-        <div class="quick-grid action-grid">
-          <button class="quick-card" type="button" data-modal="payRent">
-            ${metricIcon("wallet")}
-            <strong>Demo Payment</strong>
-            <span>${summary.isPaid ? "Payment is recorded." : "Open demo payment."}</span>
-          </button>
-          <button class="quick-card" type="button" data-page="payments">
-            ${metricIcon("file")}
-            <strong>Submit Payment Proof</strong>
-            <span>Send proof.</span>
-          </button>
-          <button class="quick-card" type="button" data-page="maintenance">
-            ${metricIcon("tool")}
-            <strong>Request Maintenance</strong>
-            <span>Report an apartment issue.</span>
-          </button>
-          <button class="quick-card" type="button" data-page="renewal">
-            ${metricIcon("refresh")}
-            <strong>Request Renewal</strong>
-            <span>Ask to renew.</span>
-          </button>
-          <button class="quick-card" type="button" data-page="documents">
-            ${metricIcon("file")}
-            <strong>View Documents</strong>
-            <span>Open files.</span>
-          </button>
-        </div>
-      </section>
+          <div class="quick-grid action-grid tenant-action-grid">
+            <button class="quick-card" type="button" data-modal="payRent">
+              ${metricIcon("wallet")}
+              <strong>Demo Payment</strong>
+              <span>${summary.isPaid ? "Payment is recorded." : "Open demo payment."}</span>
+            </button>
+            <button class="quick-card" type="button" data-page="payments">
+              ${metricIcon("file")}
+              <strong>Submit Payment Proof</strong>
+              <span>Send proof.</span>
+            </button>
+            <button class="quick-card" type="button" data-page="maintenance">
+              ${metricIcon("tool")}
+              <strong>Request Maintenance</strong>
+              <span>Report an apartment issue.</span>
+            </button>
+            <button class="quick-card" type="button" data-page="renewal">
+              ${metricIcon("refresh")}
+              <strong>Request Renewal</strong>
+              <span>Ask to renew.</span>
+            </button>
+            <button class="quick-card" type="button" data-page="documents">
+              ${metricIcon("file")}
+              <strong>View Documents</strong>
+              <span>Open files.</span>
+            </button>
+          </div>
+        </section>
 
-      <section class="section-band">
-        <div class="section-header">
-          <div>
-            <h2>Recent Activity</h2>
-            <p>Latest tenant updates.</p>
+        <section class="section-band">
+          <div class="section-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>Latest tenant updates.</p>
+            </div>
           </div>
-        </div>
-        <ul class="activity-list">
-          ${tenant.activities
-            .map(
-              (item) => `
-                <li class="activity-item">
-                  <span class="activity-dot"></span>
-                  <div>
-                    <strong>${escapeHtml(item.title)}</strong>
-                    <span>${escapeHtml(item.detail)}</span>
-                  </div>
-                  <span>${escapeHtml(item.time)}</span>
-                </li>
-              `
-            )
-            .join("")}
-        </ul>
-      </section>
+          <ul class="activity-list">
+            ${tenant.activities
+              .map(
+                (item) => `
+                  <li class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                      <strong>${escapeHtml(item.title)}</strong>
+                      <span>${escapeHtml(item.detail)}</span>
+                    </div>
+                    <span>${escapeHtml(item.time)}</span>
+                  </li>
+                `
+              )
+              .join("")}
+          </ul>
+        </section>
+      </div>
     </div>
   `;
 }
