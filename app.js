@@ -2563,7 +2563,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
     appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Update dismissed", "Hidden from Action Center.");
     saveData();
     showToast("Update dismissed.");
-    renderPreservingScroll({ preserveActionListHeight: true, ...(options.viewportAnchor || {}) });
+    renderPreservingScroll(options.viewportAnchor || {});
     return;
   }
 
