@@ -158,7 +158,7 @@ assert.match(styles, /\.quick-grid\.tenant-action-grid\s*\{[\s\S]*grid-template-
 assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card\s*\{[\s\S]*min-height:\s*112px/, "Tenant quick action cards should be compact mini cards.");
 assert.match(styles, /\.button\.secondary\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Secondary buttons should use a visible gray background.");
 assert.match(styles, /\.screen-focus-side > strong\.attention-count\s*\{[\s\S]*font-size:\s*clamp\(48px, 5\.6vw, 72px\)/, "Action Center attention count should make the number visually prominent.");
-assert.match(styles, /\.action-group-waiting \.action-item-title\s*\{[\s\S]*font-size:\s*clamp\(20px, 1\.85vw, 24px\)/, "Waiting on company Action Center item titles should be larger via reusable title styling.");
+assert.match(styles, /\.action-group-waiting \.action-item-title,\s*\.action-group-closed \.action-item-title\s*\{[\s\S]*font-size:\s*clamp\(20px, 1\.85vw, 24px\)/, "Waiting and completed Action Center item titles should share the larger reusable title styling.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card:hover\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Tenant quick action hover state should resolve to a gray surface.");
 assert.match(styles, /\.tenant-action-grid \.metric-icon\s*\{[\s\S]*width:\s*34px;[\s\S]*height:\s*34px;/, "Tenant quick action icons should be easier to scan.");
 assert.match(styles, /\.quick-card::after\s*\{[\s\S]*display:\s*inline-flex;[\s\S]*align-items:\s*center;[\s\S]*justify-content:\s*center;/, "Tenant quick action Open affordance should center its label.");

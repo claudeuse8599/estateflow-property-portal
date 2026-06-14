@@ -2869,7 +2869,8 @@ button,
   line-height: 1.25;
 }
 
-.action-group-waiting .action-item-title {
+.action-group-waiting .action-item-title,
+.action-group-closed .action-item-title {
   font-size: clamp(20px, 1.85vw, 24px);
   line-height: 1.16;
   overflow-wrap: anywhere;
