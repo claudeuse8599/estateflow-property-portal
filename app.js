@@ -824,7 +824,7 @@ function actionButtonsForItem(item) {
       actions.push({ label: "View request", page: "maintenance", variant: status === "Info Requested" ? "primary" : "secondary" });
     }
     if (!item.readBy?.includes("tenant")) {
-      actions.push({ label: "Mark read", command: "mark-read", variant: "ghost" });
+      actions.push({ label: "Mark as read", command: "mark-read", variant: "ghost" });
     }
     return actions;
   }
@@ -916,7 +916,7 @@ function actionButtonsForItem(item) {
   }
 
   if (!item.readBy?.includes("manager")) {
-    return [{ label: "Mark read", command: "mark-read", variant: "secondary" }];
+    return [{ label: "Mark as read", command: "mark-read", variant: "secondary" }];
   }
   return [];
 }
@@ -1331,6 +1331,151 @@ function actionStatusLabel(status) {
     "Info Requested": "Needs Info"
   };
   return labels[status] || statusLabel(status);
+}
+
+function actionTitleState(status) {
+  const states = {
+    Pending: "sent",
+    Submitted: "sent",
+    New: "sent",
+    Sent: "sent",
+    Read: "sent",
+    "In Review": "under review",
+    "Info Requested": "needs more information",
+    Acknowledged: "acknowledged",
+    Assigned: "assigned",
+    "In Progress": "in progress",
+    Scheduled: "scheduled",
+    Approved: "approved",
+    Rejected: "rejected",
+    Completed: "completed",
+    Canceled: "canceled"
+  };
+  return states[status] || String(status || "").toLowerCase();
+}
+
+function sentenceText(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.endsWith(".") ? text : `${text}.`;
+}
+
+function maintenanceRequestLabel(item) {
+  const source = sourceRowForAction(item);
+  const rawSubject = String(source?.issue || item.title || "Maintenance").replace(/\s+request$/i, "").trim();
+  const subject = rawSubject || "Maintenance";
+  const categorySubjects = ["ac", "plumbing", "electrical", "cleaning", "general"];
+  if (categorySubjects.includes(subject.toLowerCase())) {
+    return `${subject} maintenance request`;
+  }
+  return `${subject} request`;
+}
+
+function actionStatusDescription(item) {
+  const status = item.status;
+  if (status === "Info Requested") return "More details are needed before this can continue.";
+  if (status === "In Review") return "The company is reviewing this item.";
+  if (["Acknowledged", "Assigned", "In Progress"].includes(status)) return "The company is working on this request.";
+  if (status === "Scheduled") return "A visit has been scheduled.";
+  if (status === "Approved") return "This item has been approved.";
+  if (status === "Rejected") return "This item was rejected.";
+  if (status === "Completed") return "This item is complete.";
+  if (status === "Canceled") return "This item was canceled.";
+  return state.role === "tenant" ? "Your request is waiting for company review." : "Ready for company review.";
+}
+
+function messageActionPresentation(item) {
+  const source = sourceRowForAction(item);
+  const sourceType = String(source?.type || item.title || "Message").toLowerCase();
+  const message = String(source?.message || item.description || "");
+
+  if (sourceType.includes("maintenance")) {
+    return {
+      title: "Maintenance request update sent",
+      description: message.toLowerCase().includes("assigned")
+        ? "Your maintenance request has been assigned for review."
+        : sentenceText(message || "The company sent an update about your request.")
+    };
+  }
+
+  if (sourceType.includes("late payment")) {
+    return {
+      title: "Rent reminder sent",
+      description: sentenceText(message || "Rent proof reminder has been sent.")
+    };
+  }
+
+  if (sourceType.includes("contract")) {
+    return {
+      title: "Contract reminder sent",
+      description: sentenceText(message || "The company sent a contract update.")
+    };
+  }
+
+  return {
+    title: `${source?.type || "Message"} sent`,
+    description: sentenceText(message || item.description || "The company sent an update.")
+  };
+}
+
+function actionCardPresentation(item) {
+  const stateLabel = actionTitleState(item.status);
+
+  if (item.type === "Message") return messageActionPresentation(item);
+
+  if (item.type === "Maintenance") {
+    return {
+      title: `${maintenanceRequestLabel(item)} ${stateLabel}`,
+      description: actionStatusDescription(item)
+    };
+  }
+
+  if (item.type === "Rent Payment") {
+    const descriptions = {
+      Approved: "Payment has been verified.",
+      Rejected: "Payment proof needs correction.",
+      "Info Requested": "More payment details are needed.",
+      Pending: "The company has received the payment update.",
+      Submitted: "The company has received the payment update."
+    };
+    return {
+      title: `Payment confirmation ${stateLabel}`,
+      description: descriptions[item.status] || "The company has received the payment update."
+    };
+  }
+
+  if (item.type === "Cash Payment") {
+    return {
+      title: `Cash payment request ${stateLabel}`,
+      description: actionStatusDescription(item)
+    };
+  }
+
+  if (String(item.type || "").startsWith("Contract")) {
+    return {
+      title: `${item.type} request ${stateLabel}`,
+      description: actionStatusDescription(item)
+    };
+  }
+
+  if (item.type === "Complaint") {
+    return {
+      title: item.status === "Completed" ? "Complaint resolved" : `Complaint ${item.status === "Rejected" ? "rejected" : "submitted"}`,
+      description: item.status === "Completed" ? "The complaint has been resolved." : "The company is reviewing your complaint."
+    };
+  }
+
+  if (item.type === "Suggestion") {
+    return {
+      title: item.status === "Completed" ? "Suggestion reviewed" : `Suggestion ${item.status === "Rejected" ? "rejected" : "submitted"}`,
+      description: item.status === "Completed" ? "The suggestion has been reviewed." : "The company is reviewing your suggestion."
+    };
+  }
+
+  return {
+    title: item.title || item.type || "Action item",
+    description: sentenceText(item.description || actionStatusDescription(item))
+  };
 }
 
 function badge(status, label = statusLabel(status)) {
@@ -2167,28 +2312,42 @@ function renderActionHistory(item) {
   `;
 }
 
+function renderActionMeta(item) {
+  const rows = [];
+  const add = (label, value) => {
+    const cleanValue = String(value || "").trim();
+    if (cleanValue) rows.push({ label, value: cleanValue });
+  };
+  const propertyUnit = [item.property, item.unit ? `Unit ${item.unit}` : ""].filter(Boolean).join(" · ");
+
+  add("Tenant", item.tenant);
+  add("Property / Unit", propertyUnit);
+  add("Amount", item.amount);
+  add("Priority", item.priority);
+  add("Created", item.createdAt ? formatActionDate(item.createdAt) : "");
+
+  if (!rows.length) return "";
+  return `
+    <div class="action-meta-grid">
+      ${rows.map((row) => `<span><strong>${escapeHtml(row.label)}</strong>${escapeHtml(row.value)}</span>`).join("")}
+    </div>
+  `;
+}
+
 function renderActionCenterItem(item) {
   const unread = !item.readBy?.includes(state.role);
+  const presentation = actionCardPresentation(item);
   return `
     <article class="action-center-item ${unread ? "unread" : ""}">
-      <div class="action-item-top">
-        <div>
-          <div class="action-type-row">
-            <span class="action-type">${escapeHtml(item.type)}</span>
-            ${unread ? `<span class="unread-dot">Unread</span>` : ""}
-          </div>
-          <h3 class="action-item-title">${escapeHtml(item.title)}</h3>
-          <p>${escapeHtml(item.description)}</p>
-        </div>
-        ${badgeSlot(item.status, actionStatusLabel(item.status))}
+      <div class="action-state-row">
+        ${badge(item.status, actionStatusLabel(item.status))}
+        ${unread ? `<span class="unread-dot">Unread</span>` : ""}
       </div>
-      <div class="action-meta-grid">
-        <span><strong>Tenant</strong>${escapeHtml(item.tenant || "N/A")}</span>
-        <span><strong>Property / Unit</strong>${escapeHtml(item.property || "N/A")} ${item.unit ? `· Unit ${escapeHtml(item.unit)}` : ""}</span>
-        ${item.amount ? `<span><strong>Amount</strong>${escapeHtml(item.amount)}</span>` : ""}
-        ${item.priority ? `<span><strong>Priority</strong>${escapeHtml(item.priority)}</span>` : ""}
-        <span><strong>Created</strong>${escapeHtml(formatActionDate(item.createdAt))}</span>
+      <div class="action-item-main">
+        <h3 class="action-item-title">${escapeHtml(presentation.title)}</h3>
+        ${presentation.description ? `<p>${escapeHtml(presentation.description)}</p>` : ""}
       </div>
+      ${renderActionMeta(item)}
       ${renderActionHistory(item)}
       <div class="action-center-actions">
         ${renderActionCenterButtons(item)}
@@ -2335,7 +2494,7 @@ function applyActionCenterCommand(itemId, command) {
   if (command === "mark-read") {
     markActionRead(item, role);
     saveData();
-    showToast("Marked read.");
+    showToast("Marked as read.");
     render();
     return;
   }
