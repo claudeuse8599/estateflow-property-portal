@@ -127,10 +127,18 @@ assert.match(app, /state\.role === "tenant" \|\| item\.type === "Message"/, "Ten
 assert.match(app, /dismissedBy\?\.includes\(state\.role\)/, "Dismissed Action Center items should be hidden for the current role.");
 assert.match(app, /class="action-state-row"/, "Action Center cards should place state badges in a dedicated row.");
 assert.match(app, /class="action-card-topline"/, "Action Center cards should use a top row for status and dismiss controls.");
+assert.match(app, /data-item-id="\$\{escapeHtml\(item\.id\)\}"/, "Action Center cards should expose stable item ids for viewport anchoring.");
 assert.match(app, /<h3 class="action-item-title">/, "Action Center item headings should use a reusable title class.");
 assert.match(app, /data-command="dismiss-card"/, "Dismissible Action Center cards should render a close command.");
 assert.match(app, /aria-label="Dismiss update"/, "Dismissible Action Center cards should expose an accessible close label.");
 assert.match(app, /command === "dismiss-card"/, "Action Center should handle card dismiss commands.");
+assert.match(app, /function renderPreservingScroll/, "Dismiss flows should be able to preserve the current viewport.");
+assert.match(app, /function actionCardViewportAnchor/, "Dismiss flows should capture the next card position before rerendering.");
+assert.match(app, /actionCardViewportAnchor\(actionButton\)/, "Action Center dismiss clicks should pass a viewport anchor.");
+assert.match(app, /anchorItemId/, "Dismiss scroll restoration should align the next available card.");
+assert.match(app, /preserveActionListHeight/, "Dismissing Action Center cards should guard against list-height scroll jumps.");
+assert.match(app, /window\.requestAnimationFrame\(restoreScroll\)/, "Dismiss scroll restoration should run after browser scroll anchoring.");
+assert.match(app, /showToast\("Update dismissed\."\);\s+renderPreservingScroll\(\{ preserveActionListHeight: true, \.\.\.\(options\.viewportAnchor \|\| \{\}\) \}\);/, "Dismissing an Action Center card should preserve scroll after feedback.");
 assert.match(app, /showToast\("Update dismissed\."\)/, "Dismissing an update should give clear feedback.");
 assert.doesNotMatch(app, /<span class="action-type">\$\{escapeHtml\(item\.type\)\}<\/span>/, "Action Center cards should not show a generic static type pill.");
 assert.doesNotMatch(app, /item\.tenant \|\| "N\/A"/, "Action Center metadata should not render blank tenant placeholders.");
@@ -195,6 +203,6 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-35/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-36/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

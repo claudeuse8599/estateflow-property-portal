@@ -1674,6 +1674,49 @@ function renderAtTop() {
   window.scrollTo({ top: 0, left: 0 });
 }
 
+function renderPreservingScroll(options = {}) {
+  const scrollX = window.scrollX;
+  const scrollY = window.scrollY;
+  const actionList = options.preserveActionListHeight ? document.querySelector(".action-center-list") : null;
+  const actionListHeight = actionList ? actionList.offsetHeight : 0;
+
+  render();
+
+  if (actionListHeight) {
+    const nextActionList = document.querySelector(".action-center-list");
+    if (nextActionList) nextActionList.style.minHeight = `${actionListHeight}px`;
+  }
+
+  const restoreScroll = () => {
+    if (options.anchorItemId && typeof options.anchorTop === "number") {
+      const anchorCard = document.querySelector(`.action-center-item[data-item-id="${options.anchorItemId}"]`);
+      if (anchorCard) {
+        window.scrollBy({ top: anchorCard.getBoundingClientRect().top - options.anchorTop, left: 0 });
+        return;
+      }
+    }
+    const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    window.scrollTo({ top: Math.min(scrollY, maxScrollY), left: scrollX });
+  };
+
+  restoreScroll();
+  window.requestAnimationFrame(restoreScroll);
+}
+
+function actionCardViewportAnchor(actionButton) {
+  const card = actionButton.closest(".action-center-item");
+  if (!card) return null;
+  const sibling = card.nextElementSibling?.classList.contains("action-center-item")
+    ? card.nextElementSibling
+    : card.previousElementSibling?.classList.contains("action-center-item")
+      ? card.previousElementSibling
+      : null;
+  return {
+    anchorTop: card.getBoundingClientRect().top,
+    anchorItemId: sibling?.dataset.itemId || ""
+  };
+}
+
 function renderPreservingControl(control) {
   const id = control.id;
   const selectionStart = typeof control.selectionStart === "number" ? control.selectionStart : null;
@@ -2345,7 +2388,7 @@ function renderActionCenterItem(item) {
     ? `<button class="action-dismiss" type="button" data-action="action-center" data-command="dismiss-card" data-id="${escapeHtml(item.id)}" aria-label="Dismiss update">${icon.close}</button>`
     : "";
   return `
-    <article class="action-center-item ${unread ? "unread" : ""}">
+    <article class="action-center-item ${unread ? "unread" : ""}" data-item-id="${escapeHtml(item.id)}">
       <div class="action-card-topline">
         <div class="action-state-row">
           ${badge(item.status, actionStatusLabel(item.status))}
@@ -2491,7 +2534,7 @@ function updateTenantRenewalForInfoRequest(item, note) {
   }
 }
 
-function applyActionCenterCommand(itemId, command) {
+function applyActionCenterCommand(itemId, command, options = {}) {
   const item = actionItemById(itemId);
   if (!item || !roleCanActOnItem(item)) {
     showToast("Action unavailable.");
@@ -2520,7 +2563,7 @@ function applyActionCenterCommand(itemId, command) {
     appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Update dismissed", "Hidden from Action Center.");
     saveData();
     showToast("Update dismissed.");
-    render();
+    renderPreservingScroll({ preserveActionListHeight: true, ...(options.viewportAnchor || {}) });
     return;
   }
 
@@ -4596,7 +4639,8 @@ document.addEventListener("click", (event) => {
   }
 
   if (action === "action-center") {
-    applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command);
+    const viewportAnchor = actionButton.dataset.command === "dismiss-card" ? actionCardViewportAnchor(actionButton) : null;
+    applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command, { viewportAnchor });
     return;
   }
 
