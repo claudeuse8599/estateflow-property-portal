@@ -800,7 +800,7 @@ function visibleActionItems() {
   const items = state.role === "tenant"
     ? state.data.actions.filter(isTenantAction)
     : [...state.data.actions];
-  return items;
+  return items.filter((item) => !item.dismissedBy?.includes(state.role));
 }
 
 function roleCanActOnItem(item) {
@@ -919,6 +919,10 @@ function actionButtonsForItem(item) {
     return [{ label: "Mark as read", command: "mark-read", variant: "secondary" }];
   }
   return [];
+}
+
+function isDismissibleActionItem(item) {
+  return item.type === "Message" && roleCanActOnItem(item);
 }
 
 function actionNeedsAttention(item, role = state.role) {
@@ -2337,11 +2341,17 @@ function renderActionMeta(item) {
 function renderActionCenterItem(item) {
   const unread = !item.readBy?.includes(state.role);
   const presentation = actionCardPresentation(item);
+  const dismissButton = isDismissibleActionItem(item)
+    ? `<button class="action-dismiss" type="button" data-action="action-center" data-command="dismiss-message" data-id="${escapeHtml(item.id)}" aria-label="Dismiss message">${icon.close}</button>`
+    : "";
   return `
     <article class="action-center-item ${unread ? "unread" : ""}">
-      <div class="action-state-row">
-        ${badge(item.status, actionStatusLabel(item.status))}
-        ${unread ? `<span class="unread-dot">Unread</span>` : ""}
+      <div class="action-card-topline">
+        <div class="action-state-row">
+          ${badge(item.status, actionStatusLabel(item.status))}
+          ${unread ? `<span class="unread-dot">Unread</span>` : ""}
+        </div>
+        ${dismissButton}
       </div>
       <div class="action-item-main">
         <h3 class="action-item-title">${escapeHtml(presentation.title)}</h3>
@@ -2495,6 +2505,21 @@ function applyActionCenterCommand(itemId, command) {
     markActionRead(item, role);
     saveData();
     showToast("Marked as read.");
+    render();
+    return;
+  }
+
+  if (command === "dismiss-message") {
+    if (!isDismissibleActionItem(item)) {
+      showToast("Action unavailable.");
+      return;
+    }
+    item.dismissedBy = Array.isArray(item.dismissedBy) ? item.dismissedBy : [];
+    if (!item.dismissedBy.includes(role)) item.dismissedBy.push(role);
+    markActionRead(item, role);
+    appendActionHistory(item, role === "manager" ? "Property Management" : tenantProfile().name, "Message dismissed", "Message hidden from Action Center.");
+    saveData();
+    showToast("Message dismissed.");
     render();
     return;
   }

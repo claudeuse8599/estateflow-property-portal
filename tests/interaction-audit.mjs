@@ -122,8 +122,15 @@ assert.match(app, /valueClassName:\s*"attention-count"/, "Tenant Action Center f
 assert.match(app, /class="action-group action-group-\$\{escapeHtml\(group\.key\)\}"/, "Action Center groups should expose reusable group styling hooks.");
 assert.match(app, /function actionCardPresentation/, "Action Center cards should use data-driven presentation copy.");
 assert.match(app, /function renderActionMeta/, "Action Center metadata should be rendered conditionally.");
+assert.match(app, /function isDismissibleActionItem/, "Message Action Center cards should expose a reusable dismissibility rule.");
+assert.match(app, /dismissedBy\?\.includes\(state\.role\)/, "Dismissed Action Center items should be hidden for the current role.");
 assert.match(app, /class="action-state-row"/, "Action Center cards should place state badges in a dedicated row.");
+assert.match(app, /class="action-card-topline"/, "Action Center cards should use a top row for status and dismiss controls.");
 assert.match(app, /<h3 class="action-item-title">/, "Action Center item headings should use a reusable title class.");
+assert.match(app, /data-command="dismiss-message"/, "Dismissible message cards should render a close command.");
+assert.match(app, /aria-label="Dismiss message"/, "Dismissible message cards should expose an accessible close label.");
+assert.match(app, /command === "dismiss-message"/, "Action Center should handle message dismiss commands.");
+assert.match(app, /showToast\("Message dismissed\."\)/, "Dismissing a message should give clear feedback.");
 assert.doesNotMatch(app, /<span class="action-type">\$\{escapeHtml\(item\.type\)\}<\/span>/, "Action Center cards should not show a generic static type pill.");
 assert.doesNotMatch(app, /item\.tenant \|\| "N\/A"/, "Action Center metadata should not render blank tenant placeholders.");
 assert.doesNotMatch(app, /item\.property \|\| "N\/A"/, "Action Center metadata should not render blank property placeholders.");
@@ -167,6 +174,8 @@ assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card\s*\{[\s\S]
 assert.match(styles, /\.button\.secondary\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Secondary buttons should use a visible gray background.");
 assert.match(styles, /\.screen-focus-side > strong\.attention-count\s*\{[\s\S]*font-size:\s*clamp\(48px, 5\.6vw, 72px\)/, "Action Center attention count should make the number visually prominent.");
 assert.match(styles, /\.action-group-waiting \.action-item-title,\s*\.action-group-closed \.action-item-title\s*\{[\s\S]*font-size:\s*clamp\(20px, 1\.85vw, 24px\)/, "Waiting and completed Action Center item titles should share the larger reusable title styling.");
+assert.match(styles, /\.action-card-topline\s*\{[\s\S]*justify-content:\s*space-between/, "Action Center card header should reserve space for the dismiss control.");
+assert.match(styles, /\.action-dismiss\s*\{[\s\S]*width:\s*30px;[\s\S]*height:\s*30px/, "Message dismiss button should use a compact icon-button size.");
 assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Action Center status and unread labels should be aligned in a calmer top row.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
@@ -185,6 +194,6 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-33/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-34/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
