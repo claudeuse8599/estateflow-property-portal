@@ -736,6 +736,83 @@ button:focus-visible {
   padding: 22px 28px 42px;
 }
 
+.main-area.pull-reset-active > :not(.pull-reset-indicator) {
+  transform: translateY(var(--pull-reset-offset, 0px));
+  transition: transform 120ms ease-out;
+}
+
+.main-area.pull-reset-settling > :not(.pull-reset-indicator) {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pull-reset-indicator {
+  position: fixed;
+  top: 14px;
+  left: calc(var(--sidebar) + ((100vw - var(--sidebar)) / 2));
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--panel-translucent);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -16px) scale(0.98);
+  transition:
+    opacity 140ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 140ms ease,
+    color 140ms ease,
+    background 140ms ease;
+  backdrop-filter: blur(14px);
+}
+
+.pull-reset-indicator.visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.pull-reset-indicator[data-state="ready"],
+.pull-reset-indicator[data-state="refreshing"],
+.pull-reset-indicator[data-state="complete"] {
+  border-color: var(--line-strong);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.pull-reset-icon {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    conic-gradient(var(--primary-dark) calc(var(--pull-reset-progress, 0) * 1turn), var(--surface-soft) 0);
+}
+
+.pull-reset-icon svg {
+  width: 14px;
+  height: 14px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.pull-reset-indicator[data-state="refreshing"] .pull-reset-icon svg {
+  animation: pull-reset-spin 760ms linear infinite;
+}
+
+@keyframes pull-reset-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -2255,6 +2332,10 @@ tbody tr:hover td {
 
   .main-area {
     padding: 20px;
+  }
+
+  .pull-reset-indicator {
+    left: 50%;
   }
 
   .topbar {

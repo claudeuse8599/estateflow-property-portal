@@ -35,6 +35,11 @@ function defaultFilters() {
 
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
+const PULL_RESET_START_DISTANCE = 24;
+const PULL_RESET_THRESHOLD = 96;
+const PULL_RESET_MAX_DISTANCE = 128;
+const PULL_RESET_COOLDOWN = 1200;
+const PULL_RESET_WHEEL_RELEASE_DELAY = 180;
 
 const state = {
   auth: false,
@@ -46,6 +51,18 @@ const state = {
   filters: defaultFilters(),
   confirmations: {},
   notificationPanelOpen: false,
+  pullToReset: {
+    phase: "idle",
+    tracking: false,
+    thresholdReached: false,
+    isResetting: false,
+    distance: 0,
+    rawDistance: 0,
+    startX: 0,
+    startY: 0,
+    cooldownUntil: 0,
+    source: ""
+  },
   sequence: 0,
   data: {}
 };
@@ -1890,6 +1907,15 @@ function renderNotificationPanel() {
   `;
 }
 
+function renderPullToResetIndicator() {
+  return `
+    <div class="pull-reset-indicator" data-pull-reset aria-hidden="true" aria-live="polite">
+      <span class="pull-reset-icon">${icon.refresh}</span>
+      <span data-pull-reset-label>Pull to reset demo data</span>
+    </div>
+  `;
+}
+
 function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
@@ -1898,6 +1924,7 @@ function renderPortal() {
     <div class="portal-layout">
       ${renderSidebar(profile)}
       <main class="main-area">
+        ${renderPullToResetIndicator()}
         <header class="topbar">
           <div class="topbar-copy">
             <p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>
@@ -4518,6 +4545,239 @@ function showToast(message) {
   }, 4200);
 }
 
+function openResetDataModal({ fromPull = false } = {}) {
+  if (fromPull) resetPullToResetState({ update: false });
+  state.modal = { type: "resetData" };
+  state.notificationPanelOpen = false;
+  render();
+  pushHistoryEntry();
+}
+
+function resetDemoData() {
+  state.data = cloneData();
+  state.sequence = 0;
+  state.page = "dashboard";
+  state.modal = null;
+  state.confirmations = {};
+  state.filters = defaultFilters();
+  state.notificationPanelOpen = false;
+  resetPullToResetState({ update: false });
+  ensureActionCenterData();
+  saveData();
+  renderAtTop();
+  replaceHistoryEntry();
+  showToast("Demo data reset.");
+}
+
+function pullResetCopy() {
+  const pull = state.pullToReset;
+  if (pull.phase === "refreshing") return "Opening reset confirmation...";
+  if (pull.phase === "complete") return "Demo data reset";
+  return pull.thresholdReached ? "Release to reset demo data" : "Pull to reset demo data";
+}
+
+function updatePullToResetIndicator({ settle = false } = {}) {
+  const pull = state.pullToReset;
+  const main = document.querySelector(".main-area");
+  const indicator = document.querySelector("[data-pull-reset]");
+  if (!main || !indicator) return;
+
+  const visible = pull.phase !== "idle";
+  const offset = visible ? Math.min(PULL_RESET_MAX_DISTANCE, Math.round(pull.distance * 0.52)) : 0;
+  const progress = Math.min(1, pull.distance / PULL_RESET_THRESHOLD);
+
+  main.style.setProperty("--pull-reset-offset", `${offset}px`);
+  main.style.setProperty("--pull-reset-progress", progress.toFixed(2));
+  main.classList.toggle("pull-reset-active", visible);
+  main.classList.toggle("pull-reset-ready", Boolean(pull.thresholdReached));
+  main.classList.toggle("pull-reset-settling", settle || pull.phase === "refreshing" || pull.phase === "complete");
+
+  indicator.classList.toggle("visible", visible);
+  indicator.dataset.state = pull.thresholdReached && pull.phase === "pulling" ? "ready" : pull.phase;
+  indicator.setAttribute("aria-hidden", visible ? "false" : "true");
+  const label = indicator.querySelector("[data-pull-reset-label]");
+  if (label) label.textContent = pullResetCopy();
+}
+
+function resetPullToResetState({ update = true } = {}) {
+  Object.assign(state.pullToReset, {
+    phase: "idle",
+    tracking: false,
+    thresholdReached: false,
+    isResetting: false,
+    distance: 0,
+    rawDistance: 0,
+    startX: 0,
+    startY: 0,
+    source: ""
+  });
+  if (update) updatePullToResetIndicator({ settle: true });
+}
+
+function isAtPullResetStart() {
+  return window.scrollY <= 0 && document.documentElement.scrollTop <= 0 && document.body.scrollTop <= 0;
+}
+
+function isPullResetBlockedTarget(target) {
+  return Boolean(
+    target?.closest?.(
+      [
+        "input",
+        "textarea",
+        "select",
+        "option",
+        "button",
+        "a",
+        "form",
+        "table",
+        ".table-wrap",
+        ".modal-backdrop",
+        ".modal-card",
+        ".notifications-menu",
+        ".sidebar",
+        ".mobile-nav",
+        "[data-action]",
+        "[data-page]",
+        "[data-modal]",
+        "[data-filter]",
+        "[data-tab]",
+        "[role='button']",
+        "[contenteditable='true']"
+      ].join(", ")
+    )
+  );
+}
+
+function hasNestedScrollableAncestor(target) {
+  let node = target instanceof Element ? target : null;
+  while (node && node !== document.body && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    const scrollable = /(auto|scroll|overlay)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1;
+    if (scrollable) return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+function canUsePullToReset(event) {
+  if (!state.auth || state.modal || state.notificationPanelOpen) return false;
+  if (state.pullToReset.isResetting || Date.now() < state.pullToReset.cooldownUntil) return false;
+  if (!isAtPullResetStart()) return false;
+  if (isPullResetBlockedTarget(event.target)) return false;
+  if (hasNestedScrollableAncestor(event.target)) return false;
+  return true;
+}
+
+function startPullToReset(source, startX, startY) {
+  Object.assign(state.pullToReset, {
+    phase: "idle",
+    tracking: true,
+    thresholdReached: false,
+    isResetting: false,
+    distance: 0,
+    rawDistance: 0,
+    startX,
+    startY,
+    source
+  });
+}
+
+function setPullToResetDistance(distance) {
+  const pull = state.pullToReset;
+  pull.phase = "pulling";
+  pull.distance = Math.min(PULL_RESET_MAX_DISTANCE, Math.max(0, distance));
+  pull.thresholdReached = pull.distance >= PULL_RESET_THRESHOLD;
+  updatePullToResetIndicator();
+}
+
+function cancelPullToReset() {
+  resetPullToResetState();
+}
+
+function triggerPullToReset() {
+  if (state.pullToReset.isResetting) return;
+  Object.assign(state.pullToReset, {
+    phase: "refreshing",
+    tracking: false,
+    thresholdReached: true,
+    isResetting: true,
+    distance: PULL_RESET_THRESHOLD,
+    cooldownUntil: Date.now() + PULL_RESET_COOLDOWN
+  });
+  updatePullToResetIndicator({ settle: true });
+  window.setTimeout(() => openResetDataModal({ fromPull: true }), 180);
+}
+
+function finishPullToReset() {
+  const pull = state.pullToReset;
+  if (!pull.tracking && pull.phase !== "pulling") return;
+  if (pull.thresholdReached) {
+    triggerPullToReset();
+  } else {
+    cancelPullToReset();
+  }
+}
+
+function handlePullResetTouchStart(event) {
+  if (event.touches.length !== 1 || !canUsePullToReset(event)) return;
+  const touch = event.touches[0];
+  startPullToReset("touch", touch.clientX, touch.clientY);
+}
+
+function handlePullResetTouchMove(event) {
+  const pull = state.pullToReset;
+  if (!pull.tracking || pull.source !== "touch" || event.touches.length !== 1) return;
+  if (!isAtPullResetStart()) {
+    cancelPullToReset();
+    return;
+  }
+
+  const touch = event.touches[0];
+  const deltaY = touch.clientY - pull.startY;
+  const deltaX = touch.clientX - pull.startX;
+  if (Math.abs(deltaX) > Math.abs(deltaY) * 0.8) {
+    cancelPullToReset();
+    return;
+  }
+
+  if (deltaY <= PULL_RESET_START_DISTANCE) return;
+  event.preventDefault();
+  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * 0.72);
+}
+
+function handlePullResetTouchEnd() {
+  if (state.pullToReset.source === "touch") finishPullToReset();
+}
+
+let pullResetWheelTimer = null;
+
+function handlePullResetWheel(event) {
+  const pull = state.pullToReset;
+  if (event.deltaY >= 0) {
+    if (pull.source === "wheel") cancelPullToReset();
+    return;
+  }
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+  if (pull.source === "wheel" && !isAtPullResetStart()) {
+    cancelPullToReset();
+    return;
+  }
+  if (!pull.tracking && !canUsePullToReset(event)) return;
+
+  if (!pull.tracking) startPullToReset("wheel", event.clientX, event.clientY);
+  event.preventDefault();
+
+  pull.rawDistance += Math.min(38, Math.abs(event.deltaY) * 0.55);
+  if (pull.rawDistance > PULL_RESET_START_DISTANCE) {
+    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * 0.9);
+  }
+
+  window.clearTimeout(pullResetWheelTimer);
+  pullResetWheelTimer = window.setTimeout(() => {
+    if (state.pullToReset.source === "wheel") finishPullToReset();
+  }, PULL_RESET_WHEEL_RELEASE_DELAY);
+}
+
 function formatDateInput(value) {
   if (!value) return "12 Jun 2026";
   const [year, month, day] = value.split("-");
@@ -4576,26 +4836,12 @@ document.addEventListener("click", (event) => {
   const action = actionButton.dataset.action;
 
   if (action === "reset-data") {
-    state.modal = { type: "resetData" };
-    state.notificationPanelOpen = false;
-    render();
-    pushHistoryEntry();
+    openResetDataModal();
     return;
   }
 
   if (action === "confirm-reset-data") {
-    state.data = cloneData();
-    state.sequence = 0;
-    state.page = "dashboard";
-    state.modal = null;
-    state.confirmations = {};
-    state.filters = defaultFilters();
-    state.notificationPanelOpen = false;
-    ensureActionCenterData();
-    saveData();
-    renderAtTop();
-    replaceHistoryEntry();
-    showToast("Demo data reset.");
+    resetDemoData();
     return;
   }
 
@@ -5136,6 +5382,12 @@ document.addEventListener("keydown", (event) => {
     closeModal();
   }
 });
+
+window.addEventListener("touchstart", handlePullResetTouchStart, { passive: true });
+window.addEventListener("touchmove", handlePullResetTouchMove, { passive: false });
+window.addEventListener("touchend", handlePullResetTouchEnd, { passive: true });
+window.addEventListener("touchcancel", cancelPullToReset, { passive: true });
+window.addEventListener("wheel", handlePullResetWheel, { passive: false });
 
 window.addEventListener("popstate", (event) => {
   restoreFromHistory(event.state);

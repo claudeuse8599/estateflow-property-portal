@@ -106,6 +106,19 @@ assert.match(app, /data-action="reset-data"/, "Demo data reset should be availab
 assert.match(app, /state\.data = cloneData\(\)/, "Demo data reset should restore seed data.");
 assert.match(app, /case "resetData"/, "Data reset should open a confirmation modal.");
 assert.match(app, /data-action="confirm-reset-data"/, "Data reset confirmation should be wired.");
+assert.match(app, /pullToReset:\s*\{/, "Portal should track pull-to-reset gesture state.");
+assert.match(app, /function openResetDataModal/, "Reset modal opening should be reusable across button and gesture flows.");
+assert.match(app, /function resetDemoData/, "Demo data reset should use one shared reset helper.");
+assert.match(app, /if \(action === "reset-data"\) \{\s+openResetDataModal\(\);/, "Reset Data button should use the shared reset modal helper.");
+assert.match(app, /if \(action === "confirm-reset-data"\) \{\s+resetDemoData\(\);/, "Reset confirmation should use the shared reset helper.");
+assert.match(app, /openResetDataModal\(\{ fromPull: true \}\)/, "Pull-to-reset should open the same reset confirmation modal.");
+assert.match(app, /function canUsePullToReset/, "Pull-to-reset should guard when the gesture is allowed.");
+assert.match(app, /state\.modal \|\| state\.notificationPanelOpen/, "Pull-to-reset should not start while modal or notification UI is active.");
+assert.match(app, /isAtPullResetStart\(\)/, "Pull-to-reset should only activate at the top of the page.");
+assert.match(app, /isPullResetBlockedTarget\(event\.target\)/, "Pull-to-reset should avoid forms, buttons, tables, and nested controls.");
+assert.match(app, /window\.addEventListener\("touchstart", handlePullResetTouchStart, \{ passive: true \}\)/, "Pull-to-reset should support touch start.");
+assert.match(app, /window\.addEventListener\("touchmove", handlePullResetTouchMove, \{ passive: false \}\)/, "Pull-to-reset should support cancellable touch movement.");
+assert.match(app, /window\.addEventListener\("wheel", handlePullResetWheel, \{ passive: false \}\)/, "Pull-to-reset should support cautious trackpad overscroll.");
 assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation\/amendment\/change requests should be available.");
 assert.match(app, /function ensureActionFromContractRequest/, "Contract requests should create Action Center items.");
 assert.match(app, /data-form="tenant-complaint"/, "Tenant complaints should be submittable.");
@@ -203,6 +216,8 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260615-38/g, "Index should load the latest cache-busted assets.");
+assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
+assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
+assert.match(index, /oneui2-20260615-39/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
