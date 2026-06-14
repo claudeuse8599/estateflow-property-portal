@@ -139,9 +139,11 @@ assert.match(app, /const showScreenFocus = !\(state\.role === "tenant" && state\
 assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the compact tenant overview strip.");
 assert.match(app, /tenant-dashboard-lower/, "Tenant dashboard should arrange actions and activity in a balanced lower grid.");
 assert.doesNotMatch(app, /<h2>\$\{escapeHtml\(profile\.name\.split\(" "\)\[0\]\)\}, \$\{escapeHtml\(summary\.title\)\}<\/h2>/, "Tenant dashboard should not lead with the rent-review welcome sentence.");
+assert.match(styles, /\.quick-grid\.tenant-action-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Tenant quick actions should render as two-column mini cards.");
+assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card\s*\{[\s\S]*min-height:\s*106px/, "Tenant quick action cards should be compact mini cards.");
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
-assert.match(index, /oneui2-20260614-27/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260614-28/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
