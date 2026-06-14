@@ -390,7 +390,7 @@ function tenantRentSummary() {
     dueAmount: isPaid ? "AED 0" : rent.amount,
     outstanding: isPaid ? "AED 0" : rent.amount,
     receipt: isPaid ? rent.receipt : "Receipt pending",
-    paymentNote: isPaid ? "Recorded paid" : isRejected ? "Needs update" : status === "Submitted" || status === "In Review" ? "Under review" : "Awaiting action",
+    paymentNote: isPaid ? "No dues" : isRejected ? "Needs update" : status === "Submitted" || status === "In Review" ? "Under review" : "Awaiting action",
     maintenanceStatus: maintenance?.status || "Completed",
     maintenanceNote: maintenance ? `${maintenance.category} request` : "No open requests"
   };
@@ -1269,6 +1269,44 @@ function statusClass(status) {
   return String(status).toLowerCase().replaceAll(" / ", "-").replaceAll(" ", "-");
 }
 
+function parseDemoDate(value) {
+  const monthIndex = {
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11
+  };
+  const match = String(value || "").match(/^(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})$/);
+  if (match && monthIndex[match[2]] !== undefined) {
+    return new Date(Number(match[3]), monthIndex[match[2]], Number(match[1]));
+  }
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function daysUntilDate(value, now = new Date()) {
+  const target = parseDemoDate(value);
+  if (!target) return Number.POSITIVE_INFINITY;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  return Math.ceil((end.getTime() - today.getTime()) / 86400000);
+}
+
+function contractHealthClass(endDate) {
+  const daysRemaining = daysUntilDate(endDate);
+  if (daysRemaining <= 31) return "contract-critical";
+  if (daysRemaining <= 244) return "contract-warning";
+  return "contract-safe";
+}
+
 function statusLabel(status) {
   const labels = {
     "Info Requested": "Needs Info"
@@ -2033,15 +2071,17 @@ function renderScreenFocus() {
   `;
 }
 
-function metricCard(label, value, note, iconName, targetPage = "") {
+function metricCard(label, value, note, iconName, targetPage = "", options = {}) {
   const tag = targetPage ? "button" : "article";
   const attributes = targetPage
     ? `type="button" data-page="${escapeHtml(targetPage)}" aria-label="Open ${escapeHtml(label)} details"`
     : "";
-  const classes = `metric-card${targetPage ? " metric-link" : ""}`;
+  const classes = ["metric-card"];
+  if (targetPage) classes.push("metric-link");
+  if (options.className) classes.push(options.className);
 
   return `
-    <${tag} class="${classes}" ${attributes}>
+    <${tag} class="${classes.join(" ")}" ${attributes}>
       <div class="metric-top">
         <span class="label">${escapeHtml(label)}</span>
         ${metricIcon(iconName)}
@@ -2542,6 +2582,7 @@ function renderTenantDashboard() {
   const tenant = state.data.tenant;
   const profile = tenant.profile;
   const summary = tenantRentSummary();
+  const contractHealth = contractHealthClass(profile.contractEnd);
   return `
     <div class="content-stack">
       <section class="tenant-summary-strip" aria-label="Tenant overview">
@@ -2553,7 +2594,7 @@ function renderTenantDashboard() {
           </div>
         </div>
         <div class="tenant-summary-facts">
-          <span>
+          <span class="contract-health ${contractHealth}">
             <strong>Contract</strong>
             <em>Active until ${escapeHtml(profile.contractEnd)}</em>
           </span>
@@ -2571,8 +2612,8 @@ function renderTenantDashboard() {
       <section class="metric-grid five insight-metrics">
         ${metricCard("Rent Due", summary.dueAmount, "Current cycle", "wallet", "rent")}
         ${metricCard("Due Date", summary.rent.dueDate, "Next payment", "file", "rent")}
-        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh", "payments")}
-        ${metricCard("Contract Expiry", "31 Dec 2026", "Renewal available", "file", "renewal")}
+        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh", "payments", summary.isPaid ? { className: "metric-status-paid" } : {})}
+        ${metricCard("Contract Expiry", profile.contractEnd, "Renewal available", "file", "renewal")}
         ${metricCard("Maintenance Status", summary.maintenanceStatus, summary.maintenanceNote, "tool", "maintenance")}
       </section>
 
