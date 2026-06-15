@@ -3954,7 +3954,7 @@ function renderManagerDashboard() {
           ${renderActionButtons([
             queueSummary.primaryAction,
             queueSummary.secondaryAction
-          ], "inline-actions")}
+          ], "inline-actions operations-summary-actions")}
         </article>
         <article class="focus-block queue-block priority-queue-card">
           <div class="section-header">

@@ -289,7 +289,12 @@ assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\
 assert.match(styles, /\.focus-meta span,\s*\.focus-meta button\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Screen focus route chips should keep the same calm tag surface.");
 assert.match(styles, /\.focus-meta button:hover\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Clickable screen focus chips should have a subtle hover state.");
 assert.match(styles, /\.operations-chip-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Management operations categories should use compact route chips.");
-assert.match(styles, /\.priority-detail\s*\{[\s\S]*display:\s*flex;[\s\S]*justify-self:\s*end/, "Management priority rows should keep counts and badges aligned to the right.");
+assert.match(styles, /\.manager-command-grid\s*\{[\s\S]*align-items:\s*start/, "Management command cards should keep natural height instead of creating empty stretched space.");
+assert.match(styles, /\.operations-summary-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Management summary actions should use equal-width dashboard buttons.");
+assert.match(styles, /\.operations-summary-actions \.button,\s*\.operations-summary-actions \.button\.primary\s*\{[\s\S]*width:\s*100%;[\s\S]*min-height:\s*46px/, "Management summary action buttons should share the same width and height.");
+assert.match(styles, /\.priority-item\s*\{[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(174px, 192px\)/, "Management priority rows should reserve a stable count and badge column.");
+assert.match(styles, /\.priority-detail\s*\{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*28px minmax\(132px, 1fr\)/, "Management priority counts and tags should align in fixed internal columns.");
+assert.match(styles, /\.priority-detail \.status\s*\{[\s\S]*width:\s*100%/, "Management priority tags should share a consistent tag width.");
 assert.match(styles, /\.queue-empty\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Management queue should include a compact empty state.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
@@ -339,6 +344,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-67/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-68/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

@@ -3627,6 +3627,7 @@ button,
 
 .manager-command-grid {
   grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+  align-items: start;
 }
 
 .focus-block {
@@ -3646,6 +3647,19 @@ button,
 
 .operations-summary-card {
   gap: 16px;
+  min-height: 0;
+}
+
+.operations-summary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.operations-summary-actions .button,
+.operations-summary-actions .button.primary {
+  width: 100%;
+  min-height: 46px;
 }
 
 .operations-chip-row {
@@ -3725,7 +3739,7 @@ button,
 
 .priority-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(174px, 192px);
   gap: 12px;
   align-items: center;
   width: 100%;
@@ -3764,15 +3778,16 @@ button,
 }
 
 .priority-detail {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px minmax(132px, 1fr);
   align-items: center;
   gap: 9px;
   justify-self: end;
-  min-width: max-content;
+  width: 100%;
 }
 
 .priority-detail > strong {
-  min-width: 22px;
+  min-width: 0;
   color: var(--text);
   font-size: 17px;
   line-height: 1;
@@ -3780,7 +3795,13 @@ button,
 }
 
 .priority-detail .status-slot {
+  justify-content: stretch;
+  min-width: 0;
   padding-top: 0;
+}
+
+.priority-detail .status {
+  width: 100%;
 }
 
 .queue-empty {
@@ -5038,6 +5059,10 @@ td {
 
   .priority-detail {
     justify-self: start;
+  }
+
+  .operations-summary-actions {
+    grid-template-columns: 1fr;
   }
 
   .section-header {
