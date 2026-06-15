@@ -1618,8 +1618,8 @@ function daysUntilDate(value, now = new Date()) {
 
 function contractHealthClass(endDate) {
   const daysRemaining = daysUntilDate(endDate);
-  if (daysRemaining <= 31) return "contract-critical";
-  if (daysRemaining <= 244) return "contract-warning";
+  if (daysRemaining < 0) return "contract-critical";
+  if (daysRemaining <= 30) return "contract-warning";
   return "contract-safe";
 }
 

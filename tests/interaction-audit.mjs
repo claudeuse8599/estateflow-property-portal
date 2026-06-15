@@ -222,6 +222,7 @@ assert.match(app, /function renderLogin\(\)[\s\S]*login-actions[\s\S]*renderThem
 assert.match(app, /const showScreenFocus = !\(state\.role === "tenant" && state\.page === "dashboard"\)/, "Tenant dashboard should not render the redundant global focus hero.");
 assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the compact tenant overview strip.");
 assert.match(app, /function contractHealthClass\(endDate\)/, "Tenant contract status should be derived from the contract end date.");
+assert.match(app, /daysRemaining < 0\) return "contract-critical";[\s\S]*daysRemaining <= 30\) return "contract-warning"/, "Tenant contract health should stay green until the final month, warning in the last 30 days, and critical only after expiry.");
 assert.match(app, /class="contract-health \$\{contractHealth\}"/, "Tenant dashboard contract fact should render a health color class.");
 assert.match(app, /function paymentHealthClass\(summary\)/, "Tenant payment status should be derived from due date and payment state.");
 assert.match(app, /daysUntilDue < 0/, "Tenant payment status should turn critical when overdue.");
@@ -308,6 +309,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-59/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-60/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
