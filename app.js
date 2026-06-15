@@ -2787,8 +2787,8 @@ function metricCard(label, value, note, iconName, targetPage = "", options = {})
         ${metricIcon(iconName)}
       </div>
       <p class="metric-value">${escapeHtml(value)}</p>
-      ${(note || targetPage)
-        ? `<div class="metric-foot">${note ? `<span class="metric-note">${escapeHtml(note)}</span>` : "<span></span>"}${targetPage ? `<span class="metric-action">${escapeHtml(options.actionLabel || metricActionLabel(targetPage))}</span>` : ""}</div>`
+      ${(note || (targetPage && !options.hideActionLabel))
+        ? `<div class="metric-foot">${note ? `<span class="metric-note">${escapeHtml(note)}</span>` : "<span></span>"}${targetPage && !options.hideActionLabel ? `<span class="metric-action">${escapeHtml(options.actionLabel || metricActionLabel(targetPage))}</span>` : ""}</div>`
         : ""}
     </${tag}>
   `;
@@ -3998,6 +3998,31 @@ function renderDashboardGroupHeader(label, copy, actions = []) {
   `;
 }
 
+function renderDashboardSnapshotItem(item) {
+  return `
+    <button class="dashboard-snapshot-item" type="button" data-page="${escapeHtml(item.page)}" aria-label="Open ${escapeHtml(item.label)}">
+      ${metricIcon(item.icon)}
+      <span class="dashboard-snapshot-copy">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(String(item.value))}</strong>
+        <em>${escapeHtml(item.note)}</em>
+      </span>
+      <span class="dashboard-snapshot-action">${escapeHtml(item.actionLabel || metricActionLabel(item.page))}</span>
+    </button>
+  `;
+}
+
+function renderDashboardSnapshotCard(label, copy, items, className = "") {
+  return `
+    <section class="dashboard-snapshot-card ${escapeHtml(className)}">
+      ${renderDashboardGroupHeader(label, copy)}
+      <div class="dashboard-snapshot-grid">
+        ${items.map(renderDashboardSnapshotItem).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderManagerDashboard() {
   const queueSummary = getManagementQueueSummary();
   const summary = getManagementDashboardSummary();
@@ -4030,35 +4055,20 @@ function renderManagerDashboard() {
         </article>
       </section>
 
-      <section class="dashboard-group">
-        ${renderDashboardGroupHeader("Operations Snapshot", "Key portfolio, rent, and request numbers for today.")}
-        <div class="metric-grid dashboard-metrics insight-metrics">
-          ${metricCard("Total Tenants", String(summary.tenants.total), summary.tenants.label, "users", "tenants", { actionLabel: "View tenants" })}
-          ${metricCard("Rent Collected", formatAed(summary.rent.collectedAmount), `${summary.rent.cycleLabel} · ${summary.rent.collectedCount} ${summary.rent.collectedCount === 1 ? "payment" : "payments"}`, "wallet", "financial", { actionLabel: "Open finance" })}
-          ${metricCard("Pending Rent", formatAed(summary.rent.pendingAmount), "Requires follow-up", "refresh", "rentTracking", { actionLabel: "Track rent" })}
-          ${metricCard("Open Maintenance", String(summary.maintenance.openCount), "Active requests", "tool", "maintenanceMgmt", { actionLabel: "Open queue" })}
-          ${metricCard("Pending Renewals", String(summary.renewals.pendingCount), "Awaiting decision", "file", "renewalsMgmt", { actionLabel: "Review renewals" })}
-          ${metricCard("Total Properties", String(summary.portfolio.totalProperties), "Current portfolio", "building", "portfolio", { actionLabel: "View portfolio" })}
-        </div>
-      </section>
+      ${renderDashboardSnapshotCard("Operations Snapshot", "Key portfolio, rent, and request numbers for today.", [
+        { label: "Total Tenants", value: summary.tenants.total, note: summary.tenants.label, icon: "users", page: "tenants", actionLabel: "View tenants" },
+        { label: "Rent Collected", value: formatAed(summary.rent.collectedAmount), note: `${summary.rent.cycleLabel} · ${summary.rent.collectedCount} ${summary.rent.collectedCount === 1 ? "payment" : "payments"}`, icon: "wallet", page: "financial", actionLabel: "Open finance" },
+        { label: "Pending Rent", value: formatAed(summary.rent.pendingAmount), note: "Requires follow-up", icon: "refresh", page: "rentTracking", actionLabel: "Track rent" },
+        { label: "Open Maintenance", value: summary.maintenance.openCount, note: "Active requests", icon: "tool", page: "maintenanceMgmt", actionLabel: "Open queue" },
+        { label: "Pending Renewals", value: summary.renewals.pendingCount, note: "Awaiting decision", icon: "file", page: "renewalsMgmt", actionLabel: "Review renewals" },
+        { label: "Total Properties", value: summary.portfolio.totalProperties, note: "Current portfolio", icon: "building", page: "portfolio", actionLabel: "View portfolio" }
+      ], "operations-snapshot-card")}
 
-      <section class="dashboard-group compact-dashboard-group">
-        ${renderDashboardGroupHeader("Portfolio and Documents", "Unit availability and pending document checks.")}
-        <div class="summary-strip" aria-label="Portfolio and document dashboard links">
-          <button class="summary-link" type="button" data-page="portfolio">
-            <span>Occupied Units</span>
-            <strong>${summary.portfolio.occupiedUnits}</strong>
-          </button>
-          <button class="summary-link" type="button" data-page="portfolio">
-            <span>Vacant Units</span>
-            <strong>${summary.portfolio.vacantUnits}</strong>
-          </button>
-          <button class="summary-link" type="button" data-page="docsMgmt">
-            <span>Document Reviews</span>
-            <strong>${summary.documents.pendingReviews} pending</strong>
-          </button>
-        </div>
-      </section>
+      ${renderDashboardSnapshotCard("Portfolio and Documents", "Unit availability and pending document checks.", [
+        { label: "Occupied Units", value: summary.portfolio.occupiedUnits, note: `${summary.portfolio.totalUnits} total units`, icon: "building", page: "portfolio", actionLabel: "View portfolio" },
+        { label: "Vacant Units", value: summary.portfolio.vacantUnits, note: "Available or inactive", icon: "home", page: "portfolio", actionLabel: "View portfolio" },
+        { label: "Document Reviews", value: summary.documents.pendingReviews, note: `${summary.documents.pendingReviews === 1 ? "Pending review" : "Pending reviews"}`, icon: "file", page: "docsMgmt", actionLabel: "View docs" }
+      ], "portfolio-documents-card")}
 
       <section class="layout-three">
         <div class="section-band">
@@ -4113,13 +4123,12 @@ function renderManagerDashboard() {
             <h2>Financial Snapshot</h2>
             <p>Monthly income, expense, and operating performance.</p>
           </div>
-          ${renderActionButtons([{ label: "Open finance", icon: "chart", page: "financial", variant: "secondary" }], "inline-actions dashboard-group-actions")}
         </div>
         <div class="metric-grid compact-metrics">
-          ${metricCard("Rental income", summary.finance.rentalIncome, `${summary.finance.timeframe} · collected and due`, "chart")}
-          ${metricCard("Expenses", summary.finance.expenses, "Service costs", "wallet")}
-          ${metricCard("Net income", summary.finance.netIncome, "After costs", "chart")}
-          ${metricCard("Operational costs", summary.finance.operationalCosts, "Ops spend", "tool")}
+          ${metricCard("Rental income", summary.finance.rentalIncome, `${summary.finance.timeframe} · collected and due`, "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Expenses", summary.finance.expenses, "Service costs", "wallet", "financial", { hideActionLabel: true })}
+          ${metricCard("Net income", summary.finance.netIncome, "After costs", "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Operational costs", summary.finance.operationalCosts, "Ops spend", "tool", "financial", { hideActionLabel: true })}
         </div>
       </section>
     </div>
