@@ -35,14 +35,18 @@ function defaultFilters() {
 
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
-const PULL_RESET_START_DISTANCE = 44;
-const PULL_RESET_THRESHOLD = 168;
-const PULL_RESET_MAX_DISTANCE = 210;
+const PULL_RESET_TOP_TOLERANCE = 2;
+const PULL_RESET_START_DISTANCE = 52;
+const PULL_RESET_THRESHOLD = 190;
+const PULL_RESET_MAX_DISTANCE = 230;
 const PULL_RESET_COOLDOWN = 1200;
-const PULL_RESET_WHEEL_RELEASE_DELAY = 180;
-const PULL_RESET_WHEEL_STEP_MAX = 26;
-const PULL_RESET_WHEEL_RESISTANCE = 0.38;
-const PULL_RESET_RELEASE_RESISTANCE = 0.72;
+const PULL_RESET_WHEEL_RELEASE_DELAY = 260;
+const PULL_RESET_WHEEL_IDLE_DELAY = 480;
+const PULL_RESET_TOP_STABILITY_MS = 420;
+const PULL_RESET_WHEEL_STEP_MAX = 18;
+const PULL_RESET_WHEEL_RESISTANCE = 0.26;
+const PULL_RESET_TOUCH_RESISTANCE = 0.72;
+const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.56;
 
 const state = {
   auth: false,
@@ -63,6 +67,12 @@ const state = {
     rawDistance: 0,
     startX: 0,
     startY: 0,
+    gestureStartedAtTop: false,
+    isEligibleForPullReset: false,
+    wheelSessionActive: false,
+    wheelSessionStartedAtTop: false,
+    lastNonTopScrollTime: 0,
+    lastWheelTime: 0,
     cooldownUntil: 0,
     source: ""
   },
@@ -4576,7 +4586,7 @@ function pullResetCopy() {
   const pull = state.pullToReset;
   if (pull.phase === "refreshing") return "Opening reset confirmation...";
   if (pull.phase === "complete") return "Demo data reset";
-  return pull.thresholdReached ? "Release to reset demo data" : "Pull to reset demo data";
+  return pull.thresholdReached ? "Release to reset demo data" : "Pull further to reset demo data";
 }
 
 function updatePullToResetIndicator({ settle = false } = {}) {
@@ -4612,13 +4622,19 @@ function resetPullToResetState({ update = true } = {}) {
     rawDistance: 0,
     startX: 0,
     startY: 0,
+    gestureStartedAtTop: false,
+    isEligibleForPullReset: false,
     source: ""
   });
   if (update) updatePullToResetIndicator({ settle: true });
 }
 
+function pullResetScrollTop() {
+  return Math.max(window.scrollY, document.documentElement.scrollTop || 0, document.body.scrollTop || 0);
+}
+
 function isAtPullResetStart() {
-  return window.scrollY <= 0 && document.documentElement.scrollTop <= 0 && document.body.scrollTop <= 0;
+  return pullResetScrollTop() <= PULL_RESET_TOP_TOLERANCE;
 }
 
 function isPullResetBlockedTarget(target) {
@@ -4663,15 +4679,20 @@ function hasNestedScrollableAncestor(target) {
 }
 
 function canUsePullToReset(event) {
+  const pull = state.pullToReset;
+  const now = Date.now();
   if (!state.auth || state.modal || state.notificationPanelOpen) return false;
-  if (state.pullToReset.isResetting || Date.now() < state.pullToReset.cooldownUntil) return false;
+  if (pull.isResetting || now < pull.cooldownUntil) return false;
   if (!isAtPullResetStart()) return false;
+  if (now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) return false;
+  if (pull.wheelSessionActive && !pull.wheelSessionStartedAtTop) return false;
   if (isPullResetBlockedTarget(event.target)) return false;
   if (hasNestedScrollableAncestor(event.target)) return false;
   return true;
 }
 
 function startPullToReset(source, startX, startY) {
+  const gestureStartedAtTop = isAtPullResetStart();
   Object.assign(state.pullToReset, {
     phase: "idle",
     tracking: true,
@@ -4681,6 +4702,8 @@ function startPullToReset(source, startX, startY) {
     rawDistance: 0,
     startX,
     startY,
+    gestureStartedAtTop,
+    isEligibleForPullReset: gestureStartedAtTop,
     source
   });
 }
@@ -4698,7 +4721,7 @@ function cancelPullToReset() {
 }
 
 function triggerPullToReset() {
-  if (state.pullToReset.isResetting) return;
+  if (state.pullToReset.isResetting || !state.pullToReset.isEligibleForPullReset) return;
   Object.assign(state.pullToReset, {
     phase: "refreshing",
     tracking: false,
@@ -4714,7 +4737,7 @@ function triggerPullToReset() {
 function finishPullToReset() {
   const pull = state.pullToReset;
   if (!pull.tracking && pull.phase !== "pulling") return;
-  if (pull.thresholdReached) {
+  if (pull.isEligibleForPullReset && pull.thresholdReached) {
     triggerPullToReset();
   } else {
     cancelPullToReset();
@@ -4722,7 +4745,9 @@ function finishPullToReset() {
 }
 
 function handlePullResetTouchStart(event) {
-  if (event.touches.length !== 1 || !canUsePullToReset(event)) return;
+  if (event.touches.length !== 1) return;
+  if (!isAtPullResetStart()) state.pullToReset.lastNonTopScrollTime = Date.now();
+  if (!canUsePullToReset(event)) return;
   const touch = event.touches[0];
   startPullToReset("touch", touch.clientX, touch.clientY);
 }
@@ -4745,7 +4770,8 @@ function handlePullResetTouchMove(event) {
 
   if (deltaY <= PULL_RESET_START_DISTANCE) return;
   event.preventDefault();
-  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * PULL_RESET_RELEASE_RESISTANCE);
+  if (!pull.isEligibleForPullReset) return;
+  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * PULL_RESET_TOUCH_RESISTANCE);
 }
 
 function handlePullResetTouchEnd() {
@@ -4753,15 +4779,42 @@ function handlePullResetTouchEnd() {
 }
 
 let pullResetWheelTimer = null;
+let pullResetWheelIdleTimer = null;
 
 function handlePullResetWheel(event) {
   const pull = state.pullToReset;
+  const now = Date.now();
+  const atTop = isAtPullResetStart();
+
+  if (!atTop) {
+    pull.lastNonTopScrollTime = now;
+  }
+
+  const sessionExpired = !pull.wheelSessionActive || now - pull.lastWheelTime > PULL_RESET_WHEEL_IDLE_DELAY;
+  if (sessionExpired) {
+    pull.wheelSessionActive = true;
+    pull.wheelSessionStartedAtTop = atTop;
+  }
+  pull.lastWheelTime = now;
+
+  window.clearTimeout(pullResetWheelIdleTimer);
+  pullResetWheelIdleTimer = window.setTimeout(() => {
+    state.pullToReset.wheelSessionActive = false;
+    state.pullToReset.wheelSessionStartedAtTop = false;
+  }, PULL_RESET_WHEEL_IDLE_DELAY);
+
   if (event.deltaY >= 0) {
     if (pull.source === "wheel") cancelPullToReset();
     return;
   }
   if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-  if (pull.source === "wheel" && !isAtPullResetStart()) {
+
+  if (!pull.wheelSessionStartedAtTop) {
+    if (pull.source === "wheel") cancelPullToReset();
+    return;
+  }
+
+  if (pull.source === "wheel" && !atTop) {
     cancelPullToReset();
     return;
   }
@@ -4772,7 +4825,7 @@ function handlePullResetWheel(event) {
 
   pull.rawDistance += Math.min(PULL_RESET_WHEEL_STEP_MAX, Math.abs(event.deltaY) * PULL_RESET_WHEEL_RESISTANCE);
   if (pull.rawDistance > PULL_RESET_START_DISTANCE) {
-    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * PULL_RESET_RELEASE_RESISTANCE);
+    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * PULL_RESET_WHEEL_DISTANCE_RESISTANCE);
   }
 
   window.clearTimeout(pullResetWheelTimer);

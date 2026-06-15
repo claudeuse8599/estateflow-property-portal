@@ -107,10 +107,17 @@ assert.match(app, /state\.data = cloneData\(\)/, "Demo data reset should restore
 assert.match(app, /case "resetData"/, "Data reset should open a confirmation modal.");
 assert.match(app, /data-action="confirm-reset-data"/, "Data reset confirmation should be wired.");
 assert.match(app, /pullToReset:\s*\{/, "Portal should track pull-to-reset gesture state.");
-assert.match(app, /const PULL_RESET_START_DISTANCE = 44;/, "Pull-to-reset should require a deliberate pull before showing progress.");
-assert.match(app, /const PULL_RESET_THRESHOLD = 168;/, "Pull-to-reset should use a longer release threshold to avoid Mac momentum triggers.");
-assert.match(app, /const PULL_RESET_WHEEL_STEP_MAX = 26;/, "Trackpad pull-to-reset should accumulate cautiously per wheel event.");
-assert.match(app, /const PULL_RESET_WHEEL_RESISTANCE = 0\.38;/, "Trackpad pull-to-reset should apply resistance against momentum scrolling.");
+assert.match(app, /const PULL_RESET_TOP_TOLERANCE = 2;/, "Pull-to-reset should use a tight top tolerance.");
+assert.match(app, /const PULL_RESET_START_DISTANCE = 52;/, "Pull-to-reset should require a deliberate pull before showing progress.");
+assert.match(app, /const PULL_RESET_THRESHOLD = 190;/, "Pull-to-reset should use a stronger release threshold to avoid Mac momentum triggers.");
+assert.match(app, /const PULL_RESET_WHEEL_IDLE_DELAY = 480;/, "Trackpad pull-to-reset should wait for wheel idle before allowing a new top pull.");
+assert.match(app, /const PULL_RESET_TOP_STABILITY_MS = 420;/, "Pull-to-reset should require the page to be stable at the top.");
+assert.match(app, /const PULL_RESET_WHEEL_STEP_MAX = 18;/, "Trackpad pull-to-reset should accumulate cautiously per wheel event.");
+assert.match(app, /const PULL_RESET_WHEEL_RESISTANCE = 0\.26;/, "Trackpad pull-to-reset should apply resistance against momentum scrolling.");
+assert.match(app, /gestureStartedAtTop:\s*false/, "Pull-to-reset should track whether the gesture started at the top.");
+assert.match(app, /isEligibleForPullReset:\s*false/, "Pull-to-reset should track eligibility separately from visual pulling.");
+assert.match(app, /wheelSessionStartedAtTop:\s*false/, "Pull-to-reset should track whether a wheel session began at the top.");
+assert.match(app, /lastNonTopScrollTime:\s*0/, "Pull-to-reset should remember recent non-top scrolling.");
 assert.match(app, /function openResetDataModal/, "Reset modal opening should be reusable across button and gesture flows.");
 assert.match(app, /function resetDemoData/, "Demo data reset should use one shared reset helper.");
 assert.match(app, /if \(action === "reset-data"\) \{\s+openResetDataModal\(\);/, "Reset Data button should use the shared reset modal helper.");
@@ -119,7 +126,12 @@ assert.match(app, /openResetDataModal\(\{ fromPull: true \}\)/, "Pull-to-reset s
 assert.match(app, /function canUsePullToReset/, "Pull-to-reset should guard when the gesture is allowed.");
 assert.match(app, /state\.modal \|\| state\.notificationPanelOpen/, "Pull-to-reset should not start while modal or notification UI is active.");
 assert.match(app, /isAtPullResetStart\(\)/, "Pull-to-reset should only activate at the top of the page.");
+assert.match(app, /now - pull\.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS/, "Pull-to-reset should block momentum immediately after non-top scrolling.");
+assert.match(app, /pull\.wheelSessionActive && !pull\.wheelSessionStartedAtTop/, "Pull-to-reset should reject wheel sessions that started away from the top.");
 assert.match(app, /isPullResetBlockedTarget\(event\.target\)/, "Pull-to-reset should avoid forms, buttons, tables, and nested controls.");
+assert.match(app, /pull\.wheelSessionStartedAtTop = atTop/, "Wheel pull-to-reset should record the starting top state for the full session.");
+assert.match(app, /if \(!pull\.wheelSessionStartedAtTop\)/, "Wheel pull-to-reset should block sessions that did not start at the top.");
+assert.match(app, /state\.pullToReset\.wheelSessionActive = false/, "Wheel pull-to-reset should reset session state after idle.");
 assert.match(app, /window\.addEventListener\("touchstart", handlePullResetTouchStart, \{ passive: true \}\)/, "Pull-to-reset should support touch start.");
 assert.match(app, /window\.addEventListener\("touchmove", handlePullResetTouchMove, \{ passive: false \}\)/, "Pull-to-reset should support cancellable touch movement.");
 assert.match(app, /window\.addEventListener\("wheel", handlePullResetWheel, \{ passive: false \}\)/, "Pull-to-reset should support cautious trackpad overscroll.");
@@ -222,6 +234,6 @@ assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared t
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-40/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-41/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
