@@ -1173,10 +1173,6 @@ function countItemsByType(items, matcher) {
   return items.filter(matcher).length;
 }
 
-function pluralizeCount(count, singular, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
 function getManagementQueueSummary() {
   const data = state.data.manager;
   const attentionItems = managementActionItemsNeedingAttention();
@@ -1200,7 +1196,7 @@ function getManagementQueueSummary() {
       page: "chequeReview",
       priority: 1,
       title: "Review payment proof",
-      description: `${pluralizeCount(pendingPayments, "payment")} ${pendingPayments === 1 ? "is" : "are"} awaiting finance review`,
+      description: "Finance review",
       badgeStatus: "Pending",
       badgeLabel: "Needs Review"
     },
@@ -1212,7 +1208,7 @@ function getManagementQueueSummary() {
       page: "maintenanceMgmt",
       priority: 2,
       title: "Update maintenance status",
-      description: `${pluralizeCount(openMaintenance, "active request")} ${openMaintenance === 1 ? "needs" : "need"} a status update`,
+      description: "Status update needed",
       badgeStatus: "In Progress",
       badgeLabel: "Active"
     },
@@ -1224,7 +1220,7 @@ function getManagementQueueSummary() {
       page: "renewalsMgmt",
       priority: 3,
       title: "Review renewal requests",
-      description: `${pluralizeCount(pendingRenewals, "lease")} ${pendingRenewals === 1 ? "is" : "are"} awaiting decision`,
+      description: "Awaiting decision",
       badgeStatus: "Pending",
       badgeLabel: "Needs Decision"
     },
@@ -1236,7 +1232,7 @@ function getManagementQueueSummary() {
       page: "notifications",
       priority: 4,
       title: "Review complaints",
-      description: `${pluralizeCount(complaintFollowups, "complaint")} ${complaintFollowups === 1 ? "needs" : "need"} review`,
+      description: "Review tenant complaint",
       badgeStatus: "Pending",
       badgeLabel: "Follow Up"
     },
@@ -1248,7 +1244,7 @@ function getManagementQueueSummary() {
       page: "notifications",
       priority: 5,
       title: "Review suggestions",
-      description: `${pluralizeCount(suggestionFollowups, "suggestion")} ${suggestionFollowups === 1 ? "needs" : "need"} review`,
+      description: "Review tenant suggestion",
       badgeStatus: "Pending",
       badgeLabel: "Follow Up"
     },
@@ -1260,7 +1256,7 @@ function getManagementQueueSummary() {
       page: "actionCenter",
       priority: 6,
       title: "Review remaining updates",
-      description: `${pluralizeCount(messageFollowups + otherActionItems, "item")} ${messageFollowups + otherActionItems === 1 ? "is" : "are"} waiting in Action Center`,
+      description: "Open in Action Center",
       badgeStatus: "Submitted",
       badgeLabel: "Queue"
     }
