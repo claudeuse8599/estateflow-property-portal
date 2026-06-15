@@ -236,8 +236,14 @@ assert.match(app, /class="empty-table-row"/, "Empty table rows should use a dedi
 assert.match(app, /class="empty-table-cell"/, "Empty table cells should remove default table padding.");
 assert.match(styles, /\.table-empty-state\s*\{[\s\S]*min-height:\s*86px;[\s\S]*background:\s*var\(--surface\)/, "Empty table states should be compact and visually integrated with the table.");
 assert.doesNotMatch(app, /Choose the closest category and priority\./, "Tenant maintenance should not show the removed guidance card copy.");
+assert.match(app, /class="content-stack maintenance-stack"/, "Tenant maintenance should use the compact maintenance stack.");
+assert.match(app, /class="form-grid maintenance-form"/, "Tenant maintenance issue form should use the compact form layout.");
+assert.match(app, /class="layout-two maintenance-followup-grid"/, "Tenant maintenance complaint and suggestion flows should be grouped with their statuses.");
+assert.match(styles, /\.field select\s*\{[\s\S]*appearance:\s*none;[\s\S]*background-position:\s*right 13px center/, "Select dropdown arrows should use a custom inset arrow.");
+assert.match(styles, /\.maintenance-form\s*\{[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/, "Tenant maintenance form should use a compact multi-column desktop grid.");
+assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S]*min-height:\s*72px/, "Tenant maintenance status tables should use shorter empty states.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-43/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-44/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

@@ -4205,6 +4205,111 @@ th {
   line-height: 1.4;
 }
 
+.field select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.75 8L10 12.25L14.25 8' stroke='%23666666' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 13px center;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+}
+
+:root[data-theme="dark"] .field select {
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.75 8L10 12.25L14.25 8' stroke='%23b3b3ba' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.maintenance-stack {
+  gap: 14px;
+}
+
+.maintenance-report-section,
+.maintenance-requests-section,
+.maintenance-form-section,
+.maintenance-status-section {
+  padding: var(--space-4);
+}
+
+.maintenance-report-section .section-header,
+.maintenance-requests-section .section-header,
+.maintenance-form-section .section-header,
+.maintenance-status-section .section-header {
+  margin-bottom: var(--space-3);
+}
+
+.maintenance-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.maintenance-field-wide {
+  grid-column: span 2;
+}
+
+.maintenance-form textarea {
+  min-height: 76px;
+}
+
+.maintenance-form .upload-box {
+  min-height: 76px;
+}
+
+.maintenance-form .button.primary {
+  grid-column: 1 / -1;
+  width: auto;
+  min-height: 42px;
+  justify-self: end;
+  padding-inline: 16px;
+}
+
+.maintenance-followup-grid {
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.maintenance-flow-column {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.maintenance-secondary-form {
+  gap: var(--space-3);
+}
+
+.maintenance-secondary-form textarea {
+  min-height: 82px;
+}
+
+.maintenance-secondary-form .upload-box {
+  min-height: 70px;
+}
+
+.maintenance-secondary-form .button.primary {
+  width: auto;
+  min-height: 40px;
+  justify-self: start;
+  padding-inline: 15px;
+}
+
+.maintenance-status-section .table-shell {
+  gap: var(--space-2);
+}
+
+.maintenance-status-section .table-empty-state {
+  min-height: 72px;
+  padding-block: 14px;
+}
+
+.complaint-status-section table {
+  min-width: 560px;
+}
+
+.suggestion-status-section table {
+  min-width: 360px;
+}
+
 th,
 td {
   padding: 11px 14px;
@@ -4334,6 +4439,14 @@ td {
   .focus-block h2 {
     font-size: 27px;
   }
+
+  .maintenance-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maintenance-form .button.primary {
+    justify-self: start;
+  }
 }
 
 @media (max-width: 620px) {
@@ -4378,6 +4491,19 @@ td {
   .metric-grid,
   .quick-grid {
     padding: 6px;
+  }
+
+  .maintenance-form {
+    grid-template-columns: 1fr;
+  }
+
+  .maintenance-field-wide {
+    grid-column: auto;
+  }
+
+  .maintenance-form .button.primary,
+  .maintenance-secondary-form .button.primary {
+    width: 100%;
   }
 
   .topbar h1 {
