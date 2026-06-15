@@ -4287,7 +4287,13 @@ th {
   grid-column: 1 / -1;
 }
 
+.maintenance-status-single {
+  grid-column: 1 / -1;
+}
+
 .maintenance-secondary-form {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   align-content: start;
   gap: var(--space-3);
@@ -4304,7 +4310,9 @@ th {
 .maintenance-secondary-form .button.primary {
   width: auto;
   min-height: 40px;
+  margin-top: auto;
   justify-self: start;
+  align-self: start;
   padding-inline: 15px;
 }
 

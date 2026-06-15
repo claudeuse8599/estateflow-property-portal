@@ -3145,6 +3145,8 @@ function renderTenantMaintenance() {
   const previousComplaints = state.data.tenant.complaints.filter((row) => !activeFollowupStatuses.includes(row.status));
   const activeSuggestions = state.data.tenant.suggestions.filter((row) => activeFollowupStatuses.includes(row.status));
   const previousSuggestions = state.data.tenant.suggestions.filter((row) => !activeFollowupStatuses.includes(row.status));
+  const activeStatusSectionCount = Number(activeComplaints.length > 0) + Number(activeSuggestions.length > 0);
+  const activeStatusSectionClass = activeStatusSectionCount === 1 ? " maintenance-status-single" : "";
   const complaintRows = activeComplaints.map(
     (row) => `
       <tr>
@@ -3182,7 +3184,7 @@ function renderTenantMaintenance() {
   ];
   const complaintStatusSection = complaintRows.length
     ? `
-      <div class="section-band maintenance-status-section complaint-status-section">
+      <div class="section-band maintenance-status-section complaint-status-section${activeStatusSectionClass}">
         <div class="section-header">
           <div>
             <h2>Complaints</h2>
@@ -3198,7 +3200,7 @@ function renderTenantMaintenance() {
     : "";
   const suggestionStatusSection = suggestionRows.length
     ? `
-      <div class="section-band maintenance-status-section suggestion-status-section">
+      <div class="section-band maintenance-status-section suggestion-status-section${activeStatusSectionClass}">
         <div class="section-header">
           <div>
             <h2>Suggestions</h2>
