@@ -3956,7 +3956,7 @@ function renderManagerDashboard() {
           <div class="section-header">
             <div>
               <span class="focus-eyebrow">Priority queue</span>
-              <h3>Handle this first</h3>
+              <h3>Actions that need priority</h3>
               <p>Use the oldest or most urgent category first.</p>
             </div>
           </div>

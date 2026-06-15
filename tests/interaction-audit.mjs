@@ -216,6 +216,7 @@ assert.match(app, /priorityActions:\s*activeCategories\.slice\(0, 4\)/, "Managem
 assert.match(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should render compact action category chips.");
 assert.match(app, /renderManagementPriorityQueue\(queueSummary\)/, "Management dashboard should render one priority queue from shared data.");
 assert.match(app, /data-page="\$\{escapeHtml\(action\.page\)\}"/, "Management priority rows should navigate to the category page.");
+assert.match(app, /<h3>Actions that need priority<\/h3>/, "Management priority queue heading should use clearer priority-focused copy.");
 assert.doesNotMatch(app, /Work that needs a response/, "Management dashboard should not repeat the old workload section heading.");
 assert.doesNotMatch(app, /Next company actions/, "Management dashboard should not keep a separate duplicate action list.");
 assert.doesNotMatch(app, /Payments awaiting review/, "Management dashboard should remove the repeated payment count card copy.");
@@ -288,18 +289,20 @@ assert.match(styles, /\.action-dismiss\s*\{[\s\S]*width:\s*30px;[\s\S]*height:\s
 assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Action Center status and unread labels should be aligned in a calmer top row.");
 assert.match(styles, /\.focus-meta span,\s*\.focus-meta button\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Screen focus route chips should keep the same calm tag surface.");
 assert.match(styles, /\.focus-meta button:hover\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Clickable screen focus chips should have a subtle hover state.");
-assert.match(styles, /\.operations-chip-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Management operations categories should use compact route chips.");
+assert.match(styles, /\.operations-chip-row\s*\{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Management operations categories should use balanced route chips.");
 assert.match(styles, /\.manager-command-grid\s*\{[\s\S]*align-items:\s*stretch/, "Management command cards should stretch to matching heights.");
 assert.match(styles, /\.operations-summary-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Management summary actions should use equal-width dashboard buttons.");
 assert.match(styles, /\.operations-summary-card,\s*\.priority-queue-card\s*\{[\s\S]*padding:\s*22px/, "Management command cards should share consistent internal padding.");
 assert.match(styles, /\.operations-summary-card\s*\{[\s\S]*height:\s*100%/, "Management summary card should match the priority queue card height.");
 assert.match(styles, /\.operations-summary-actions \.button,\s*\.operations-summary-actions \.button\.primary\s*\{[\s\S]*width:\s*100%;[\s\S]*min-height:\s*40px/, "Management summary action buttons should share the same compact width and height.");
+assert.match(styles, /\.operations-summary-actions\s*\{[\s\S]*align-self:\s*end;[\s\S]*margin-top:\s*auto/, "Management summary actions should occupy the matched card height intentionally.");
 assert.match(styles, /\.priority-queue-card\s*\{[\s\S]*gap:\s*10px/, "Management priority queue card should use compact internal spacing.");
 assert.match(styles, /\.priority-queue-card \.section-header\s*\{[\s\S]*display:\s*block;[\s\S]*margin-bottom:\s*6px/, "Management priority queue header should not add excess vertical space before rows.");
 assert.match(styles, /\.priority-item\s*\{[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(174px, 192px\)/, "Management priority rows should reserve a stable count and badge column.");
 assert.match(styles, /\.management-priority-item\s*\{[\s\S]*min-height:\s*58px;[\s\S]*padding:\s*8px 12px/, "Management priority rows should stay compact while preserving scanability.");
 assert.match(styles, /\.priority-detail\s*\{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*28px minmax\(132px, 1fr\)/, "Management priority counts and tags should align in fixed internal columns.");
 assert.match(styles, /\.priority-detail \.status\s*\{[\s\S]*width:\s*100%/, "Management priority tags should share a consistent tag width.");
+assert.match(styles, /\.priority-detail \.status\s*\{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*8px minmax\(0, 1fr\)/, "Management priority tag dots should align in a fixed badge column.");
 assert.match(styles, /\.queue-empty\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Management queue should include a compact empty state.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
@@ -349,6 +352,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-70/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-71/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
