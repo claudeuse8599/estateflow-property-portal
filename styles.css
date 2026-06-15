@@ -5261,6 +5261,169 @@ td {
   justify-self: center;
 }
 
+/* Unified dashboard mini-card system */
+.metric-grid,
+.quick-grid {
+  gap: 10px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.metric-card,
+.quick-card,
+.operations-chip {
+  min-height: 112px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+  box-shadow: none;
+}
+
+.metric-grid > .metric-card,
+.quick-grid > .quick-card,
+.quick-grid > .quick-card:first-child {
+  border-left: 1px solid var(--line);
+}
+
+.metric-link:hover,
+.quick-card:hover,
+.operations-chip:hover,
+.operations-chip:focus-visible {
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.metric-card .metric-icon,
+.quick-card .metric-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.metric-card span.label,
+.quick-card span,
+.operations-chip span {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.32;
+}
+
+.metric-value,
+.dashboard-snapshot-copy strong,
+.quick-card strong {
+  font-size: 24px;
+  font-weight: 720;
+  line-height: 1.1;
+}
+
+.metric-foot {
+  align-items: center;
+  margin-top: 12px;
+}
+
+.metric-action,
+.quick-card::after {
+  min-height: 30px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.quick-card::after {
+  top: 18px;
+  right: 18px;
+  height: auto;
+  min-width: 54px;
+}
+
+.quick-grid.tenant-action-grid > .quick-card {
+  min-height: 112px;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.quick-grid.tenant-action-grid > .quick-card:hover {
+  background: var(--surface);
+}
+
+.tenant-action-grid .quick-card::after,
+.tenant-action-grid .quick-card:last-child:nth-child(odd)::after {
+  top: 18px;
+  right: 18px;
+}
+
+.operations-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  text-align: left;
+}
+
+.operations-chip strong {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+.operations-chip span {
+  align-self: center;
+  justify-self: start;
+  font-weight: 650;
+  white-space: normal;
+}
+
+.operations-chip::after {
+  content: "Open";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  min-width: 54px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.operations-summary-actions {
+  gap: 10px;
+}
+
+.operations-summary-actions .button,
+.operations-summary-actions .button.primary {
+  min-height: 48px;
+  padding: 11px 16px;
+  font-size: 13px;
+}
+
+.action-center-item {
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.action-center-actions .button {
+  min-height: 40px;
+  padding: 9px 14px;
+}
+
 @media (max-width: 900px) {
   .topbar {
     gap: var(--space-3);
