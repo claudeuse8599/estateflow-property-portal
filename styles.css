@@ -3625,6 +3625,10 @@ button,
   gap: 18px;
 }
 
+.manager-command-grid {
+  grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+}
+
 .focus-block {
   display: grid;
   gap: 14px;
@@ -3638,6 +3642,47 @@ button,
 
 .primary-block {
   background: var(--surface);
+}
+
+.operations-summary-card {
+  gap: 16px;
+}
+
+.operations-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.operations-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.operations-chip strong {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.operations-chip span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.operations-chip:hover,
+.operations-chip:focus-visible {
+  background: var(--primary-soft);
 }
 
 .action-block,
@@ -3672,6 +3717,10 @@ button,
 .priority-list {
   display: grid;
   gap: 8px;
+}
+
+.management-priority-list {
+  gap: 9px;
 }
 
 .priority-item {
@@ -3712,6 +3761,55 @@ button,
 .priority-item .status-slot {
   align-self: start;
   padding-top: 1px;
+}
+
+.priority-detail {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  justify-self: end;
+  min-width: max-content;
+}
+
+.priority-detail > strong {
+  min-width: 22px;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+  text-align: right;
+}
+
+.priority-detail .status-slot {
+  padding-top: 0;
+}
+
+.queue-empty {
+  display: grid;
+  gap: 4px;
+  min-height: 92px;
+  align-content: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+
+.queue-empty.compact {
+  display: inline-grid;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.queue-empty strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.queue-empty span {
+  font-size: 13px;
 }
 
 .priority-item:hover,
@@ -4932,6 +5030,14 @@ td {
 
   .screen-focus {
     margin-bottom: var(--space-4);
+  }
+
+  .management-priority-item {
+    grid-template-columns: 1fr;
+  }
+
+  .priority-detail {
+    justify-self: start;
   }
 
   .section-header {

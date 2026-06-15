@@ -209,9 +209,16 @@ assert.doesNotMatch(app, /body:\s*"Track requests, rent updates, messages, and c
 assert.doesNotMatch(app, /Your requests, rent updates, messages, and company responses\./, "Tenant Action Center page should not render the removed supporting copy elsewhere.");
 assert.doesNotMatch(app, /meta:\s*\["Requests", "Payment updates", "Status history"\]/, "Tenant Action Center focus card should not reserve space for removed metadata chips.");
 assert.match(app, /function metricActionLabel/, "Dashboard cards should expose clearer action labels.");
-assert.match(app, /const managerActionCount = actionCenterCountForRole\("manager"\)/, "Management dashboard focus count should use the Action Center queue count.");
-assert.match(app, /title:\s*`\$\{managerActionCount\} \$\{managerActionCount === 1 \? "action" : "actions"\} in queue`/, "Operations Today should show the same action count as Action Center.");
-assert.match(app, /meta:\s*\[\s*\{\s*label:\s*`\$\{openMaintenance\} maintenance`,\s*page:\s*"maintenanceMgmt"\s*\},\s*\{\s*label:\s*`\$\{pendingRenewals\} renewals`,\s*page:\s*"renewalsMgmt"\s*\}\s*\]/, "Operations Today meta chips should route to maintenance and renewals.");
+assert.match(app, /function getManagementQueueSummary\(\)/, "Management dashboard should use a shared queue summary helper.");
+assert.match(app, /totalActions:\s*attentionItems\.length/, "Management dashboard headline count should come from the Action Center attention queue.");
+assert.match(app, /categories:\s*activeCategories/, "Management dashboard category chips should use the shared queue summary.");
+assert.match(app, /priorityActions:\s*activeCategories\.slice\(0, 4\)/, "Management dashboard priority rows should use the same shared category data.");
+assert.match(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should render compact action category chips.");
+assert.match(app, /renderManagementPriorityQueue\(queueSummary\)/, "Management dashboard should render one priority queue from shared data.");
+assert.match(app, /data-page="\$\{escapeHtml\(action\.page\)\}"/, "Management priority rows should navigate to the category page.");
+assert.doesNotMatch(app, /Work that needs a response/, "Management dashboard should not repeat the old workload section heading.");
+assert.doesNotMatch(app, /Next company actions/, "Management dashboard should not keep a separate duplicate action list.");
+assert.doesNotMatch(app, /Payments awaiting review/, "Management dashboard should remove the repeated payment count card copy.");
 assert.doesNotMatch(app, /"June snapshot"/, "Operations Today should not show the non-actionable June snapshot tag.");
 assert.match(app, /function renderFocusMetaItem\(item\)/, "Screen focus metadata should support actionable route chips.");
 assert.match(app, /actionStatus: "All"/, "Action Center should include a status filter.");
@@ -231,7 +238,8 @@ assert.match(app, /aria-expanded="\$\{state\.notificationPanelOpen\}"/, "Notific
 assert.doesNotMatch(app, /showToast\("3 notifications\."\)/, "Notification button should not be toast-only.");
 assert.match(app, /\.filter\(\(toast\) => toast\.textContent === message\)/, "Repeated toast messages should be deduplicated.");
 assert.match(app, /function renderLogin\(\)[\s\S]*login-actions[\s\S]*renderThemeToggle\(\)/, "Login screen should include the theme toggle.");
-assert.match(app, /const showScreenFocus = !\(state\.role === "tenant" && state\.page === "dashboard"\)/, "Tenant dashboard should not render the redundant global focus hero.");
+assert.match(app, /state\.role === "tenant" && state\.page === "dashboard"/, "Tenant dashboard should not render the redundant global focus hero.");
+assert.match(app, /state\.role === "manager" && state\.page === "dashboard"/, "Management dashboard should use its own command center instead of the redundant global focus hero.");
 assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the compact tenant overview strip.");
 assert.match(app, /function contractHealthClass\(endDate\)/, "Tenant contract status should be derived from the contract end date.");
 assert.match(app, /daysRemaining < 0\) return "contract-critical";[\s\S]*daysRemaining <= 30\) return "contract-warning"/, "Tenant contract health should stay green until the final month, warning in the last 30 days, and critical only after expiry.");
@@ -280,6 +288,9 @@ assert.match(styles, /\.action-dismiss\s*\{[\s\S]*width:\s*30px;[\s\S]*height:\s
 assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Action Center status and unread labels should be aligned in a calmer top row.");
 assert.match(styles, /\.focus-meta span,\s*\.focus-meta button\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Screen focus route chips should keep the same calm tag surface.");
 assert.match(styles, /\.focus-meta button:hover\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Clickable screen focus chips should have a subtle hover state.");
+assert.match(styles, /\.operations-chip-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Management operations categories should use compact route chips.");
+assert.match(styles, /\.priority-detail\s*\{[\s\S]*display:\s*flex;[\s\S]*justify-self:\s*end/, "Management priority rows should keep counts and badges aligned to the right.");
+assert.match(styles, /\.queue-empty\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Management queue should include a compact empty state.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card:hover\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Tenant quick action hover state should resolve to a gray surface.");
@@ -328,6 +339,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-66/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-67/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

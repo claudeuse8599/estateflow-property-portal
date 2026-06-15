@@ -1159,6 +1159,125 @@ function actionCenterCountForRole(role = state.role) {
   return count;
 }
 
+function managementActionItemsNeedingAttention() {
+  const previousRole = state.role;
+  try {
+    state.role = "manager";
+    return visibleActionItems().filter((item) => actionNeedsAttention(item, "manager"));
+  } finally {
+    state.role = previousRole;
+  }
+}
+
+function countItemsByType(items, matcher) {
+  return items.filter(matcher).length;
+}
+
+function pluralizeCount(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function getManagementQueueSummary() {
+  const data = state.data.manager;
+  const attentionItems = managementActionItemsNeedingAttention();
+  const pendingPayments = data.chequeReviews.filter((row) => row.status === "Pending").length;
+  const openMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed").length;
+  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending").length;
+  const complaintFollowups = countItemsByType(attentionItems, (item) => item.type === "Complaint");
+  const suggestionFollowups = countItemsByType(attentionItems, (item) => item.type === "Suggestion");
+  const messageFollowups = countItemsByType(attentionItems, (item) => item.type === "Message");
+  const otherActionItems = Math.max(
+    0,
+    attentionItems.length - pendingPayments - openMaintenance - pendingRenewals - complaintFollowups - suggestionFollowups - messageFollowups
+  );
+
+  const categories = [
+    {
+      type: "payments",
+      label: "Payments",
+      singularLabel: "Payment",
+      count: pendingPayments,
+      page: "chequeReview",
+      priority: 1,
+      title: "Review payment proof",
+      description: `${pluralizeCount(pendingPayments, "payment")} ${pendingPayments === 1 ? "is" : "are"} awaiting finance review`,
+      badgeStatus: "Pending",
+      badgeLabel: "Needs Review"
+    },
+    {
+      type: "maintenance",
+      label: "Maintenance",
+      singularLabel: "Maintenance",
+      count: openMaintenance,
+      page: "maintenanceMgmt",
+      priority: 2,
+      title: "Update maintenance status",
+      description: `${pluralizeCount(openMaintenance, "active request")} ${openMaintenance === 1 ? "needs" : "need"} a status update`,
+      badgeStatus: "In Progress",
+      badgeLabel: "Active"
+    },
+    {
+      type: "renewals",
+      label: "Renewals",
+      singularLabel: "Renewal",
+      count: pendingRenewals,
+      page: "renewalsMgmt",
+      priority: 3,
+      title: "Review renewal requests",
+      description: `${pluralizeCount(pendingRenewals, "lease")} ${pendingRenewals === 1 ? "is" : "are"} awaiting decision`,
+      badgeStatus: "Pending",
+      badgeLabel: "Needs Decision"
+    },
+    {
+      type: "complaints",
+      label: "Complaints",
+      singularLabel: "Complaint",
+      count: complaintFollowups,
+      page: "notifications",
+      priority: 4,
+      title: "Review complaints",
+      description: `${pluralizeCount(complaintFollowups, "complaint")} ${complaintFollowups === 1 ? "needs" : "need"} review`,
+      badgeStatus: "Pending",
+      badgeLabel: "Follow Up"
+    },
+    {
+      type: "suggestions",
+      label: "Suggestions",
+      singularLabel: "Suggestion",
+      count: suggestionFollowups,
+      page: "notifications",
+      priority: 5,
+      title: "Review suggestions",
+      description: `${pluralizeCount(suggestionFollowups, "suggestion")} ${suggestionFollowups === 1 ? "needs" : "need"} review`,
+      badgeStatus: "Pending",
+      badgeLabel: "Follow Up"
+    },
+    {
+      type: "messages",
+      label: "Other updates",
+      singularLabel: "Other update",
+      count: messageFollowups + otherActionItems,
+      page: "actionCenter",
+      priority: 6,
+      title: "Review remaining updates",
+      description: `${pluralizeCount(messageFollowups + otherActionItems, "item")} ${messageFollowups + otherActionItems === 1 ? "is" : "are"} waiting in Action Center`,
+      badgeStatus: "Submitted",
+      badgeLabel: "Queue"
+    }
+  ];
+  const activeCategories = categories
+    .filter((category) => category.count > 0)
+    .sort((a, b) => a.priority - b.priority);
+
+  return {
+    totalActions: attentionItems.length,
+    categories: activeCategories,
+    priorityActions: activeCategories.slice(0, 4),
+    primaryAction: { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
+    secondaryAction: { label: "Track Rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
+  };
+}
+
 function filteredActionItems() {
   const search = state.filters.actionSearch.toLowerCase().trim();
   const status = state.filters.actionStatus;
@@ -2207,7 +2326,10 @@ function renderPullToResetIndicator() {
 function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
-  const showScreenFocus = !(state.role === "tenant" && state.page === "dashboard");
+  const showScreenFocus = !(
+    (state.role === "tenant" && state.page === "dashboard") ||
+    (state.role === "manager" && state.page === "dashboard")
+  );
   return `
     <div class="portal-layout">
       ${renderSidebar(profile)}
@@ -2467,24 +2589,19 @@ function pageFocus() {
 
   const data = state.data.manager;
   const rentStats = managerRentStats();
-  const pendingPayments = data.chequeReviews.filter((row) => row.status === "Pending").length;
-  const openMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed").length;
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending").length;
-  const managerActionCount = actionCenterCountForRole("manager");
+  const queueSummary = getManagementQueueSummary();
+  const pendingPayments = queueSummary.categories.find((category) => category.type === "payments")?.count || 0;
+  const openMaintenance = queueSummary.categories.find((category) => category.type === "maintenance")?.count || 0;
+  const pendingRenewals = queueSummary.categories.find((category) => category.type === "renewals")?.count || 0;
+  const managerActionCount = queueSummary.totalActions;
   const map = {
     dashboard: {
-      eyebrow: "Operations today",
-      title: `${managerActionCount} ${managerActionCount === 1 ? "action" : "actions"} in queue`,
-      body: "Review payments, maintenance, and renewals.",
-      value: `${pendingPayments} payments`,
-      meta: [
-        { label: `${openMaintenance} maintenance`, page: "maintenanceMgmt" },
-        { label: `${pendingRenewals} renewals`, page: "renewalsMgmt" }
-      ],
-      actions: [
-        { label: "Review payments", icon: "check", page: "chequeReview", variant: "primary" },
-        { label: "Open maintenance", icon: "tool", page: "maintenanceMgmt", variant: "secondary" }
-      ]
+      eyebrow: "Operations summary",
+      title: managerActionCount ? `${managerActionCount} ${managerActionCount === 1 ? "action" : "actions"} need response` : "You're all caught up",
+      body: managerActionCount ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now.",
+      value: String(managerActionCount),
+      meta: queueSummary.categories.map((category) => ({ label: `${category.count} ${category.label.toLowerCase()}`, page: category.page })),
+      actions: [queueSummary.primaryAction, queueSummary.secondaryAction]
     },
     actionCenter: {
       eyebrow: "Action Center",
@@ -3756,11 +3873,64 @@ function renderManagerPage() {
   }
 }
 
+function renderManagementQueueChips(summary) {
+  if (!summary.categories.length) {
+    return `<div class="queue-empty compact">No pending categories.</div>`;
+  }
+
+  return `
+    <div class="operations-chip-row" aria-label="Management action categories">
+      ${summary.categories
+        .map(
+          (category) => `
+            <button class="operations-chip" type="button" data-page="${escapeHtml(category.page)}">
+              <strong>${category.count}</strong>
+              <span>${escapeHtml(category.count === 1 ? category.singularLabel || category.label : category.label)}</span>
+            </button>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderManagementPriorityQueue(summary) {
+  if (!summary.priorityActions.length) {
+    return `
+      <div class="queue-empty">
+        <strong>You're all caught up.</strong>
+        <span>No payments, maintenance, or renewal decisions need a response.</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="priority-list management-priority-list">
+      ${summary.priorityActions
+        .map(
+          (action) => `
+            <button class="priority-item management-priority-item" type="button" data-page="${escapeHtml(action.page)}">
+              <span class="priority-copy">
+                <strong>${escapeHtml(action.title)}</strong>
+                <em>${escapeHtml(action.description)}</em>
+              </span>
+              <span class="priority-detail">
+                <strong>${action.count}</strong>
+                ${badgeSlot(action.badgeStatus, action.badgeLabel)}
+              </span>
+            </button>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function renderManagerDashboard() {
   const data = state.data.manager;
   const rentStats = managerRentStats();
   const activityItems = managerActivityItems();
-  const pendingPayments = data.chequeReviews.filter((row) => row.status === "Pending");
+  const queueSummary = getManagementQueueSummary();
   const activeMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed");
   const pendingRenewals = data.renewals.filter((row) => row.status === "Pending");
   const documentReviews = data.documents.filter((row) => row.status === "In Review").length;
@@ -3772,62 +3942,29 @@ function renderManagerDashboard() {
   };
   const maintenanceTotal = Math.max(data.maintenanceRequests.length, 1);
   const maintenancePercent = (count) => Math.max(8, Math.round((count / maintenanceTotal) * 100));
+  const actionsLabel = `${queueSummary.totalActions} ${queueSummary.totalActions === 1 ? "action" : "actions"}`;
   return `
     <div class="content-stack">
-      <section class="home-grid manager-home">
-        <article class="focus-block primary-block">
-          <span class="focus-eyebrow">Operations queue</span>
-          <h2>Work that needs a response</h2>
-          <p>Start with items that need approval, follow-up, or a status update.</p>
-          <div class="workload-summary" aria-label="Dashboard work queue">
-            <button type="button" data-page="chequeReview">
-              <span>Payments awaiting review</span>
-              <strong>${pendingPayments.length}</strong>
-            </button>
-            <button type="button" data-page="maintenanceMgmt">
-              <span>Open maintenance requests</span>
-              <strong>${activeMaintenance.length}</strong>
-            </button>
-            <button type="button" data-page="renewalsMgmt">
-              <span>Renewals awaiting decision</span>
-              <strong>${pendingRenewals.length}</strong>
-            </button>
-          </div>
+      <section class="home-grid manager-home manager-command-grid">
+        <article class="focus-block primary-block operations-summary-card">
+          <span class="focus-eyebrow">Operations summary</span>
+          <h2>${queueSummary.totalActions ? `${actionsLabel} need response` : "You're all caught up"}</h2>
+          <p>${queueSummary.totalActions ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now."}</p>
+          ${renderManagementQueueChips(queueSummary)}
           ${renderActionButtons([
-            { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
-            { label: "Track rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
+            queueSummary.primaryAction,
+            queueSummary.secondaryAction
           ], "inline-actions")}
         </article>
-        <article class="focus-block queue-block">
+        <article class="focus-block queue-block priority-queue-card">
           <div class="section-header">
             <div>
-              <span class="focus-eyebrow">Need attention</span>
-              <h3>Next company actions</h3>
+              <span class="focus-eyebrow">Priority queue</span>
+              <h3>Handle this first</h3>
+              <p>Use the oldest or most urgent category first.</p>
             </div>
           </div>
-          <div class="priority-list">
-            <button class="priority-item" type="button" data-page="chequeReview">
-              <span class="priority-copy">
-                <strong>Review payment proof</strong>
-                <em>${pendingPayments.length} waiting for a finance decision</em>
-              </span>
-              ${badgeSlot("Pending", "Needs Review")}
-            </button>
-            <button class="priority-item" type="button" data-page="maintenanceMgmt">
-              <span class="priority-copy">
-                <strong>Update maintenance status</strong>
-                <em>${activeMaintenance.length} active tenant requests</em>
-              </span>
-              ${badgeSlot("In Progress")}
-            </button>
-            <button class="priority-item" type="button" data-page="renewalsMgmt">
-              <span class="priority-copy">
-                <strong>Review renewal requests</strong>
-                <em>${pendingRenewals.length} leases need a response</em>
-              </span>
-              ${badgeSlot("Pending", "Needs Decision")}
-            </button>
-          </div>
+          ${renderManagementPriorityQueue(queueSummary)}
         </article>
       </section>
 
