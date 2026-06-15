@@ -232,8 +232,11 @@ assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract hea
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
+assert.match(app, /class="empty-table-row"/, "Empty table rows should use a dedicated row class.");
+assert.match(app, /class="empty-table-cell"/, "Empty table cells should remove default table padding.");
+assert.match(styles, /\.table-empty-state\s*\{[\s\S]*min-height:\s*86px;[\s\S]*background:\s*var\(--surface\)/, "Empty table states should be compact and visually integrated with the table.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-41/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-42/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

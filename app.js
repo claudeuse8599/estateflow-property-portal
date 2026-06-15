@@ -2360,7 +2360,7 @@ function table(headers, rows, options = {}) {
           <tbody>
             ${rows.length
               ? rows.join("")
-              : `<tr><td colspan="${headers.length}"><div class="empty-state"><strong>${escapeHtml(emptyTitle)}</strong><span>${escapeHtml(emptyBody)}</span></div></td></tr>`}
+              : `<tr class="empty-table-row"><td class="empty-table-cell" colspan="${headers.length}"><div class="empty-state table-empty-state"><strong>${escapeHtml(emptyTitle)}</strong><span>${escapeHtml(emptyBody)}</span></div></td></tr>`}
           </tbody>
         </table>
       </div>
