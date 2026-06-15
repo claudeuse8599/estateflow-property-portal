@@ -250,6 +250,8 @@ assert.match(styles, /\.rent-overview-actions\s*\{[\s\S]*display:\s*grid;[\s\S]*
 assert.match(styles, /\.rent-overview-actions \.button\s*\{[\s\S]*min-height:\s*38px;[\s\S]*min-width:\s*118px/, "Tenant rent overview buttons should be smaller than the global button size.");
 assert.match(styles, /\.tenant-secondary-status-grid\s*\{[\s\S]*gap:\s*10px;[\s\S]*align-content:\s*start/, "Tenant secondary status cards should keep a compact, non-stretched grid.");
 assert.match(styles, /\.tenant-status-card\s*\{[\s\S]*min-height:\s*0;[\s\S]*padding:\s*12px 14px/, "Tenant status cards should not create oversized dashboard-row spacing.");
+assert.match(styles, /\.tenant-dashboard-lower\s*\{[\s\S]*align-items:\s*stretch/, "Tenant dashboard lower row should avoid a blank bottom-right pocket.");
+assert.match(styles, /\.tenant-dashboard-lower \.activity-list\s*\{[\s\S]*display:\s*flex;[\s\S]*justify-content:\s*space-between/, "Tenant recent activity should use the stretched lower card height gracefully.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Tenant quick actions should render as two-column mini cards.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card\s*\{[\s\S]*min-height:\s*112px/, "Tenant quick action cards should be compact mini cards.");
 assert.match(styles, /\.button\.secondary\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Secondary buttons should use a visible gray background.");
@@ -305,6 +307,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-57/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-58/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

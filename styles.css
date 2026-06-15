@@ -1890,8 +1890,21 @@ button:focus-visible {
 }
 
 .tenant-dashboard-lower {
-  align-items: start;
+  align-items: stretch;
   grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+}
+
+.tenant-dashboard-lower > .section-band {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tenant-dashboard-lower .activity-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
 }
 
 .quick-grid.tenant-action-grid {
