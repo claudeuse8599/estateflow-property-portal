@@ -137,6 +137,9 @@ assert.match(app, /window\.addEventListener\("touchstart", handlePullResetTouchS
 assert.match(app, /window\.addEventListener\("touchmove", handlePullResetTouchMove, \{ passive: false \}\)/, "Pull-to-reset should support cancellable touch movement.");
 assert.match(app, /window\.addEventListener\("wheel", handlePullResetWheel, \{ passive: false \}\)/, "Pull-to-reset should support cautious trackpad overscroll.");
 assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation\/amendment\/change requests should be available.");
+assert.match(app, /class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated button row.");
+assert.match(app, /button class="button danger contract-action-button"[^>]*Contract Cancellation/, "Cancel contract should render as a visible button.");
+assert.match(app, /button class="button secondary contract-action-button"[^>]*Contract Amendment/, "Contract amendment should render as a visible button.");
 assert.match(app, /function ensureActionFromContractRequest/, "Contract requests should create Action Center items.");
 assert.match(app, /data-form="tenant-complaint"/, "Tenant complaints should be submittable.");
 assert.match(app, /data-form="tenant-suggestion"/, "Tenant suggestions should be submittable.");
@@ -261,6 +264,7 @@ assert.match(styles, /\.complaint-status-section th:nth-child\(4\),\s*\.complain
 assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S]*min-height:\s*72px/, "Tenant maintenance status tables should use shorter empty states.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-48/g, "Index should load the latest cache-busted assets.");
+assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
+assert.match(index, /oneui2-20260615-49/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

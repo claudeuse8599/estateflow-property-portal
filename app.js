@@ -3362,12 +3362,12 @@ function renderTenantRenewal() {
             <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(profile.rent)}</strong></div>
             <div class="detail-item"><span>Renewal status</span><strong>${badge(status)}</strong></div>
           </div>
-          <div class="section-actions">
+          <div class="section-actions contract-action-row">
             <button class="button secondary" type="button" data-action="view-doc" data-doc-title="Tenancy Contract" data-doc-owner="${escapeHtml(profile.name)}">${buttonIcon("file")}View Contract PDF</button>
             <button class="button primary" type="button" data-action="request-renewal">${buttonIcon("refresh")}Request Renewal</button>
-            <button class="button ghost" type="button" data-action="request-contract" data-contract-type="Contract Cancellation">Cancel Contract</button>
-            <button class="button ghost" type="button" data-action="request-contract" data-contract-type="Contract Amendment">Request Amendment</button>
-            <button class="button ghost" type="button" data-action="request-contract" data-contract-type="Contract Change">Request Change</button>
+            <button class="button danger contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Cancellation">Cancel Contract</button>
+            <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Amendment">Request Amendment</button>
+            <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Change">Request Change</button>
           </div>
         </div>
         <div class="section-band">
