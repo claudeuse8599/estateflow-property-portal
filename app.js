@@ -433,7 +433,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Payment not started",
       note: "Choose a payment method.",
       description: `${dueCopy}. Choose a payment method to complete rent.`,
-      action: { label: "Pay rent", icon: "wallet", modal: "payRent" },
+      action: { label: "Pay Rent", icon: "wallet", modal: "payRent" },
       activityTitle: "Payment not started",
       activityDetail: `${rentCycle.amount} is due ${rentCycle.dueDate}.`
     },
@@ -520,23 +520,67 @@ function getRentDashboardState(rentCycle, today = new Date()) {
     confirmed: "Rent paid"
   };
   const defaultTitle = urgency === "overdue" ? "Rent overdue" : urgency === "dueSoon" ? "Rent due soon" : "Rent is up to date";
+  const rentStatusCopy = {
+    paid: {
+      title: "Rent paid",
+      body: "Payment is confirmed for this rent cycle.",
+      label: "Paid",
+      note: "No dues.",
+      action: { label: "View Receipt", icon: "file", page: "rent" },
+      secondaryAction: null,
+      activityTitle: "Rent paid",
+      activityDetail: "Payment confirmed for this rent cycle."
+    },
+    overdue: {
+      title: "Rent overdue",
+      body: `${rentCycle.amount} was due on ${rentCycle.dueDate}. Complete payment to update your rent status.`,
+      label: "Payment overdue",
+      note: "Payment overdue.",
+      action: { label: "Pay Rent", icon: "wallet", modal: "payRent" },
+      secondaryAction: { label: "View Rent", icon: "wallet", page: "rent" },
+      activityTitle: "Rent overdue",
+      activityDetail: `${rentCycle.amount} was due on ${rentCycle.dueDate}.`
+    },
+    dueSoon: {
+      title: daysUntilDue === 0 ? "Rent due today" : "Rent due soon",
+      body: `${rentCycle.amount} is due on ${rentCycle.dueDate}. Pay before the due date to keep your account current.`,
+      label: daysUntilDue === 0 ? "Due today" : "Due soon",
+      note: daysUntilDue === 0 ? "Due today." : `Due in ${daysUntilDue} days.`,
+      action: { label: "Pay Rent", icon: "wallet", modal: "payRent" },
+      secondaryAction: { label: "View Rent", icon: "wallet", page: "rent" },
+      activityTitle: daysUntilDue === 0 ? "Rent due today" : "Rent due soon",
+      activityDetail: `${rentCycle.amount} is due ${rentCycle.dueDate}.`
+    },
+    healthy: {
+      title: "Rent on schedule",
+      body: `${rentCycle.amount} is scheduled for ${rentCycle.dueDate}. No action is needed right now.`,
+      label: "Not due yet",
+      note: "No urgent action.",
+      action: { label: "View Rent", icon: "wallet", page: "rent" },
+      secondaryAction: null,
+      activityTitle: "Rent on schedule",
+      activityDetail: `${rentCycle.amount} is scheduled for ${rentCycle.dueDate}.`
+    }
+  };
+  const statusState = rentStatusCopy[urgency] || rentStatusCopy.healthy;
+  const useRentStatusCopy = urgency !== "paid" || ["not_started", "proof_submitted", "under_review", "rejected"].includes(workflow);
 
   return {
     urgency,
     color,
     metricClass,
     daysUntilDue,
-    title: titleByWorkflow[workflow] || defaultTitle,
-    body: workflowState.description,
+    title: useRentStatusCopy ? statusState.title : titleByWorkflow[workflow] || defaultTitle,
+    body: useRentStatusCopy ? statusState.body : workflowState.description,
     urgencyLabel: rentUrgencyLabel(urgency, daysUntilDue),
     urgencyNote: urgencyCopy,
     workflow,
-    workflowLabel: workflowState.label,
-    workflowNote: workflowState.note,
-    primaryAction: workflowState.action,
-    secondaryAction: workflow === "under_review" || workflow === "proof_submitted" ? { label: "View rent", icon: "wallet", page: "rent" } : null,
-    activityTitle: workflowState.activityTitle,
-    activityDetail: workflowState.activityDetail,
+    workflowLabel: useRentStatusCopy ? statusState.label : workflowState.label,
+    workflowNote: useRentStatusCopy ? statusState.note : workflowState.note,
+    primaryAction: useRentStatusCopy ? statusState.action : workflowState.action,
+    secondaryAction: useRentStatusCopy ? statusState.secondaryAction : workflow === "under_review" || workflow === "proof_submitted" ? { label: "View rent", icon: "wallet", page: "rent" } : null,
+    activityTitle: useRentStatusCopy ? statusState.activityTitle : workflowState.activityTitle,
+    activityDetail: useRentStatusCopy ? statusState.activityDetail : workflowState.activityDetail,
     activityTime: rentCycle.submittedOn || "Current"
   };
 }

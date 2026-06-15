@@ -1231,29 +1231,54 @@ button:focus-visible {
 }
 
 .tenant-rent-overview {
+  position: relative;
   display: grid;
   gap: 18px;
   min-height: 260px;
   padding: 22px;
-  border: 1px solid var(--line);
+  overflow: hidden;
+  border: 1px solid var(--rent-card-border, var(--line));
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--rent-card-bg, var(--surface));
   box-shadow: var(--shadow-soft);
 }
 
+.tenant-rent-overview::after {
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background: var(--rent-card-accent, transparent);
+  content: "";
+}
+
 .tenant-rent-overview.metric-status-paid {
-  border-color: var(--apple-green-border);
-  background: var(--apple-green-soft);
+  --rent-card-accent: var(--apple-green);
+  --rent-card-bg: var(--rent-green-card-bg);
+  --rent-card-border: var(--apple-green-border);
+  --rent-status-bg: var(--rent-green-badge-bg);
+  --rent-status-border: var(--apple-green-border);
+  --rent-status-text: var(--apple-green-text);
 }
 
 .tenant-rent-overview.metric-status-warning {
-  border-color: var(--apple-orange-border);
-  background: var(--apple-orange-soft);
+  --rent-card-accent: var(--apple-orange);
+  --rent-card-bg: var(--rent-orange-card-bg);
+  --rent-card-border: var(--apple-orange-border);
+  --rent-status-bg: var(--rent-orange-badge-bg);
+  --rent-status-border: var(--apple-orange-border);
+  --rent-status-text: var(--apple-orange-text);
 }
 
 .tenant-rent-overview.metric-status-critical {
-  border-color: var(--apple-red-border);
-  background: var(--apple-red-soft);
+  --rent-card-accent: var(--apple-red);
+  --rent-card-bg: var(--rent-red-card-bg);
+  --rent-card-border: var(--apple-red-border);
+  --rent-status-bg: var(--rent-red-badge-bg);
+  --rent-status-border: var(--apple-red-border);
+  --rent-status-text: var(--apple-red-text);
 }
 
 .rent-overview-main {
@@ -1278,27 +1303,10 @@ button:focus-visible {
   text-transform: uppercase;
 }
 
-.tenant-rent-overview.metric-status-paid .rent-overview-label,
-.tenant-rent-overview.metric-status-paid h2,
-.tenant-rent-overview.metric-status-paid .rent-overview-amount strong {
-  color: var(--apple-green-text);
-}
-
-.tenant-rent-overview.metric-status-warning .rent-overview-label,
-.tenant-rent-overview.metric-status-warning h2,
-.tenant-rent-overview.metric-status-warning .rent-overview-amount strong {
-  color: var(--apple-orange-text);
-}
-
-.tenant-rent-overview.metric-status-critical .rent-overview-label,
-.tenant-rent-overview.metric-status-critical h2,
-.tenant-rent-overview.metric-status-critical .rent-overview-amount strong {
-  color: var(--apple-red-text);
-}
-
 .rent-overview-copy h2 {
   max-width: 680px;
   margin: 0;
+  color: var(--text);
   font-size: clamp(22px, 2.2vw, 30px);
   font-weight: 680;
   letter-spacing: 0;
@@ -1352,7 +1360,7 @@ button:focus-visible {
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--rent-detail-bg);
 }
 
 .rent-overview-facts em {
@@ -1364,12 +1372,34 @@ button:focus-visible {
   line-height: 1.3;
 }
 
+.rent-overview-facts span:last-child em {
+  display: inline-flex;
+  justify-self: start;
+  padding: 4px 9px;
+  border: 1px solid var(--rent-status-border, var(--line));
+  border-radius: 999px;
+  color: var(--rent-status-text, var(--text));
+  background: var(--rent-status-bg, var(--surface-soft));
+  font-size: 13px;
+  line-height: 1.15;
+}
+
 .rent-overview-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(168px, 0.48fr);
   gap: 10px;
-  align-items: center;
+  align-items: stretch;
   margin-top: 2px;
+}
+
+.rent-overview-actions .button {
+  width: 100%;
+  justify-content: center;
+  min-width: 0;
+}
+
+.rent-overview-actions .button.primary {
+  min-width: 0;
 }
 
 .tenant-secondary-status-grid {
@@ -2678,6 +2708,10 @@ tbody tr:hover td {
     grid-template-columns: 1fr;
   }
 
+  .rent-overview-actions {
+    grid-template-columns: 1fr;
+  }
+
   .quick-grid.tenant-action-grid > .quick-card:last-child:nth-child(odd) {
     grid-column: auto;
   }
@@ -2791,6 +2825,13 @@ tbody tr:hover td {
   --apple-red-soft: rgba(255, 59, 48, 0.13);
   --apple-red-border: rgba(255, 59, 48, 0.38);
   --apple-red-text: #9f211a;
+  --rent-green-card-bg: rgba(52, 199, 89, 0.065);
+  --rent-orange-card-bg: rgba(255, 149, 0, 0.07);
+  --rent-red-card-bg: rgba(255, 59, 48, 0.06);
+  --rent-green-badge-bg: rgba(52, 199, 89, 0.12);
+  --rent-orange-badge-bg: rgba(255, 149, 0, 0.12);
+  --rent-red-badge-bg: rgba(255, 59, 48, 0.105);
+  --rent-detail-bg: rgba(255, 255, 255, 0.74);
   --focus: rgba(22, 22, 22, 0.14);
   --shadow: 0 8px 20px rgba(17, 24, 39, 0.035);
   --shadow-soft: 0 1px 3px rgba(17, 24, 39, 0.025);
@@ -2832,6 +2873,13 @@ tbody tr:hover td {
   --apple-red-soft: rgba(255, 69, 58, 0.18);
   --apple-red-border: rgba(255, 69, 58, 0.42);
   --apple-red-text: #ffb5ae;
+  --rent-green-card-bg: rgba(48, 209, 88, 0.115);
+  --rent-orange-card-bg: rgba(255, 159, 10, 0.13);
+  --rent-red-card-bg: rgba(255, 69, 58, 0.115);
+  --rent-green-badge-bg: rgba(48, 209, 88, 0.16);
+  --rent-orange-badge-bg: rgba(255, 159, 10, 0.18);
+  --rent-red-badge-bg: rgba(255, 69, 58, 0.17);
+  --rent-detail-bg: rgba(25, 26, 30, 0.72);
   --focus: rgba(158, 184, 218, 0.24);
   --shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.18);
