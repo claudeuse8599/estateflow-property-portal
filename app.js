@@ -3290,18 +3290,18 @@ function renderTenantDashboard() {
           </div>
         </div>
         <div class="tenant-summary-facts">
-          <span class="contract-health ${contractHealth}">
+          <button class="contract-health ${contractHealth}" type="button" data-page="renewal" aria-label="Open contract renewal details">
             <strong>Contract</strong>
             <em>Active until ${escapeHtml(profile.contractEnd)}</em>
-          </span>
-          <span>
+          </button>
+          <button type="button" data-page="rent" aria-label="Open rent details">
             <strong>Rent cycle</strong>
             <em>${escapeHtml(summary.rent.month)} · ${escapeHtml(rentState.urgencyLabel)}</em>
-          </span>
-          <span>
+          </button>
+          <button type="button" data-page="maintenance" aria-label="Open maintenance details">
             <strong>Maintenance</strong>
             <em>${escapeHtml(summary.maintenanceStatus)}</em>
-          </span>
+          </button>
         </div>
       </section>
 

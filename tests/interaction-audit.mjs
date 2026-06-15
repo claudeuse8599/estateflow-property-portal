@@ -224,6 +224,7 @@ assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the co
 assert.match(app, /function contractHealthClass\(endDate\)/, "Tenant contract status should be derived from the contract end date.");
 assert.match(app, /daysRemaining < 0\) return "contract-critical";[\s\S]*daysRemaining <= 30\) return "contract-warning"/, "Tenant contract health should stay green until the final month, warning in the last 30 days, and critical only after expiry.");
 assert.match(app, /class="contract-health \$\{contractHealth\}"/, "Tenant dashboard contract fact should render a health color class.");
+assert.match(app, /tenant-summary-facts[\s\S]*data-page="renewal"[\s\S]*Active until[\s\S]*data-page="rent"[\s\S]*Rent cycle[\s\S]*data-page="maintenance"[\s\S]*Maintenance/, "Tenant dashboard summary facts should route to renewal, rent, and maintenance.");
 assert.match(app, /function paymentHealthClass\(summary\)/, "Tenant payment status should be derived from due date and payment state.");
 assert.match(app, /daysUntilDue < 0/, "Tenant payment status should turn critical when overdue.");
 assert.match(app, /daysUntilDue >= 0 && daysUntilDue <= 7/, "Tenant payment status should turn warning when close to due.");
@@ -274,6 +275,7 @@ assert.match(styles, /--apple-green:\s*#34c759/, "Apple green should be availabl
 assert.match(styles, /\.metric-card\.metric-status-paid\s*\{[\s\S]*border:\s*1px solid var\(--apple-green-border\);[\s\S]*background:\s*var\(--apple-green-soft\)/, "Paid payment metric should use the Apple-green paid treatment.");
 assert.match(styles, /\.metric-card\.metric-status-warning\s*\{[\s\S]*border:\s*1px solid var\(--apple-orange-border\);[\s\S]*background:\s*var\(--apple-orange-soft\)/, "Near-due payment metric should use the Apple-orange warning treatment.");
 assert.match(styles, /\.metric-card\.metric-status-critical\s*\{[\s\S]*border:\s*1px solid var\(--apple-red-border\);[\s\S]*background:\s*var\(--apple-red-soft\)/, "Overdue payment metric should use the Apple-red critical treatment.");
+assert.match(styles, /\.tenant-summary-facts button\s*\{[\s\S]*cursor:\s*pointer/, "Tenant summary facts should be clickable chips without changing their visual treatment.");
 assert.match(styles, /\.tenant-summary-facts \.contract-warning/, "Contract health should include the orange warning state.");
 assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract health should include the red critical state.");
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
@@ -309,6 +311,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-60/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-61/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
