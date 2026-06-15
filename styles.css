@@ -3629,7 +3629,7 @@ button,
 
 .manager-command-grid {
   grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
-  align-items: start;
+  align-items: stretch;
 }
 
 .focus-block {
@@ -3650,6 +3650,7 @@ button,
 .operations-summary-card {
   gap: 16px;
   min-height: 0;
+  height: 100%;
   padding: 22px;
 }
 
@@ -5020,12 +5021,16 @@ td {
 
 /* Management dashboard command center polish */
 .manager-command-grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 .operations-summary-card,
 .priority-queue-card {
   padding: 22px;
+}
+
+.operations-summary-card {
+  height: 100%;
 }
 
 .operations-summary-actions {
