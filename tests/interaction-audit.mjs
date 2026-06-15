@@ -91,6 +91,15 @@ assert.match(app, /function saveData\(\)/, "Data-changing flows should have a sa
 assert.match(app, /window\.addEventListener\("storage"/, "Open portals should listen for shared data changes.");
 assert.match(app, /markTenantRentPaid\(\)/, "Demo rent payment should update tenant and manager records.");
 assert.match(app, /setManagerRentStatus\(profile\.name, profile\.unit, "Paid"\)/, "Tenant payment should update manager rent tracking.");
+assert.match(app, /function getRentDashboardState/, "Tenant dashboard should use a shared rent urgency and payment workflow helper.");
+assert.match(app, /function normalizePaymentWorkflow/, "Tenant dashboard should separate payment workflow from rent urgency.");
+assert.match(app, /Payment proof under review/, "Tenant dashboard should describe proof review clearly.");
+assert.match(app, /Rent overdue - proof under review/, "Tenant dashboard should combine overdue urgency with proof review status.");
+assert.match(app, /Payment Workflow/, "Tenant dashboard cards should separate payment workflow from rent urgency.");
+assert.match(app, /Rent Urgency/, "Tenant dashboard should expose rent urgency as its own card.");
+assert.match(app, /function tenantDashboardQuickActions/, "Tenant dashboard quick actions should be generated from payment state.");
+assert.match(app, /View proof/, "Payment proof under review should route to proof/status instead of asking for a new proof.");
+assert.doesNotMatch(app, /<strong>Submit Payment Proof<\/strong>/, "Tenant dashboard should not hard-code Submit Payment Proof when proof may already be under review.");
 assert.match(app, /data-form="card-payment"/, "Tenant card payment flow should collect demo card details.");
 assert.match(app, /showToast\("Payment successful\."\);\s+showToast\("Email sent\."\);/, "Card payment should show payment and email feedback.");
 assert.match(app, /data-form="cash-payment"/, "Tenant cash payment flow should collect a visit time.");
@@ -215,8 +224,9 @@ assert.match(app, /tenant-summary-strip/, "Tenant dashboard should render the co
 assert.match(app, /function contractHealthClass\(endDate\)/, "Tenant contract status should be derived from the contract end date.");
 assert.match(app, /class="contract-health \$\{contractHealth\}"/, "Tenant dashboard contract fact should render a health color class.");
 assert.match(app, /function paymentHealthClass\(summary\)/, "Tenant payment status should be derived from due date and payment state.");
-assert.match(app, /daysRemaining <= 1\) return "metric-status-critical"/, "Tenant payment status should turn critical when overdue or one day from due.");
-assert.match(app, /daysRemaining <= 7\) return "metric-status-warning"/, "Tenant payment status should turn warning when close to due.");
+assert.match(app, /daysUntilDue < 0/, "Tenant payment status should turn critical when overdue.");
+assert.match(app, /daysUntilDue >= 0 && daysUntilDue <= 7/, "Tenant payment status should turn warning when close to due.");
+assert.match(app, /const metricClass = color === "red" \? "metric-status-critical" : color === "orange" \? "metric-status-warning" : "metric-status-paid"/, "Tenant dashboard helper should map urgency colors to metric classes.");
 assert.match(app, /metricStatusPaid|metric-status-paid|className: "metric-status-paid"/, "Tenant paid payment status should render the paid metric class.");
 assert.match(app, /metric-status-warning/, "Tenant payment status should support a near-due warning class.");
 assert.match(app, /metric-status-critical/, "Tenant payment status should support an overdue or one-day critical class.");
@@ -277,6 +287,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-52/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-53/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

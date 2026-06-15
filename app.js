@@ -124,10 +124,10 @@ const seedData = {
       { name: "Payment Receipts", status: "Uploaded", lastUpdated: "05 May 2026" }
     ],
     activities: [
-      { title: "Rent due", detail: "AED 8,500 due 05 Jun 2026", time: "Today" },
+      { title: "Payment proof submitted", detail: "Waiting for company review.", time: "10 Jun 2026" },
       { title: "Maintenance updated", detail: "AC request is in progress", time: "Yesterday" },
       { title: "Renewal reminder", detail: "Contract ends 31 Dec 2026", time: "2 days ago" },
-      { title: "Document received", detail: "Cheque copy under review", time: "10 Jun 2026" }
+      { title: "Document received", detail: "Cheque copy is available.", time: "10 Jun 2026" }
     ]
   },
   manager: {
@@ -381,46 +381,195 @@ function currentTenantPaymentSubmission() {
   const rent = currentTenantRent();
   return state.data.tenant.paymentSubmissions.find((row) =>
     row.amount === rent.amount && row.dueDate === rent.dueDate
-  ) || state.data.tenant.paymentSubmissions[0];
+  ) || null;
+}
+
+function currentTenantCashRequest() {
+  const rent = currentTenantRent();
+  return state.data.tenant.cashRequests.find((row) =>
+    row.amount === rent.amount && row.dueDate === rent.dueDate && row.status !== "Rejected"
+  ) || null;
 }
 
 function activeTenantMaintenance() {
   return state.data.tenant.maintenanceRequests.find((row) => row.status !== "Completed");
 }
 
+function normalizePaymentWorkflow({ rent, payment, cashRequest }) {
+  const rentStatus = String(rent?.status || "").toLowerCase();
+  const paymentStatus = String(payment?.status || "").toLowerCase();
+  const cashStatus = String(cashRequest?.status || "").toLowerCase();
+
+  if (rentStatus === "paid" || ["approved", "paid", "confirmed"].includes(paymentStatus)) return "confirmed";
+  if (paymentStatus === "rejected" || cashStatus === "rejected") return "rejected";
+  if (cashRequest && cashStatus === "approved") return "cash_approved";
+  if (cashRequest && ["pending", "submitted", "in review"].includes(cashStatus)) return "cash_requested";
+  if (payment && ["submitted", "in review", "pending"].includes(paymentStatus)) return "under_review";
+  if (payment) return "proof_submitted";
+  return "not_started";
+}
+
+function rentUrgencyLabel(urgency, daysUntilDue) {
+  if (urgency === "paid") return "Paid";
+  if (urgency === "overdue") return "Overdue";
+  if (urgency === "dueSoon") return daysUntilDue === 0 ? "Due today" : "Due soon";
+  return "Not due yet";
+}
+
+function getRentDashboardState(rentCycle, today = new Date()) {
+  const dueDate = parseDemoDate(rentCycle?.dueDate);
+  const daysUntilDue = dueDate ? daysUntilDate(rentCycle.dueDate, today) : Number.POSITIVE_INFINITY;
+  const workflow = rentCycle?.paymentStatus || "not_started";
+  const isPaid = ["paid", "confirmed"].includes(workflow);
+  const isRejected = workflow === "rejected";
+  const isOverdue = !isPaid && daysUntilDue < 0;
+  const isDueSoon = !isPaid && daysUntilDue >= 0 && daysUntilDue <= 7;
+  const urgency = isPaid ? "paid" : isOverdue ? "overdue" : isDueSoon ? "dueSoon" : "healthy";
+  const color = isPaid ? "green" : isRejected || isOverdue ? "red" : isDueSoon ? "orange" : "green";
+  const metricClass = color === "red" ? "metric-status-critical" : color === "orange" ? "metric-status-warning" : "metric-status-paid";
+  const dueCopy = `Due ${rentCycle.dueDate}`;
+  const workflowCopy = {
+    not_started: {
+      label: "Payment not started",
+      note: "Choose a payment method.",
+      description: `${dueCopy}. Choose a payment method to complete rent.`,
+      action: { label: "Pay rent", icon: "wallet", modal: "payRent" },
+      activityTitle: "Payment not started",
+      activityDetail: `${rentCycle.amount} is due ${rentCycle.dueDate}.`
+    },
+    proof_needed: {
+      label: "Proof needed",
+      note: "Submit proof.",
+      description: `${dueCopy}. Submit payment proof for company review.`,
+      action: { label: "Submit proof", icon: "file", page: "payments" },
+      activityTitle: "Payment proof needed",
+      activityDetail: `Submit proof for ${rentCycle.amount}.`
+    },
+    proof_submitted: {
+      label: "Proof submitted",
+      note: "Waiting for review.",
+      description: `${dueCopy}. Your proof has been submitted and is waiting for company review.`,
+      action: { label: "View proof", icon: "file", page: "payments" },
+      activityTitle: "Payment proof submitted",
+      activityDetail: "Waiting for company review."
+    },
+    under_review: {
+      label: "Payment proof under review",
+      note: "Waiting for company review.",
+      description: `${dueCopy}. Your proof is waiting for company review.`,
+      action: { label: "View proof", icon: "file", page: "payments" },
+      activityTitle: "Payment proof submitted",
+      activityDetail: "Waiting for company review."
+    },
+    cash_requested: {
+      label: "Cash visit requested",
+      note: "Waiting for approval.",
+      description: `${dueCopy}. Waiting for the company to approve your visit time.`,
+      action: { label: "View request", icon: "wallet", page: "payments" },
+      activityTitle: "Cash visit requested",
+      activityDetail: "Waiting for company approval."
+    },
+    cash_approved: {
+      label: "Cash visit approved",
+      note: "Visit time approved.",
+      description: `${dueCopy}. Visit the company at the approved time to complete payment.`,
+      action: { label: "View instructions", icon: "wallet", page: "payments" },
+      activityTitle: "Cash visit approved",
+      activityDetail: "Visit time approved by management."
+    },
+    paid: {
+      label: "Paid",
+      note: "No dues.",
+      description: "Payment confirmed for this rent cycle.",
+      action: { label: "View receipt", icon: "file", page: "rent" },
+      activityTitle: "Rent paid",
+      activityDetail: "Payment confirmed for this rent cycle."
+    },
+    confirmed: {
+      label: "Paid",
+      note: "No dues.",
+      description: "Payment confirmed for this rent cycle.",
+      action: { label: "View receipt", icon: "file", page: "rent" },
+      activityTitle: "Rent paid",
+      activityDetail: "Payment confirmed for this rent cycle."
+    },
+    rejected: {
+      label: "Payment rejected",
+      note: "Action needed.",
+      description: `${dueCopy}. The company rejected the payment proof. Submit updated details or choose another method.`,
+      action: { label: "Submit new proof", icon: "file", page: "payments" },
+      activityTitle: "Payment proof rejected",
+      activityDetail: "Submit updated payment details."
+    }
+  };
+  const workflowState = workflowCopy[workflow] || workflowCopy.not_started;
+  const urgencyCopy = urgency === "paid"
+    ? "Payment confirmed."
+    : urgency === "overdue"
+      ? `${Math.abs(daysUntilDue)} days overdue.`
+      : urgency === "dueSoon"
+        ? daysUntilDue === 0 ? "Due today." : `Due in ${daysUntilDue} days.`
+        : "No urgent action.";
+  const titleByWorkflow = {
+    under_review: urgency === "overdue" ? "Rent overdue - proof under review" : urgency === "dueSoon" ? "Rent due soon - proof under review" : "Payment proof under review",
+    proof_submitted: urgency === "overdue" ? "Rent overdue - proof submitted" : urgency === "dueSoon" ? "Rent due soon - proof submitted" : "Payment proof submitted",
+    cash_requested: urgency === "overdue" ? "Rent overdue - cash visit pending" : "Cash visit requested",
+    cash_approved: urgency === "overdue" ? "Rent overdue - cash visit approved" : "Cash visit approved",
+    rejected: urgency === "overdue" ? "Payment overdue - action needed" : "Payment proof rejected",
+    paid: "Rent paid",
+    confirmed: "Rent paid"
+  };
+  const defaultTitle = urgency === "overdue" ? "Rent overdue" : urgency === "dueSoon" ? "Rent due soon" : "Rent is up to date";
+
+  return {
+    urgency,
+    color,
+    metricClass,
+    daysUntilDue,
+    title: titleByWorkflow[workflow] || defaultTitle,
+    body: workflowState.description,
+    urgencyLabel: rentUrgencyLabel(urgency, daysUntilDue),
+    urgencyNote: urgencyCopy,
+    workflow,
+    workflowLabel: workflowState.label,
+    workflowNote: workflowState.note,
+    primaryAction: workflowState.action,
+    secondaryAction: workflow === "under_review" || workflow === "proof_submitted" ? { label: "View rent", icon: "wallet", page: "rent" } : null,
+    activityTitle: workflowState.activityTitle,
+    activityDetail: workflowState.activityDetail,
+    activityTime: rentCycle.submittedOn || "Current"
+  };
+}
+
 function tenantRentSummary() {
   const rent = currentTenantRent();
   const payment = currentTenantPaymentSubmission();
-  const rentMonth = rent.month.split(" ")[0] || "Current";
+  const cashRequest = currentTenantCashRequest();
   const status = rent.status === "Paid" ? "Paid" : payment?.status || rent.status || "Pending";
   const isPaid = status === "Paid" || status === "Approved";
-  const isRejected = status === "Rejected";
   const maintenance = activeTenantMaintenance();
-
-  let title = `${rentMonth} rent needs review`;
-  let body = "Submit proof or use the demo payment flow.";
-  if (isPaid) {
-    title = `${rentMonth} rent is paid`;
-    body = maintenance ? `Receipt is ready. ${maintenance.category} maintenance is ${maintenance.status.toLowerCase()}.` : "Receipt is ready. No open maintenance requests.";
-  } else if (isRejected) {
-    title = `${rentMonth} payment proof needs attention`;
-    body = "Management rejected the proof. Submit updated details.";
-  } else if (status === "Submitted" || status === "In Review") {
-    title = `${rentMonth} rent proof is under review`;
-    body = maintenance ? `One maintenance request is ${maintenance.status.toLowerCase()}.` : "Management is reviewing your rent proof.";
-  }
+  const paymentWorkflow = normalizePaymentWorkflow({ rent, payment, cashRequest });
+  const dashboardState = getRentDashboardState({
+    amount: rent.amount,
+    dueDate: rent.dueDate,
+    paymentStatus: paymentWorkflow,
+    submittedOn: payment?.submittedOn || cashRequest?.createdAt || ""
+  });
 
   return {
     rent,
     payment,
+    cashRequest,
     status,
     isPaid,
-    title,
-    body,
+    title: dashboardState.title,
+    body: dashboardState.body,
     dueAmount: isPaid ? "AED 0" : rent.amount,
     outstanding: isPaid ? "AED 0" : rent.amount,
     receipt: isPaid ? rent.receipt : "Receipt pending",
-    paymentNote: isPaid ? "No dues" : isRejected ? "Needs update" : status === "Submitted" || status === "In Review" ? "Under review" : "Awaiting action",
+    paymentWorkflow,
+    dashboardState,
+    paymentNote: dashboardState.workflowNote,
     maintenanceStatus: maintenance?.status || "Completed",
     maintenanceNote: maintenance ? `${maintenance.category} request` : "No open requests"
   };
@@ -1431,12 +1580,7 @@ function contractHealthClass(endDate) {
 }
 
 function paymentHealthClass(summary) {
-  if (summary.isPaid) return "metric-status-paid";
-  if (summary.status === "Late" || summary.status === "Rejected") return "metric-status-critical";
-  const daysRemaining = daysUntilDate(summary.rent?.dueDate);
-  if (daysRemaining <= 1) return "metric-status-critical";
-  if (daysRemaining <= 7) return "metric-status-warning";
-  return "";
+  return summary.dashboardState?.metricClass || "";
 }
 
 function statusLabel(status) {
@@ -1691,16 +1835,16 @@ function pageContext() {
 function notificationItems() {
   if (state.role === "tenant") {
     const profile = tenantProfile();
-    const payment = state.data.tenant.paymentSubmissions[0];
+    const summary = tenantRentSummary();
     const maintenance = state.data.tenant.maintenanceRequests[0];
     const latestContractRequest = latestTenantContractRequest(profile);
     const renewalStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
 
     return [
       {
-        title: "Payment proof",
-        detail: payment?.status === "Approved" ? "June rent proof is approved." : "Management is reviewing June rent proof.",
-        status: payment?.status || "In Review",
+        title: "Rent payment",
+        detail: summary.dashboardState.body,
+        status: summary.dashboardState.workflowLabel,
         page: "payments"
       },
       {
@@ -2217,17 +2361,12 @@ function pageFocus() {
         eyebrow: "Next step",
         title: summary.title,
         body: summary.body,
-        value: summary.isPaid ? "Paid" : summary.rent.amount,
-        meta: [`Unit ${profile.unit}`, `Payment ${summary.status}`, maintenance ? `${maintenance.category} ${maintenance.status}` : "No open maintenance"],
-        actions: summary.isPaid
-          ? [
-              { label: "View rent", icon: "wallet", page: "rent", variant: "primary" },
-              { label: "View documents", icon: "file", page: "documents", variant: "secondary" }
-            ]
-          : [
-              { label: "Submit payment", icon: "file", page: "payments", variant: "primary" },
-              { label: "Pay demo", icon: "wallet", modal: "payRent", variant: "secondary" }
-          ]
+        value: summary.dashboardState.urgencyLabel,
+        meta: [summary.rent.amount, `Due ${summary.rent.dueDate}`, summary.dashboardState.workflowLabel],
+        actions: [
+          { ...summary.dashboardState.primaryAction, variant: "primary" },
+          ...(summary.dashboardState.secondaryAction ? [{ ...summary.dashboardState.secondaryAction, variant: "secondary" }] : [])
+        ]
       },
       actionCenter: {
         eyebrow: "Action Center",
@@ -2242,17 +2381,17 @@ function pageFocus() {
       },
       rent: {
         eyebrow: "Rent status",
-        title: summary.isPaid ? "No balance due" : "Balance due",
-        body: summary.isPaid ? "Rent is recorded as paid." : "Review rent or open demo payment.",
+        title: summary.dashboardState.title,
+        body: summary.dashboardState.body,
         value: summary.outstanding,
-        meta: [`Due ${summary.rent.dueDate}`, summary.receipt],
-        actions: summary.isPaid ? [] : [{ label: "Pay demo", icon: "wallet", modal: "payRent", variant: "primary" }]
+        meta: [summary.dashboardState.urgencyLabel, summary.receipt],
+        actions: summary.isPaid ? [] : [{ ...summary.dashboardState.primaryAction, variant: "primary" }]
       },
       payments: {
         eyebrow: "Proof review",
-        title: summary.isPaid ? "Payment recorded" : "Submit payment proof",
-        body: summary.isPaid ? "Management rent records are updated." : "Management reviews and updates status.",
-        value: summary.status,
+        title: summary.dashboardState.workflowLabel,
+        body: summary.dashboardState.body,
+        value: summary.dashboardState.urgencyLabel,
         meta: [summary.paymentNote, "No payment gateway"],
         actions: []
       },
@@ -2427,10 +2566,75 @@ function metricCard(label, value, note, iconName, targetPage = "", options = {})
       </div>
       <p class="metric-value">${escapeHtml(value)}</p>
       ${(note || targetPage)
-        ? `<div class="metric-foot">${note ? `<span class="metric-note">${escapeHtml(note)}</span>` : "<span></span>"}${targetPage ? `<span class="metric-action">${escapeHtml(metricActionLabel(targetPage))}</span>` : ""}</div>`
+        ? `<div class="metric-foot">${note ? `<span class="metric-note">${escapeHtml(note)}</span>` : "<span></span>"}${targetPage ? `<span class="metric-action">${escapeHtml(options.actionLabel || metricActionLabel(targetPage))}</span>` : ""}</div>`
         : ""}
     </${tag}>
   `;
+}
+
+function quickActionAttributes(action) {
+  if (action.modal) return `data-modal="${escapeHtml(action.modal)}"`;
+  if (action.page) return `data-page="${escapeHtml(action.page)}"`;
+  if (action.action) return `data-action="${escapeHtml(action.action)}"`;
+  return "";
+}
+
+function renderTenantQuickAction(action) {
+  return `
+    <button class="quick-card" type="button" ${quickActionAttributes(action)}>
+      ${metricIcon(action.icon || "file")}
+      <strong>${escapeHtml(action.title || action.label)}</strong>
+      <span>${escapeHtml(action.detail || "")}</span>
+    </button>
+  `;
+}
+
+function tenantDashboardQuickActions(summary) {
+  const rentState = summary.dashboardState;
+  const actions = [
+    {
+      ...rentState.primaryAction,
+      title: rentState.primaryAction.label,
+      detail: rentState.workflowNote
+    }
+  ];
+
+  if (rentState.secondaryAction) {
+    actions.push({
+      ...rentState.secondaryAction,
+      title: rentState.secondaryAction.label,
+      detail: "Open rent details."
+    });
+  }
+
+  actions.push(
+    { title: "Request Maintenance", detail: "Open request.", icon: "tool", page: "maintenance" },
+    { title: "Request Renewal", detail: "Ask to renew.", icon: "refresh", page: "renewal" },
+    { title: "View Documents", detail: "Open files.", icon: "file", page: "documents" }
+  );
+
+  return actions;
+}
+
+function tenantDashboardActivities(summary) {
+  const paymentTitles = new Set([
+    "Rent due",
+    "Rent paid",
+    "Payment proof sent",
+    "Payment proof submitted",
+    "Payment proof rejected",
+    "Payment not started",
+    "Payment proof needed",
+    "Cash visit requested",
+    "Cash visit approved"
+  ]);
+  const currentPaymentActivity = {
+    title: summary.dashboardState.activityTitle,
+    detail: summary.dashboardState.activityDetail,
+    time: summary.dashboardState.activityTime || "Current"
+  };
+  const supportingItems = state.data.tenant.activities.filter((item) => !paymentTitles.has(item.title));
+  return [currentPaymentActivity, ...supportingItems].slice(0, 6);
 }
 
 function table(headers, rows, options = {}) {
@@ -2962,6 +3166,9 @@ function renderTenantDashboard() {
   const tenant = state.data.tenant;
   const profile = tenant.profile;
   const summary = tenantRentSummary();
+  const rentState = summary.dashboardState;
+  const quickActions = tenantDashboardQuickActions(summary);
+  const activityItems = tenantDashboardActivities(summary);
   const contractHealth = contractHealthClass(profile.contractEnd);
   const paymentHealth = paymentHealthClass(summary);
   return `
@@ -2981,7 +3188,7 @@ function renderTenantDashboard() {
           </span>
           <span>
             <strong>Rent cycle</strong>
-            <em>${escapeHtml(summary.rent.month)} · due ${escapeHtml(summary.rent.dueDate)}</em>
+            <em>${escapeHtml(summary.rent.month)} · ${escapeHtml(rentState.urgencyLabel)}</em>
           </span>
           <span>
             <strong>Maintenance</strong>
@@ -2990,10 +3197,11 @@ function renderTenantDashboard() {
         </div>
       </section>
 
-      <section class="metric-grid five insight-metrics">
-        ${metricCard("Rent Due", summary.dueAmount, "Current cycle", "wallet", "rent")}
-        ${metricCard("Due Date", summary.rent.dueDate, "Next payment", "file", "rent")}
-        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh", "payments", paymentHealth ? { className: paymentHealth } : {})}
+      <section class="metric-grid dashboard-metrics insight-metrics">
+        ${metricCard("Rent Amount", summary.rent.amount, summary.rent.month, "wallet", "rent")}
+        ${metricCard("Due Date", summary.rent.dueDate, rentState.urgencyNote, "file", "rent", paymentHealth ? { className: paymentHealth } : {})}
+        ${metricCard("Rent Urgency", rentState.urgencyLabel, rentState.body, "refresh", "rent", paymentHealth ? { className: paymentHealth } : {})}
+        ${metricCard("Payment Workflow", rentState.workflowLabel, rentState.workflowNote, "file", "payments", { ...(paymentHealth ? { className: paymentHealth } : {}), actionLabel: rentState.primaryAction.label })}
         ${metricCard("Contract Expiry", profile.contractEnd, "Renewal available", "file", "renewal")}
         ${metricCard("Maintenance Status", summary.maintenanceStatus, summary.maintenanceNote, "tool", "maintenance")}
       </section>
@@ -3007,31 +3215,7 @@ function renderTenantDashboard() {
             </div>
           </div>
           <div class="quick-grid action-grid tenant-action-grid">
-            <button class="quick-card" type="button" data-modal="payRent">
-              ${metricIcon("wallet")}
-              <strong>Demo Payment</strong>
-              <span>${summary.isPaid ? "Payment is recorded." : "Open demo payment."}</span>
-            </button>
-            <button class="quick-card" type="button" data-page="payments">
-              ${metricIcon("file")}
-              <strong>Submit Payment Proof</strong>
-              <span>Send proof.</span>
-            </button>
-            <button class="quick-card" type="button" data-page="maintenance">
-              ${metricIcon("tool")}
-              <strong>Request Maintenance</strong>
-              <span>Report an apartment issue.</span>
-            </button>
-            <button class="quick-card" type="button" data-page="renewal">
-              ${metricIcon("refresh")}
-              <strong>Request Renewal</strong>
-              <span>Ask to renew.</span>
-            </button>
-            <button class="quick-card" type="button" data-page="documents">
-              ${metricIcon("file")}
-              <strong>View Documents</strong>
-              <span>Open files.</span>
-            </button>
+            ${quickActions.map(renderTenantQuickAction).join("")}
           </div>
         </section>
 
@@ -3043,7 +3227,7 @@ function renderTenantDashboard() {
             </div>
           </div>
           <ul class="activity-list">
-            ${tenant.activities
+            ${activityItems
               .map(
                 (item) => `
                   <li class="activity-item">
@@ -3066,6 +3250,8 @@ function renderTenantDashboard() {
 
 function renderTenantRent() {
   const summary = tenantRentSummary();
+  const rentState = summary.dashboardState;
+  const paymentHealth = paymentHealthClass(summary);
   const historyExpanded = state.filters.rentHistoryView === "All";
   const currentRow = currentTenantRent();
   const recentPaidRows = state.data.tenant.rentHistory.filter((row) => row.status === "Paid" && row !== currentRow).slice(0, 2);
@@ -3092,7 +3278,7 @@ function renderTenantRent() {
         ${metricCard("Monthly Rent", summary.rent.amount, "Contract rent", "wallet")}
         ${metricCard("Outstanding Balance", summary.outstanding, "Current cycle", "chart")}
         ${metricCard("Next Due Date", summary.rent.dueDate, "Due date", "file")}
-        ${metricCard("Payment Status", summary.status, summary.paymentNote, "refresh")}
+        ${metricCard("Payment Workflow", rentState.workflowLabel, rentState.workflowNote, "refresh", "", paymentHealth ? { className: paymentHealth } : {})}
       </section>
       <section class="section-band">
         <div class="section-header">
