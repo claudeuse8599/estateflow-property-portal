@@ -3140,24 +3140,46 @@ function renderTenantMaintenance() {
       </tr>
     `
   );
-  const complaintRows = state.data.tenant.complaints.map(
+  const activeFollowupStatuses = ["Pending", "In Review"];
+  const activeComplaints = state.data.tenant.complaints.filter((row) => activeFollowupStatuses.includes(row.status));
+  const previousComplaints = state.data.tenant.complaints.filter((row) => !activeFollowupStatuses.includes(row.status));
+  const activeSuggestions = state.data.tenant.suggestions.filter((row) => activeFollowupStatuses.includes(row.status));
+  const previousSuggestions = state.data.tenant.suggestions.filter((row) => !activeFollowupStatuses.includes(row.status));
+  const complaintRows = activeComplaints.map(
     (row) => `
       <tr>
         <td>${escapeHtml(row.description)}</td>
         <td>${escapeHtml(row.attachment || "Attached placeholder")}</td>
         <td>${badge(row.status)}</td>
-        <td>${row.status === "Pending" || row.status === "In Review" ? `<button class="button ghost compact" type="button" data-action="cancel-complaint" data-id="${escapeHtml(row.id)}">Cancel</button>` : `<span class="action-muted">No action</span>`}</td>
+        <td><button class="button ghost compact" type="button" data-action="cancel-complaint" data-id="${escapeHtml(row.id)}">Cancel</button></td>
       </tr>
     `
   );
-  const suggestionRows = state.data.tenant.suggestions.map(
+  const suggestionRows = activeSuggestions.map(
     (row) => `
       <tr>
         <td>${escapeHtml(row.description)}</td>
         <td>${badge(row.status)}</td>
+        <td><button class="button ghost compact" type="button" data-action="cancel-suggestion" data-id="${escapeHtml(row.id)}">Cancel</button></td>
       </tr>
     `
   );
+  const historyRows = [
+    ...previousComplaints.map((row) => `
+      <tr>
+        <td>Complaint</td>
+        <td>${escapeHtml(row.description)}</td>
+        <td>${badge(row.status)}</td>
+      </tr>
+    `),
+    ...previousSuggestions.map((row) => `
+      <tr>
+        <td>Suggestion</td>
+        <td>${escapeHtml(row.description)}</td>
+        <td>${badge(row.status)}</td>
+      </tr>
+    `)
+  ];
   const complaintStatusSection = complaintRows.length
     ? `
       <div class="section-band maintenance-status-section complaint-status-section">
@@ -3183,9 +3205,25 @@ function renderTenantMaintenance() {
             <p>Status of submitted suggestions.</p>
           </div>
         </div>
-        ${table(["Suggestion", "Status"], suggestionRows, {
+        ${table(["Suggestion", "Status", "Action"], suggestionRows, {
           emptyTitle: "No suggestions filed",
           emptyBody: "Submitted suggestions will appear here."
+        })}
+      </div>
+    `
+    : "";
+  const historySection = historyRows.length
+    ? `
+      <div class="section-band maintenance-status-section maintenance-history-section">
+        <div class="section-header">
+          <div>
+            <h2>Previous Submissions</h2>
+            <p>Closed complaints and suggestions.</p>
+          </div>
+        </div>
+        ${table(["Type", "Details", "Status"], historyRows, {
+          countLabel: `${historyRows.length} ${historyRows.length === 1 ? "item" : "items"}`,
+          meta: "History"
         })}
       </div>
     `
@@ -3282,6 +3320,7 @@ function renderTenantMaintenance() {
         </div>
         ${complaintStatusSection}
         ${suggestionStatusSection}
+        ${historySection}
       </section>
     </div>
   `;
@@ -5022,6 +5061,21 @@ document.addEventListener("click", (event) => {
     }
     saveData();
     showToast("Complaint canceled.");
+    render();
+    return;
+  }
+
+  if (action === "cancel-suggestion") {
+    const suggestion = state.data.tenant.suggestions.find((row) => row.id === actionButton.dataset.id);
+    const managerSuggestion = state.data.manager.suggestions.find((row) => row.id === actionButton.dataset.id);
+    if (suggestion) suggestion.status = "Canceled";
+    if (managerSuggestion) {
+      managerSuggestion.status = "Canceled";
+      const item = ensureActionFromSuggestion(managerSuggestion);
+      setActionStatus(item, "Canceled", "tenant", "Suggestion canceled", "Tenant canceled the suggestion.");
+    }
+    saveData();
+    showToast("Suggestion canceled.");
     render();
     return;
   }

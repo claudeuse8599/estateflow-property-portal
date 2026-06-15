@@ -4283,6 +4283,10 @@ th {
   grid-column: 2;
 }
 
+.maintenance-history-section {
+  grid-column: 1 / -1;
+}
+
 .maintenance-secondary-form {
   flex: 1;
   align-content: start;
@@ -4364,12 +4368,32 @@ th {
 
 .suggestion-status-section th:nth-child(1),
 .suggestion-status-section td:nth-child(1) {
-  width: 70%;
+  width: 56%;
 }
 
 .suggestion-status-section th:nth-child(2),
 .suggestion-status-section td:nth-child(2) {
-  width: 30%;
+  width: 25%;
+}
+
+.suggestion-status-section th:nth-child(3),
+.suggestion-status-section td:nth-child(3) {
+  width: 19%;
+}
+
+.maintenance-history-section th:nth-child(1),
+.maintenance-history-section td:nth-child(1) {
+  width: 18%;
+}
+
+.maintenance-history-section th:nth-child(2),
+.maintenance-history-section td:nth-child(2) {
+  width: 57%;
+}
+
+.maintenance-history-section th:nth-child(3),
+.maintenance-history-section td:nth-child(3) {
+  width: 25%;
 }
 
 th,
@@ -4511,7 +4535,8 @@ td {
   }
 
   .complaint-status-section,
-  .suggestion-status-section {
+  .suggestion-status-section,
+  .maintenance-history-section {
     grid-column: auto;
   }
 }
