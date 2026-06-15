@@ -144,6 +144,10 @@ assert.match(app, /button class="button secondary contract-action-button"[^>]*Co
 assert.doesNotMatch(app, />Request Change</, "Duplicate Request Change action should be removed from the Renewal page.");
 assert.match(app, /function latestTenantContractRequest/, "Tenant renewal timeline should use the latest request data.");
 assert.match(app, /function requestTimelineStatuses/, "Tenant renewal timeline badges should derive from request status.");
+assert.match(app, /function contractRequestSummaryStatus/, "Tenant renewal focus card should use request-aware status labels.");
+assert.match(app, /"Contract Amendment": "Amendment Requested"/, "Amendment requests should update the tenant renewal focus status.");
+assert.match(app, /"Contract Cancellation": "Cancellation Requested"/, "Cancellation requests should update the tenant renewal focus status.");
+assert.match(app, /value: contractSummaryStatus/, "Tenant renewal focus card should reflect the latest contract request.");
 assert.match(app, /"Contract Cancellation": "Cancel Contract"/, "Cancel contract timeline should show a request-specific submitted label.");
 assert.match(app, /"Contract Amendment": "Amendment"/, "Amendment timeline should show a request-specific submitted label.");
 assert.match(app, /Request renewal to view the timeline\./, "Tenant renewal timeline should show a clear empty state before request.");
@@ -273,6 +277,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-51/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-52/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

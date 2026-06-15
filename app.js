@@ -1210,6 +1210,33 @@ function contractRequestSubmittedTitle(requestType) {
   return `${name} Request Submitted`;
 }
 
+function contractRequestSummaryStatus(request, fallbackStatus = "Pending") {
+  if (!request) return fallbackStatus;
+
+  const status = request.summaryStatus || request.status || fallbackStatus;
+  const inReviewStatuses = ["Pending", "Submitted"];
+  const requestedLabels = {
+    "Contract Cancellation": "Cancellation Requested",
+    "Contract Amendment": "Amendment Requested",
+    "Contract Change": "Amendment Requested",
+    "Contract Renewal": "Renewal Requested"
+  };
+  const nounLabels = {
+    "Contract Cancellation": "Cancellation",
+    "Contract Amendment": "Amendment",
+    "Contract Change": "Amendment",
+    "Contract Renewal": "Renewal"
+  };
+
+  if (inReviewStatuses.includes(status)) return requestedLabels[request.requestType] || status;
+  if (["Approved", "Rejected"].includes(status)) {
+    const noun = nounLabels[request.requestType] || contractRequestDisplayName(request.requestType);
+    return `${noun} ${status}`;
+  }
+
+  return status;
+}
+
 function activeTenantRenewalRequest(profile) {
   const renewal = state.data.manager.renewals.find((row) => row.tenant === profile.name && row.unit === profile.unit);
   const hasTenantInitiatedRenewal = Boolean(renewal?.createdAt || state.confirmations.renewal || profile.renewalStatus !== "Pending");
@@ -1666,7 +1693,8 @@ function notificationItems() {
     const profile = tenantProfile();
     const payment = state.data.tenant.paymentSubmissions[0];
     const maintenance = state.data.tenant.maintenanceRequests[0];
-    const renewalStatus = profile.renewalStatus || "Pending";
+    const latestContractRequest = latestTenantContractRequest(profile);
+    const renewalStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
 
     return [
       {
@@ -2182,6 +2210,8 @@ function pageFocus() {
     const summary = tenantRentSummary();
     const maintenance = activeTenantMaintenance();
     const actionCount = actionCenterCountForRole("tenant");
+    const latestContractRequest = latestTenantContractRequest(profile);
+    const contractSummaryStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
     const map = {
       dashboard: {
         eyebrow: "Next step",
@@ -2238,7 +2268,7 @@ function pageFocus() {
         eyebrow: "Contract renewal",
         title: "Contract ends 31 Dec 2026",
         body: "Request renewal when ready.",
-        value: profile.renewalStatus,
+        value: contractSummaryStatus,
         meta: ["Current rent AED 8,500", "Unit 1204"],
         actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary" }]
       },
