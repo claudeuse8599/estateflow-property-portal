@@ -128,11 +128,12 @@ assert.match(app, /gestureStartedAtTop:\s*false/, "Pull-to-reset should track wh
 assert.match(app, /isEligibleForPullReset:\s*false/, "Pull-to-reset should track eligibility separately from visual pulling.");
 assert.match(app, /wheelSessionStartedAtTop:\s*false/, "Pull-to-reset should track whether a wheel session began at the top.");
 assert.match(app, /lastNonTopScrollTime:\s*0/, "Pull-to-reset should remember recent non-top scrolling.");
-assert.match(app, /function openResetDataModal/, "Reset modal opening should be reusable across button and gesture flows.");
+assert.match(app, /function openResetDataModal\(\)/, "Reset modal opening should remain available for the manual Reset data button.");
 assert.match(app, /function resetDemoData/, "Demo data reset should use one shared reset helper.");
 assert.match(app, /if \(action === "reset-data"\) \{\s+openResetDataModal\(\);/, "Reset Data button should use the shared reset modal helper.");
 assert.match(app, /if \(action === "confirm-reset-data"\) \{\s+resetDemoData\(\);/, "Reset confirmation should use the shared reset helper.");
-assert.match(app, /openResetDataModal\(\{ fromPull: true \}\)/, "Pull-to-reset should open the same reset confirmation modal.");
+assert.match(app, /window\.setTimeout\(resetDemoData, 180\)/, "Pull-to-reset should reset directly after a deliberate pull.");
+assert.doesNotMatch(app, /openResetDataModal\(\{ fromPull: true \}\)/, "Pull-to-reset should not open a confirmation modal.");
 assert.match(app, /function canUsePullToReset/, "Pull-to-reset should guard when the gesture is allowed.");
 assert.match(app, /state\.modal \|\| state\.notificationPanelOpen/, "Pull-to-reset should not start while modal or notification UI is active.");
 assert.match(app, /isAtPullResetStart\(\)/, "Pull-to-reset should only activate at the top of the page.");
@@ -314,6 +315,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-62/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-63/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

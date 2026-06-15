@@ -4998,8 +4998,7 @@ function showToast(message) {
   }, 4200);
 }
 
-function openResetDataModal({ fromPull = false } = {}) {
-  if (fromPull) resetPullToResetState({ update: false });
+function openResetDataModal() {
   state.modal = { type: "resetData" };
   state.notificationPanelOpen = false;
   render();
@@ -5024,7 +5023,7 @@ function resetDemoData() {
 
 function pullResetCopy() {
   const pull = state.pullToReset;
-  if (pull.phase === "refreshing") return "Opening reset confirmation...";
+  if (pull.phase === "refreshing") return "Resetting demo data...";
   if (pull.phase === "complete") return "Demo data reset";
   return pull.thresholdReached ? "Release to reset demo data" : "Pull further to reset demo data";
 }
@@ -5177,7 +5176,7 @@ function triggerPullToReset() {
     cooldownUntil: Date.now() + PULL_RESET_COOLDOWN
   });
   updatePullToResetIndicator({ settle: true });
-  window.setTimeout(() => openResetDataModal({ fromPull: true }), 180);
+  window.setTimeout(resetDemoData, 180);
 }
 
 function finishPullToReset() {
