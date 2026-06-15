@@ -249,7 +249,10 @@ assert.match(app, /tenant-dashboard-lower/, "Tenant dashboard should arrange act
 assert.doesNotMatch(app, /<h2>\$\{escapeHtml\(profile\.name\.split\(" "\)\[0\]\)\}, \$\{escapeHtml\(summary\.title\)\}<\/h2>/, "Tenant dashboard should not lead with the rent-review welcome sentence.");
 assert.match(styles, /\.tenant-dashboard-flow\s*\{[\s\S]*grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(320px, 0\.65fr\);[\s\S]*align-items:\s*stretch/, "Tenant dashboard status area should give the rent overview primary space and keep both columns aligned.");
 assert.match(styles, /\.tenant-rent-overview\s*\{[\s\S]*padding:\s*22px/, "Tenant rent overview should have more internal breathing room.");
+assert.match(styles, /--rent-green-card-bg:\s*var\(--surface\)/, "Tenant paid rent overview should keep a neutral surface while retaining green paid accents.");
+assert.match(styles, /--rent-orange-card-bg:\s*var\(--surface\)/, "Tenant warning rent overview should keep a neutral surface while retaining orange warning accents.");
 assert.match(styles, /--rent-red-card-bg:\s*var\(--surface\)/, "Tenant overdue rent card should keep a neutral surface while retaining red warning accents.");
+assert.match(styles, /\.tenant-rent-overview\.metric-status-paid\s*\{[\s\S]*--rent-card-accent:\s*var\(--apple-green\);[\s\S]*--rent-card-bg:\s*var\(--rent-green-card-bg\);[\s\S]*--rent-card-border:\s*var\(--apple-green-border\)/, "Tenant paid rent overview should use green rail and border without a green card fill.");
 assert.match(styles, /\.tenant-rent-overview\.metric-status-critical\s*\{[\s\S]*--rent-card-bg:\s*var\(--rent-red-card-bg\)/, "Tenant rent overview should keep refined status-color support for overdue states.");
 assert.match(styles, /\.tenant-rent-overview::after\s*\{[\s\S]*background:\s*var\(--rent-card-accent, transparent\)/, "Tenant rent overview should use a subtle status accent line.");
 assert.match(styles, /\.rent-overview-copy h2\s*\{[\s\S]*color:\s*var\(--text\)/, "Tenant rent overview title should remain primary text instead of status red.");
@@ -318,6 +321,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-64/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-65/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
