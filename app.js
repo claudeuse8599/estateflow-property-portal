@@ -3162,61 +3162,47 @@ function renderTenantMaintenance() {
 
   return `
     <div class="content-stack">
-      <section class="layout-two">
-        <div class="section-band">
-          <div class="section-header">
-            <div>
-              <h2>Report an Issue</h2>
-              <p>Short details help assign the right technician.</p>
-            </div>
-          </div>
-          ${confirmed}
-          <form class="form-grid" data-form="tenant-maintenance">
-            <div class="field">
-              <label for="unitNumber">Unit number</label>
-              <input id="unitNumber" name="unitNumber" value="1204" />
-            </div>
-            <div class="field">
-              <label for="issueCategory">Issue category</label>
-              <select id="issueCategory" name="issueCategory">
-                <option>Plumbing</option>
-                <option>Electrical</option>
-                <option selected>AC</option>
-                <option>Cleaning</option>
-                <option>General</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="priority">Priority</label>
-              <select id="priority" name="priority">
-                <option>Low</option>
-                <option selected>Medium</option>
-                <option>High</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="description">Description</label>
-              <textarea id="description" name="description">Bedroom AC makes a loud noise after 20 minutes.</textarea>
-            </div>
-            <div class="field">
-              <label>Upload image</label>
-              <div class="upload-box">Attach issue photo.</div>
-            </div>
-            <button class="button primary" type="submit">${buttonIcon("send")}Submit request</button>
-          </form>
-        </div>
-        <div class="section-band">
-          <div class="section-header">
-            <div>
-              <h2>Guidance</h2>
-              <p>Choose the closest category and priority.</p>
-            </div>
-          </div>
-          <div class="metric-grid">
-            ${metricCard("Average Response", "1 day", "High priority", "tool")}
-            ${metricCard("Current Unit", "1204", "Marina Heights Residence", "building")}
+      <section class="section-band">
+        <div class="section-header">
+          <div>
+            <h2>Report an Issue</h2>
+            <p>Short details help assign the right technician.</p>
           </div>
         </div>
+        ${confirmed}
+        <form class="form-grid" data-form="tenant-maintenance">
+          <div class="field">
+            <label for="unitNumber">Unit number</label>
+            <input id="unitNumber" name="unitNumber" value="1204" />
+          </div>
+          <div class="field">
+            <label for="issueCategory">Issue category</label>
+            <select id="issueCategory" name="issueCategory">
+              <option>Plumbing</option>
+              <option>Electrical</option>
+              <option selected>AC</option>
+              <option>Cleaning</option>
+              <option>General</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+              <option>Low</option>
+              <option selected>Medium</option>
+              <option>High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" name="description">Bedroom AC makes a loud noise after 20 minutes.</textarea>
+          </div>
+          <div class="field">
+            <label>Upload image</label>
+            <div class="upload-box">Attach issue photo.</div>
+          </div>
+          <button class="button primary" type="submit">${buttonIcon("send")}Submit request</button>
+        </form>
       </section>
       <section class="section-band">
         <div class="section-header">
