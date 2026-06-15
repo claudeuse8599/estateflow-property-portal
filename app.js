@@ -3332,6 +3332,21 @@ function renderTenantRenewal() {
   const profile = state.data.tenant.profile;
   const confirmed = state.confirmations.renewal ? `<div class="confirmation">Renewal request submitted.</div>` : "";
   const status = state.confirmations.renewal ? "Submitted" : profile.renewalStatus;
+  const hasRenewalTimeline = state.confirmations.renewal || profile.renewalStatus !== "Pending";
+  const renewalTimeline = hasRenewalTimeline
+    ? `
+          <ul class="timeline">
+            <li class="timeline-item ${state.confirmations.renewal ? "done" : "current"}"><span class="timeline-marker">1</span><strong>Request submitted</strong>${badge(state.confirmations.renewal ? "Submitted" : profile.renewalStatus)}</li>
+            <li class="timeline-item ${state.confirmations.renewal ? "current" : ""}"><span class="timeline-marker">2</span><strong>Review</strong>${badge(state.confirmations.renewal ? "In Review" : "Pending")}</li>
+            <li class="timeline-item"><span class="timeline-marker">3</span><strong>Decision</strong>${badge("Pending")}</li>
+          </ul>
+        `
+    : `
+          <div class="empty-state renewal-timeline-empty">
+            <strong>No renewal timeline yet</strong>
+            <span>Request renewal to view the timeline.</span>
+          </div>
+        `;
   const requestRows = state.data.tenant.contractRequests.map(
     (row) => `
       <tr>
@@ -3377,11 +3392,7 @@ function renderTenantRenewal() {
               <p>Request status and decision.</p>
             </div>
           </div>
-          <ul class="timeline">
-            <li class="timeline-item ${state.confirmations.renewal ? "done" : "current"}"><span class="timeline-marker">1</span><strong>Request submitted</strong>${badge(state.confirmations.renewal ? "Submitted" : "Pending")}</li>
-            <li class="timeline-item ${state.confirmations.renewal ? "current" : ""}"><span class="timeline-marker">2</span><strong>Review</strong>${badge(state.confirmations.renewal ? "In Review" : "Pending")}</li>
-            <li class="timeline-item"><span class="timeline-marker">3</span><strong>Decision</strong>${badge("Pending")}</li>
-          </ul>
+          ${renewalTimeline}
         </div>
       </section>
       <section class="section-band">

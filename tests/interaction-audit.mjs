@@ -140,6 +140,8 @@ assert.match(app, /data-action="request-contract"/, "Tenant contract cancellatio
 assert.match(app, /class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated button row.");
 assert.match(app, /button class="button danger contract-action-button"[^>]*Contract Cancellation/, "Cancel contract should render as a visible button.");
 assert.match(app, /button class="button secondary contract-action-button"[^>]*Contract Amendment/, "Contract amendment should render as a visible button.");
+assert.match(app, /const hasRenewalTimeline = state\.confirmations\.renewal \|\| profile\.renewalStatus !== "Pending"/, "Tenant renewal timeline should only show after a renewal request exists.");
+assert.match(app, /Request renewal to view the timeline\./, "Tenant renewal timeline should show a clear empty state before request.");
 assert.match(app, /function ensureActionFromContractRequest/, "Contract requests should create Action Center items.");
 assert.match(app, /data-form="tenant-complaint"/, "Tenant complaints should be submittable.");
 assert.match(app, /data-form="tenant-suggestion"/, "Tenant suggestions should be submittable.");
@@ -265,6 +267,7 @@ assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
-assert.match(index, /oneui2-20260615-49/g, "Index should load the latest cache-busted assets.");
+assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
+assert.match(index, /oneui2-20260615-50/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

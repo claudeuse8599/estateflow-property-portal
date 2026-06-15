@@ -1991,6 +1991,11 @@ tbody tr:hover td {
   background: var(--primary);
 }
 
+.renewal-timeline-empty {
+  min-height: 122px;
+  align-content: center;
+}
+
 .document-grid,
 .property-grid,
 .visual-grid {
