@@ -246,9 +246,11 @@ assert.match(styles, /\.field select\s*\{[\s\S]*appearance:\s*none;[\s\S]*backgr
 assert.match(styles, /\.maintenance-form\s*\{[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/, "Tenant maintenance form should use a compact multi-column desktop grid.");
 assert.match(styles, /\.maintenance-followup-grid\s*\{[\s\S]*align-items:\s*stretch/, "Tenant maintenance follow-up cards should stretch to equal heights by row.");
 assert.match(styles, /\.suggestion-status-section\s*\{[\s\S]*grid-column:\s*2/, "Suggestion status card should align under the suggestion form when visible.");
+assert.match(styles, /\.maintenance-status-section table\s*\{[\s\S]*min-width:\s*0;[\s\S]*table-layout:\s*fixed/, "Tenant maintenance status tables should fit within narrow status cards.");
+assert.match(styles, /\.complaint-status-section th:nth-child\(4\),\s*\.complaint-status-section td:nth-child\(4\)\s*\{[\s\S]*width:\s*19%/, "Complaint action column should stay inside the status card.");
 assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S]*min-height:\s*72px/, "Tenant maintenance status tables should use shorter empty states.");
 assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
-assert.match(index, /oneui2-20260615-45/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-46/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
