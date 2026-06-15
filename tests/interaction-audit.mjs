@@ -209,6 +209,11 @@ assert.doesNotMatch(app, /body:\s*"Track requests, rent updates, messages, and c
 assert.doesNotMatch(app, /Your requests, rent updates, messages, and company responses\./, "Tenant Action Center page should not render the removed supporting copy elsewhere.");
 assert.doesNotMatch(app, /meta:\s*\["Requests", "Payment updates", "Status history"\]/, "Tenant Action Center focus card should not reserve space for removed metadata chips.");
 assert.match(app, /function metricActionLabel/, "Dashboard cards should expose clearer action labels.");
+assert.match(app, /const managerActionCount = actionCenterCountForRole\("manager"\)/, "Management dashboard focus count should use the Action Center queue count.");
+assert.match(app, /title:\s*`\$\{managerActionCount\} \$\{managerActionCount === 1 \? "action" : "actions"\} in queue`/, "Operations Today should show the same action count as Action Center.");
+assert.match(app, /meta:\s*\[\s*\{\s*label:\s*`\$\{openMaintenance\} maintenance`,\s*page:\s*"maintenanceMgmt"\s*\},\s*\{\s*label:\s*`\$\{pendingRenewals\} renewals`,\s*page:\s*"renewalsMgmt"\s*\}\s*\]/, "Operations Today meta chips should route to maintenance and renewals.");
+assert.doesNotMatch(app, /"June snapshot"/, "Operations Today should not show the non-actionable June snapshot tag.");
+assert.match(app, /function renderFocusMetaItem\(item\)/, "Screen focus metadata should support actionable route chips.");
 assert.match(app, /actionStatus: "All"/, "Action Center should include a status filter.");
 assert.match(app, /actionType: "All"/, "Action Center should include a type filter.");
 assert.match(app, /actionSort: "Newest"/, "Action Center should include newest/oldest sorting.");
@@ -273,6 +278,8 @@ assert.match(styles, /\.action-group-waiting \.action-item-title,\s*\.action-gro
 assert.match(styles, /\.action-card-topline\s*\{[\s\S]*justify-content:\s*space-between/, "Action Center card header should reserve space for the dismiss control.");
 assert.match(styles, /\.action-dismiss\s*\{[\s\S]*width:\s*30px;[\s\S]*height:\s*30px/, "Message dismiss button should use a compact icon-button size.");
 assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Action Center status and unread labels should be aligned in a calmer top row.");
+assert.match(styles, /\.focus-meta span,\s*\.focus-meta button\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Screen focus route chips should keep the same calm tag surface.");
+assert.match(styles, /\.focus-meta button:hover\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Clickable screen focus chips should have a subtle hover state.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
 assert.match(styles, /\.quick-grid\.tenant-action-grid > \.quick-card:hover\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Tenant quick action hover state should resolve to a gray surface.");
@@ -321,6 +328,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-65/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-66/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

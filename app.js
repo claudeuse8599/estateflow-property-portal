@@ -2388,6 +2388,16 @@ function renderActionButtons(actions = [], className = "focus-actions") {
   `;
 }
 
+function renderFocusMetaItem(item) {
+  if (typeof item === "string") return `<span>${escapeHtml(item)}</span>`;
+  const label = item?.label || "";
+  if (!label) return "";
+  if (item.page) {
+    return `<button type="button" data-page="${escapeHtml(item.page)}">${escapeHtml(label)}</button>`;
+  }
+  return `<span>${escapeHtml(label)}</span>`;
+}
+
 function pageFocus() {
   if (state.role === "tenant") {
     const profile = state.data.tenant.profile;
@@ -2464,10 +2474,13 @@ function pageFocus() {
   const map = {
     dashboard: {
       eyebrow: "Operations today",
-      title: `${pendingPayments + openMaintenance + pendingRenewals} items need action`,
+      title: `${managerActionCount} ${managerActionCount === 1 ? "action" : "actions"} in queue`,
       body: "Review payments, maintenance, and renewals.",
       value: `${pendingPayments} payments`,
-      meta: [`${openMaintenance} maintenance`, `${pendingRenewals} renewals`, "June snapshot"],
+      meta: [
+        { label: `${openMaintenance} maintenance`, page: "maintenanceMgmt" },
+        { label: `${pendingRenewals} renewals`, page: "renewalsMgmt" }
+      ],
       actions: [
         { label: "Review payments", icon: "check", page: "chequeReview", variant: "primary" },
         { label: "Open maintenance", icon: "tool", page: "maintenanceMgmt", variant: "secondary" }
@@ -2570,7 +2583,7 @@ function renderScreenFocus() {
         <span class="focus-eyebrow">${escapeHtml(focus.eyebrow)}</span>
         <h2>${escapeHtml(focus.title)}</h2>
         ${focus.body ? `<p>${escapeHtml(focus.body)}</p>` : ""}
-        ${meta.length ? `<div class="focus-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
+        ${meta.length ? `<div class="focus-meta">${meta.map(renderFocusMetaItem).join("")}</div>` : ""}
       </div>
       <div class="screen-focus-side">
         <strong${valueClass}>${escapeHtml(focus.value)}</strong>

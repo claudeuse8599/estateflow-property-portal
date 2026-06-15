@@ -3514,16 +3514,28 @@ button,
   margin-top: 4px;
 }
 
-.focus-meta span {
+.focus-meta span,
+.focus-meta button {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
   padding: 6px 11px;
+  border: 0;
   border-radius: 999px;
   color: var(--muted);
   background: var(--surface-soft);
+  font: inherit;
   font-size: 12px;
   font-weight: 620;
+}
+
+.focus-meta button {
+  cursor: pointer;
+}
+
+.focus-meta button:hover {
+  color: var(--text);
+  background: var(--primary-soft);
 }
 
 .workload-summary {
