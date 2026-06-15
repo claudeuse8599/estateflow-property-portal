@@ -3158,6 +3158,38 @@ function renderTenantMaintenance() {
       </tr>
     `
   );
+  const complaintStatusSection = complaintRows.length
+    ? `
+      <div class="section-band maintenance-status-section complaint-status-section">
+        <div class="section-header">
+          <div>
+            <h2>Complaints</h2>
+            <p>Status of submitted complaints.</p>
+          </div>
+        </div>
+        ${table(["Complaint", "Supporting File", "Status", "Action"], complaintRows, {
+          emptyTitle: "No complaints filed",
+          emptyBody: "Submitted complaints will appear here."
+        })}
+      </div>
+    `
+    : "";
+  const suggestionStatusSection = suggestionRows.length
+    ? `
+      <div class="section-band maintenance-status-section suggestion-status-section">
+        <div class="section-header">
+          <div>
+            <h2>Suggestions</h2>
+            <p>Status of submitted suggestions.</p>
+          </div>
+        </div>
+        ${table(["Suggestion", "Status"], suggestionRows, {
+          emptyTitle: "No suggestions filed",
+          emptyBody: "Submitted suggestions will appear here."
+        })}
+      </div>
+    `
+    : "";
   const confirmed = state.confirmations.maintenance ? `<div class="confirmation">Request submitted.</div>` : "";
 
   return `
@@ -3214,68 +3246,42 @@ function renderTenantMaintenance() {
         ${table(["Issue", "Priority", "Date", "Status", "Action"], rows)}
       </section>
       <section class="layout-two maintenance-followup-grid">
-        <div class="maintenance-flow-column">
-          <div class="section-band maintenance-form-section">
-            <div class="section-header">
-              <div>
-                <h2>File Complaint</h2>
-                <p>Submit a complaint for management review.</p>
-              </div>
+        <div class="section-band maintenance-form-section maintenance-complaint-form-section">
+          <div class="section-header">
+            <div>
+              <h2>File Complaint</h2>
+              <p>Submit a complaint for management review.</p>
             </div>
-            <form class="form-grid maintenance-secondary-form" data-form="tenant-complaint">
-              <div class="field">
-                <label for="complaintText">Complaint</label>
-                <textarea id="complaintText" name="description">Noise complaint from nearby unit after midnight.</textarea>
-              </div>
-              <div class="field">
-                <label>Supporting file</label>
-                <div class="upload-box">Attach photo or document.</div>
-              </div>
-              <button class="button primary" type="submit">${buttonIcon("send")}Submit complaint</button>
-            </form>
           </div>
-          <div class="section-band maintenance-status-section complaint-status-section">
-            <div class="section-header">
-              <div>
-                <h2>Complaints</h2>
-                <p>Status of submitted complaints.</p>
-              </div>
+          <form class="form-grid maintenance-secondary-form" data-form="tenant-complaint">
+            <div class="field">
+              <label for="complaintText">Complaint</label>
+              <textarea id="complaintText" name="description">Noise complaint from nearby unit after midnight.</textarea>
             </div>
-            ${table(["Complaint", "Supporting File", "Status", "Action"], complaintRows, {
-              emptyTitle: "No complaints filed",
-              emptyBody: "Submitted complaints will appear here."
-            })}
-          </div>
+            <div class="field">
+              <label>Supporting file</label>
+              <div class="upload-box">Attach photo or document.</div>
+            </div>
+            <button class="button primary" type="submit">${buttonIcon("send")}Submit complaint</button>
+          </form>
         </div>
-        <div class="maintenance-flow-column">
-          <div class="section-band maintenance-form-section">
-            <div class="section-header">
-              <div>
-                <h2>File Suggestion</h2>
-                <p>Share an improvement idea.</p>
-              </div>
+        <div class="section-band maintenance-form-section maintenance-suggestion-form-section">
+          <div class="section-header">
+            <div>
+              <h2>File Suggestion</h2>
+              <p>Share an improvement idea.</p>
             </div>
-            <form class="form-grid maintenance-secondary-form" data-form="tenant-suggestion">
-              <div class="field">
-                <label for="suggestionText">Suggestion</label>
-                <textarea id="suggestionText" name="description">Add parcel pickup hours to the tenant portal.</textarea>
-              </div>
-              <button class="button primary" type="submit">${buttonIcon("send")}Submit suggestion</button>
-            </form>
           </div>
-          <div class="section-band maintenance-status-section suggestion-status-section">
-            <div class="section-header">
-              <div>
-                <h2>Suggestions</h2>
-                <p>Status of submitted suggestions.</p>
-              </div>
+          <form class="form-grid maintenance-secondary-form" data-form="tenant-suggestion">
+            <div class="field">
+              <label for="suggestionText">Suggestion</label>
+              <textarea id="suggestionText" name="description">Add parcel pickup hours to the tenant portal.</textarea>
             </div>
-            ${table(["Suggestion", "Status"], suggestionRows, {
-              emptyTitle: "No suggestions filed",
-              emptyBody: "Submitted suggestions will appear here."
-            })}
-          </div>
+            <button class="button primary" type="submit">${buttonIcon("send")}Submit suggestion</button>
+          </form>
         </div>
+        ${complaintStatusSection}
+        ${suggestionStatusSection}
       </section>
     </div>
   `;

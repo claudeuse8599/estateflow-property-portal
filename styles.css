@@ -4264,17 +4264,28 @@ th {
 }
 
 .maintenance-followup-grid {
-  align-items: start;
+  align-items: stretch;
   gap: var(--space-4);
 }
 
-.maintenance-flow-column {
-  display: grid;
-  gap: var(--space-3);
+.maintenance-form-section,
+.maintenance-status-section {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
+.complaint-status-section {
+  grid-column: 1;
+}
+
+.suggestion-status-section {
+  grid-column: 2;
+}
+
 .maintenance-secondary-form {
+  flex: 1;
+  align-content: start;
   gap: var(--space-3);
 }
 
@@ -4446,6 +4457,11 @@ td {
 
   .maintenance-form .button.primary {
     justify-self: start;
+  }
+
+  .complaint-status-section,
+  .suggestion-status-section {
+    grid-column: auto;
   }
 }
 
