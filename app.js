@@ -1101,9 +1101,12 @@ function markTenantRentPaid({ receipt = "REC-DEMO-0626", source = "Demo payment"
 
 function upsertManagerRenewalRequest() {
   const profile = tenantProfile();
+  const createdAt = new Date().toISOString();
   const existing = state.data.manager.renewals.find((row) => row.tenant === profile.name && row.unit === profile.unit);
   if (existing) {
     existing.status = "Pending";
+    existing.updatedAt = createdAt;
+    if (!existing.createdAt) existing.createdAt = createdAt;
     return existing;
   }
 
@@ -1115,7 +1118,9 @@ function upsertManagerRenewalRequest() {
     endDate: profile.contractEnd,
     currentRent: profile.rent,
     status: "Pending",
-    startDate: profile.contractStart
+    startDate: profile.contractStart,
+    createdAt,
+    updatedAt: createdAt
   };
   state.data.manager.renewals.unshift(renewal);
   return renewal;
@@ -1182,11 +1187,68 @@ function syncTenantContractRequestStatus(request) {
   if (tenantRequest) {
     tenantRequest.status = request.status;
     tenantRequest.decisionNote = request.decisionNote || "";
+    tenantRequest.updatedAt = request.updatedAt || new Date().toISOString();
   }
   if (request.requestType === "Contract Renewal") {
     profile.renewalStatus = request.status;
   }
   recordTenantActivity("Contract request updated", `${request.requestType} ${request.status.toLowerCase()}.`);
+}
+
+function contractRequestDisplayName(requestType) {
+  const labels = {
+    "Contract Cancellation": "Cancel Contract",
+    "Contract Amendment": "Amendment",
+    "Contract Change": "Amendment",
+    "Contract Renewal": "Renewal"
+  };
+  return labels[requestType] || String(requestType || "Contract").replace(/^Contract\s+/i, "");
+}
+
+function contractRequestSubmittedTitle(requestType) {
+  const name = contractRequestDisplayName(requestType);
+  return `${name} Request Submitted`;
+}
+
+function activeTenantRenewalRequest(profile) {
+  const renewal = state.data.manager.renewals.find((row) => row.tenant === profile.name && row.unit === profile.unit);
+  const hasTenantInitiatedRenewal = Boolean(renewal?.createdAt || state.confirmations.renewal || profile.renewalStatus !== "Pending");
+  if (renewal?.status === "Pending" && !hasTenantInitiatedRenewal) return null;
+  if (!renewal && profile.renewalStatus === "Pending" && !state.confirmations.renewal) return null;
+  return {
+    requestType: "Contract Renewal",
+    status: renewal?.status || profile.renewalStatus || "Submitted",
+    createdAt: renewal?.createdAt || "",
+    updatedAt: renewal?.updatedAt || "",
+    summaryStatus: profile.renewalStatus === "Pending" ? "Submitted" : profile.renewalStatus
+  };
+}
+
+function latestTenantContractRequest(profile) {
+  const renewal = activeTenantRenewalRequest(profile);
+  const contract = state.data.tenant.contractRequests.find((row) => row.tenant === profile.name && row.unit === profile.unit);
+  if (!renewal) return contract || null;
+  if (!contract) return renewal;
+
+  const renewalTime = Date.parse(renewal.updatedAt || renewal.createdAt || "") || 0;
+  const contractTime = Date.parse(contract.updatedAt || contract.createdAt || "") || 0;
+  return contractTime >= renewalTime ? contract : renewal;
+}
+
+function requestTimelineStatuses(request) {
+  const status = request?.status || "Pending";
+  const finalStatus = ["Approved", "Rejected"].includes(status) ? status : "Pending";
+  const reviewStatus = finalStatus !== "Pending"
+    ? "Completed"
+    : status === "Info Requested"
+      ? "Info Requested"
+      : "In Review";
+
+  return {
+    submitted: "Submitted",
+    review: reviewStatus,
+    decision: finalStatus
+  };
 }
 
 function syncTenantComplaintStatus(complaint) {
@@ -2727,6 +2789,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "approve-renewal" && source) {
     source.status = "Approved";
+    source.updatedAt = new Date().toISOString();
     syncTenantRenewalStatus(source);
     setActionStatus(item, "Approved", "manager", "Renewal approved", "Renewal request approved.");
     saveData();
@@ -2737,6 +2800,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "reject-renewal" && source) {
     source.status = "Rejected";
+    source.updatedAt = new Date().toISOString();
     syncTenantRenewalStatus(source);
     setActionStatus(item, "Rejected", "manager", "Renewal rejected", "Renewal request rejected.");
     saveData();
@@ -2747,6 +2811,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "request-renewal-info") {
     if (source) source.status = "In Review";
+    if (source) source.updatedAt = new Date().toISOString();
     updateTenantRenewalForInfoRequest(item, "Company requested renewal clarification.");
     setActionStatus(item, "Info Requested", "manager", "More info requested", "Tenant must clarify renewal details.");
     saveData();
@@ -2757,6 +2822,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "approve-contract" && source) {
     source.status = "Approved";
+    source.updatedAt = new Date().toISOString();
     source.decisionNote = "Contract request approved.";
     syncTenantContractRequestStatus(source);
     setActionStatus(item, "Approved", "manager", "Contract request approved", source.requestType);
@@ -2768,6 +2834,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "reject-contract" && source) {
     source.status = "Rejected";
+    source.updatedAt = new Date().toISOString();
     source.decisionNote = "Contract request rejected.";
     syncTenantContractRequestStatus(source);
     setActionStatus(item, "Rejected", "manager", "Contract request rejected", source.requestType);
@@ -2779,6 +2846,7 @@ function applyActionCenterCommand(itemId, command, options = {}) {
 
   if (command === "request-contract-info" && source) {
     source.status = "Info Requested";
+    source.updatedAt = new Date().toISOString();
     source.decisionNote = "Company requested more contract details.";
     syncTenantContractRequestStatus(source);
     setActionStatus(item, "Info Requested", "manager", "More info requested", "Tenant must clarify contract request details.");
@@ -3330,15 +3398,19 @@ function renderTenantMaintenance() {
 
 function renderTenantRenewal() {
   const profile = state.data.tenant.profile;
-  const confirmed = state.confirmations.renewal ? `<div class="confirmation">Renewal request submitted.</div>` : "";
-  const status = state.confirmations.renewal ? "Submitted" : profile.renewalStatus;
-  const hasRenewalTimeline = state.confirmations.renewal || profile.renewalStatus !== "Pending";
-  const renewalTimeline = hasRenewalTimeline
+  const latestRequest = latestTenantContractRequest(profile);
+  const status = latestRequest?.summaryStatus || latestRequest?.status || profile.renewalStatus;
+  const timelineStatuses = latestRequest ? requestTimelineStatuses(latestRequest) : null;
+  const isFinalDecision = ["Approved", "Rejected"].includes(timelineStatuses?.decision);
+  const requestName = latestRequest ? contractRequestDisplayName(latestRequest.requestType) : "Renewal";
+  const timelineHeading = latestRequest ? "Request Timeline" : "Renewal Timeline";
+  const timelineSubtitle = latestRequest ? `${requestName} status and decision.` : "Request status and decision.";
+  const renewalTimeline = latestRequest
     ? `
           <ul class="timeline">
-            <li class="timeline-item ${state.confirmations.renewal ? "done" : "current"}"><span class="timeline-marker">1</span><strong>Request submitted</strong>${badge(state.confirmations.renewal ? "Submitted" : profile.renewalStatus)}</li>
-            <li class="timeline-item ${state.confirmations.renewal ? "current" : ""}"><span class="timeline-marker">2</span><strong>Review</strong>${badge(state.confirmations.renewal ? "In Review" : "Pending")}</li>
-            <li class="timeline-item"><span class="timeline-marker">3</span><strong>Decision</strong>${badge("Pending")}</li>
+            <li class="timeline-item done"><span class="timeline-marker">1</span><strong>${escapeHtml(contractRequestSubmittedTitle(latestRequest.requestType))}</strong>${badge(timelineStatuses.submitted)}</li>
+            <li class="timeline-item ${isFinalDecision ? "done" : "current"}"><span class="timeline-marker">2</span><strong>Review</strong>${badge(timelineStatuses.review)}</li>
+            <li class="timeline-item ${isFinalDecision ? "current" : ""}"><span class="timeline-marker">3</span><strong>Decision</strong>${badge(timelineStatuses.decision)}</li>
           </ul>
         `
     : `
@@ -3368,28 +3440,26 @@ function renderTenantRenewal() {
               <p>Your tenancy summary.</p>
             </div>
           </div>
-          ${confirmed}
           <div class="detail-grid">
             <div class="detail-item"><span>Tenant name</span><strong>${escapeHtml(profile.name)}</strong></div>
             <div class="detail-item"><span>Unit</span><strong>${escapeHtml(profile.unit)}</strong></div>
             <div class="detail-item"><span>Start date</span><strong>${escapeHtml(profile.contractStart)}</strong></div>
             <div class="detail-item"><span>End date</span><strong>${escapeHtml(profile.contractEnd)}</strong></div>
             <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(profile.rent)}</strong></div>
-            <div class="detail-item"><span>Renewal status</span><strong>${badge(status)}</strong></div>
+            <div class="detail-item"><span>${latestRequest ? "Request status" : "Renewal status"}</span><strong>${badge(status)}</strong></div>
           </div>
           <div class="section-actions contract-action-row">
-            <button class="button secondary" type="button" data-action="view-doc" data-doc-title="Tenancy Contract" data-doc-owner="${escapeHtml(profile.name)}">${buttonIcon("file")}View Contract PDF</button>
             <button class="button primary" type="button" data-action="request-renewal">${buttonIcon("refresh")}Request Renewal</button>
+            <button class="button secondary" type="button" data-action="view-doc" data-doc-title="Tenancy Contract" data-doc-owner="${escapeHtml(profile.name)}">${buttonIcon("file")}View Contract PDF</button>
             <button class="button danger contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Cancellation">Cancel Contract</button>
             <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Amendment">Request Amendment</button>
-            <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Change">Request Change</button>
           </div>
         </div>
         <div class="section-band">
           <div class="section-header">
             <div>
-              <h2>Renewal Timeline</h2>
-              <p>Request status and decision.</p>
+              <h2>${timelineHeading}</h2>
+              <p>${escapeHtml(timelineSubtitle)}</p>
             </div>
           </div>
           ${renewalTimeline}
@@ -3399,7 +3469,7 @@ function renderTenantRenewal() {
         <div class="section-header">
           <div>
             <h2>Contract Requests</h2>
-            <p>Renewal, cancellation, amendment, and change requests.</p>
+            <p>Renewal, cancellation, and amendment requests.</p>
           </div>
         </div>
         ${table(["Type", "Details", "Status", "Notes"], requestRows, {
@@ -5019,7 +5089,8 @@ document.addEventListener("click", (event) => {
 
   if (action === "request-contract") {
     const profile = tenantProfile();
-    const requestType = actionButton.dataset.contractType || "Contract Change";
+    const requestType = actionButton.dataset.contractType || "Contract Amendment";
+    const createdAt = new Date().toISOString();
     const request = {
       id: nextId("contract"),
       tenant: profile.name,
@@ -5029,15 +5100,17 @@ document.addEventListener("click", (event) => {
       currentRent: profile.rent,
       notes: `${requestType} requested from tenant portal.`,
       status: "Pending",
-      createdAt: new Date().toISOString()
+      createdAt,
+      updatedAt: createdAt
     };
     state.data.tenant.contractRequests.unshift({ ...request });
     state.data.manager.contractRequests.unshift({ ...request });
     const item = ensureActionFromContractRequest(request);
-    setActionStatus(item, "Pending", "tenant", `${requestType} submitted`, request.notes);
+    const submittedTitle = contractRequestSubmittedTitle(requestType);
+    setActionStatus(item, "Pending", "tenant", submittedTitle, request.notes);
     recordTenantActivity("Contract request submitted", requestType);
     saveData();
-    showToast(`${requestType} submitted.`);
+    showToast(`${submittedTitle}.`);
     render();
     return;
   }
@@ -5131,6 +5204,7 @@ document.addEventListener("click", (event) => {
     const row = state.data.manager.renewals.find((item) => item.id === actionButton.dataset.id);
     if (row) {
       row.status = action === "approve-renewal" ? "Approved" : "Rejected";
+      row.updatedAt = new Date().toISOString();
       state.modal = null;
       syncTenantRenewalStatus(row);
       const item = ensureActionFromRenewal(row);
@@ -5176,6 +5250,7 @@ document.addEventListener("click", (event) => {
     const row = state.data.manager.contractRequests.find((item) => item.id === actionButton.dataset.id);
     if (row) {
       row.status = action === "approve-contract" ? "Approved" : "Rejected";
+      row.updatedAt = new Date().toISOString();
       row.decisionNote = action === "approve-contract" ? "Contract request approved." : "Contract request rejected.";
       state.modal = null;
       syncTenantContractRequestStatus(row);

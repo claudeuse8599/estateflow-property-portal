@@ -136,11 +136,16 @@ assert.match(app, /state\.pullToReset\.wheelSessionActive = false/, "Wheel pull-
 assert.match(app, /window\.addEventListener\("touchstart", handlePullResetTouchStart, \{ passive: true \}\)/, "Pull-to-reset should support touch start.");
 assert.match(app, /window\.addEventListener\("touchmove", handlePullResetTouchMove, \{ passive: false \}\)/, "Pull-to-reset should support cancellable touch movement.");
 assert.match(app, /window\.addEventListener\("wheel", handlePullResetWheel, \{ passive: false \}\)/, "Pull-to-reset should support cautious trackpad overscroll.");
-assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation\/amendment\/change requests should be available.");
+assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation and amendment requests should be available.");
 assert.match(app, /class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated button row.");
+assert.match(app, /class="section-actions contract-action-row"[\s\S]*data-action="request-renewal"[\s\S]*data-action="view-doc"/, "Request Renewal should appear before View Contract PDF.");
 assert.match(app, /button class="button danger contract-action-button"[^>]*Contract Cancellation/, "Cancel contract should render as a visible button.");
 assert.match(app, /button class="button secondary contract-action-button"[^>]*Contract Amendment/, "Contract amendment should render as a visible button.");
-assert.match(app, /const hasRenewalTimeline = state\.confirmations\.renewal \|\| profile\.renewalStatus !== "Pending"/, "Tenant renewal timeline should only show after a renewal request exists.");
+assert.doesNotMatch(app, />Request Change</, "Duplicate Request Change action should be removed from the Renewal page.");
+assert.match(app, /function latestTenantContractRequest/, "Tenant renewal timeline should use the latest request data.");
+assert.match(app, /function requestTimelineStatuses/, "Tenant renewal timeline badges should derive from request status.");
+assert.match(app, /"Contract Cancellation": "Cancel Contract"/, "Cancel contract timeline should show a request-specific submitted label.");
+assert.match(app, /"Contract Amendment": "Amendment"/, "Amendment timeline should show a request-specific submitted label.");
 assert.match(app, /Request renewal to view the timeline\./, "Tenant renewal timeline should show a clear empty state before request.");
 assert.match(app, /function ensureActionFromContractRequest/, "Contract requests should create Action Center items.");
 assert.match(app, /data-form="tenant-complaint"/, "Tenant complaints should be submittable.");
@@ -268,6 +273,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-50/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-51/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
