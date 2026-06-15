@@ -13,7 +13,6 @@ const expectedPages = [
   "dashboard",
   "actionCenter",
   "rent",
-  "payments",
   "maintenance",
   "renewal",
   "documents",
@@ -98,7 +97,11 @@ assert.match(app, /Rent overdue - proof under review/, "Tenant dashboard should 
 assert.match(app, /rent-overview-facts/, "Tenant dashboard should group rent urgency and payment workflow inside one overview.");
 assert.match(app, /renderTenantRentOverview\(summary\)/, "Tenant dashboard should render the grouped rent overview in the main flow.");
 assert.match(app, /function tenantDashboardQuickActions/, "Tenant dashboard quick actions should be generated from payment state.");
-assert.match(app, /View proof/, "Payment proof under review should route to proof/status instead of asking for a new proof.");
+assert.doesNotMatch(app, /id: "payments"/, "Tenant Payment Proof should be removed from navigation.");
+assert.doesNotMatch(app, /case "payments"/, "Tenant Payment Proof route should be removed.");
+assert.doesNotMatch(app, /function renderTenantPayments/, "Tenant Payment Proof page should be removed.");
+assert.doesNotMatch(app, /data-page="payments"/, "No UI should route to the removed tenant Payment Proof page.");
+assert.doesNotMatch(app, /View proof/, "Tenant dashboard should not link to the removed proof page.");
 assert.doesNotMatch(app, /<strong>Submit Payment Proof<\/strong>/, "Tenant dashboard should not hard-code Submit Payment Proof when proof may already be under review.");
 assert.match(app, /data-form="card-payment"/, "Tenant card payment flow should collect demo card details.");
 assert.match(app, /showToast\("Payment successful\."\);\s+showToast\("Email sent\."\);/, "Card payment should show payment and email feedback.");
@@ -209,7 +212,7 @@ assert.match(app, /function metricActionLabel/, "Dashboard cards should expose c
 assert.match(app, /actionStatus: "All"/, "Action Center should include a status filter.");
 assert.match(app, /actionType: "All"/, "Action Center should include a type filter.");
 assert.match(app, /actionSort: "Newest"/, "Action Center should include newest/oldest sorting.");
-assert.match(app, /setActionStatus\(action, "Pending", "tenant", "Payment proof submitted"/, "Tenant payment proof should create a persisted action update.");
+assert.doesNotMatch(app, /data-form="tenant-payment"/, "Tenant payment proof form should be removed.");
 assert.match(app, /setActionStatus\(action, "New", "tenant", "Maintenance request submitted"/, "Tenant maintenance requests should create a persisted action update.");
 assert.match(app, /setActionStatus\(item, "Approved", "manager", "Payment approved"/, "Company payment approvals should update Action Center status.");
 assert.match(app, /setActionStatus\(item, "Acknowledged", "manager", "Request acknowledged"/, "Company maintenance acknowledgements should update Action Center status.");
@@ -315,6 +318,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-63/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-64/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

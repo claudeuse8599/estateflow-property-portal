@@ -204,7 +204,6 @@ const nav = {
     { id: "dashboard", label: "Dashboard", icon: "home", group: "Overview" },
     { id: "actionCenter", label: "Action Center", icon: "bell", group: "Overview" },
     { id: "rent", label: "Rent", icon: "wallet", group: "Money" },
-    { id: "payments", label: "Payment Proof", icon: "file", group: "Money" },
     { id: "maintenance", label: "Maintenance", icon: "tool", group: "Requests" },
     { id: "renewal", label: "Renewal", icon: "refresh", group: "Requests" },
     { id: "documents", label: "Documents", icon: "file", group: "Records" }
@@ -229,7 +228,6 @@ const pageMeta = {
     dashboard: ["Tenant Dashboard", "Rent, requests, renewals, and documents."],
     actionCenter: ["Action Center", "Review updates and complete next actions."],
     rent: ["Rent", "Check balance and payment status."],
-    payments: ["Payment Proof", "Submit payment proof for review."],
     maintenance: ["Maintenance", "Report an issue in a few fields."],
     renewal: ["Renewal", "Review terms and request renewal."],
     documents: ["Documents", "View contracts, IDs, cheques, and receipts."]
@@ -441,7 +439,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Proof needed",
       note: "Submit proof.",
       description: `${dueCopy}. Submit payment proof for company review.`,
-      action: { label: "Submit proof", icon: "file", page: "payments" },
+      action: { label: "Pay Rent", icon: "wallet", modal: "payRent" },
       activityTitle: "Payment proof needed",
       activityDetail: `Submit proof for ${rentCycle.amount}.`
     },
@@ -449,7 +447,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Proof submitted",
       note: "Waiting for review.",
       description: `${dueCopy}. Your proof has been submitted and is waiting for company review.`,
-      action: { label: "View proof", icon: "file", page: "payments" },
+      action: { label: "View rent", icon: "wallet", page: "rent" },
       activityTitle: "Payment proof submitted",
       activityDetail: "Waiting for company review."
     },
@@ -457,7 +455,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Payment proof under review",
       note: "Waiting for company review.",
       description: `${dueCopy}. Your proof is waiting for company review.`,
-      action: { label: "View proof", icon: "file", page: "payments" },
+      action: { label: "View rent", icon: "wallet", page: "rent" },
       activityTitle: "Payment proof submitted",
       activityDetail: "Waiting for company review."
     },
@@ -465,7 +463,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Cash visit requested",
       note: "Waiting for approval.",
       description: `${dueCopy}. Waiting for the company to approve your visit time.`,
-      action: { label: "View request", icon: "wallet", page: "payments" },
+      action: { label: "View rent", icon: "wallet", page: "rent" },
       activityTitle: "Cash visit requested",
       activityDetail: "Waiting for company approval."
     },
@@ -473,7 +471,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Cash visit approved",
       note: "Visit time approved.",
       description: `${dueCopy}. Visit the company at the approved time to complete payment.`,
-      action: { label: "View instructions", icon: "wallet", page: "payments" },
+      action: { label: "View rent", icon: "wallet", page: "rent" },
       activityTitle: "Cash visit approved",
       activityDetail: "Visit time approved by management."
     },
@@ -497,7 +495,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Payment rejected",
       note: "Action needed.",
       description: `${dueCopy}. The company rejected the payment proof. Submit updated details or choose another method.`,
-      action: { label: "Submit new proof", icon: "file", page: "payments" },
+      action: { label: "Pay Rent", icon: "wallet", modal: "payRent" },
       activityTitle: "Payment proof rejected",
       activityDetail: "Submit updated payment details."
     }
@@ -1004,8 +1002,8 @@ function sourceRowForAction(item) {
 
 function actionSourcePage(item) {
   const pages = {
-    "Rent Payment": state.role === "tenant" ? "payments" : "chequeReview",
-    "Cash Payment": state.role === "tenant" ? "payments" : "chequeReview",
+    "Rent Payment": state.role === "tenant" ? "rent" : "chequeReview",
+    "Cash Payment": state.role === "tenant" ? "rent" : "chequeReview",
     Maintenance: state.role === "tenant" ? "maintenance" : "maintenanceMgmt",
     "Contract Renewal": state.role === "tenant" ? "renewal" : "renewalsMgmt",
     "Contract Cancellation": state.role === "tenant" ? "renewal" : "renewalsMgmt",
@@ -1038,7 +1036,7 @@ function actionButtonsForItem(item) {
   if (state.role === "tenant") {
     const actions = [];
     if (item.type === "Rent Payment" || item.type === "Cash Payment") {
-      actions.push({ label: status === "Rejected" || status === "Info Requested" ? "Submit proof" : "View payment", page: "payments", variant: status === "Rejected" || status === "Info Requested" ? "primary" : "secondary" });
+      actions.push({ label: status === "Rejected" || status === "Info Requested" ? "Pay rent" : "View rent", page: "rent", variant: status === "Rejected" || status === "Info Requested" ? "primary" : "secondary" });
     } else if (item.type === "Maintenance") {
       actions.push({ label: status === "Info Requested" ? "Add details" : "View request", page: "maintenance", variant: status === "Info Requested" ? "primary" : "secondary" });
     } else if (item.type.startsWith("Contract")) {
@@ -1824,7 +1822,6 @@ function metricActionLabel(targetPage) {
   const labels = {
     actionCenter: "Open actions",
     rent: "View rent",
-    payments: "Submit proof",
     maintenance: "Open request",
     renewal: "View renewal",
     documents: "View files",
@@ -1889,7 +1886,7 @@ function notificationItems() {
         title: "Rent payment",
         detail: summary.dashboardState.body,
         status: summary.dashboardState.workflowLabel,
-        page: "payments"
+        page: "rent"
       },
       {
         title: "Maintenance",
@@ -2297,7 +2294,6 @@ function renderSidebar(profile) {
 
 function shortNavLabel(label) {
   const labels = {
-    "Payment Proof": "Payment",
     "Action Center": "Actions",
     "Maintenance": "Maintain",
     "Renewal": "Renewal",
@@ -2316,7 +2312,7 @@ function shortNavLabel(label) {
 
 function primaryMobileNavItems() {
   const primaryIds = state.role === "tenant"
-    ? ["dashboard", "actionCenter", "rent", "payments", "maintenance"]
+    ? ["dashboard", "actionCenter", "rent", "maintenance", "renewal"]
     : ["dashboard", "actionCenter", "tenants", "rentTracking", "maintenanceMgmt"];
   return nav[state.role].filter((item) => primaryIds.includes(item.id));
 }
@@ -2430,14 +2426,6 @@ function pageFocus() {
         value: summary.outstanding,
         meta: [summary.dashboardState.urgencyLabel, summary.receipt],
         actions: summary.isPaid ? [] : [{ ...summary.dashboardState.primaryAction, variant: "primary" }]
-      },
-      payments: {
-        eyebrow: "Proof review",
-        title: summary.dashboardState.workflowLabel,
-        body: summary.dashboardState.body,
-        value: summary.dashboardState.urgencyLabel,
-        meta: [summary.paymentNote, "No payment gateway"],
-        actions: []
       },
       maintenance: {
         eyebrow: "Maintenance",
@@ -3237,8 +3225,6 @@ function renderTenantPage() {
       return renderActionCenter();
     case "rent":
       return renderTenantRent();
-    case "payments":
-      return renderTenantPayments();
     case "maintenance":
       return renderTenantMaintenance();
     case "renewal":
@@ -3398,117 +3384,6 @@ function renderTenantRent() {
           </span>
         </div>
         ${table(["Month", "Amount", "Due Date", "Status", "Receipt"], rentRows)}
-      </section>
-    </div>
-  `;
-}
-
-function renderTenantPayments() {
-  const rows = state.data.tenant.paymentSubmissions.map(
-    (row) => `
-      <tr>
-        <td>${escapeHtml(row.type)}</td>
-        <td>${escapeHtml(row.amount)}</td>
-        <td>${escapeHtml(row.dueDate)}</td>
-        <td>${badge(row.status)}</td>
-        <td>${escapeHtml(row.submittedOn)}</td>
-      </tr>
-    `
-  );
-  const cashRows = state.data.tenant.cashRequests.map(
-    (row) => `
-      <tr>
-        <td>${escapeHtml(row.amount)}</td>
-        <td>${escapeHtml(row.preferredTime)}</td>
-        <td>${badge(row.status)}</td>
-        <td>${escapeHtml(row.decisionNote || row.notes || "Awaiting company review")}</td>
-      </tr>
-    `
-  );
-  const confirmed = state.confirmations.payment ? `<div class="confirmation">Payment proof submitted.</div>` : "";
-
-  return `
-    <div class="content-stack">
-      <section class="layout-two">
-        <div class="section-band">
-          <div class="section-header">
-            <div>
-              <h2>Submit Payment Proof</h2>
-              <p>Submit proof for management review. No payment is processed.</p>
-            </div>
-          </div>
-          ${confirmed}
-          <form class="form-grid" data-form="tenant-payment">
-            <div class="field">
-              <label for="paymentType">Payment type</label>
-              <select id="paymentType" name="paymentType">
-                <option>Cheque</option>
-                <option>Bank Transfer</option>
-                <option>Cash Deposit</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="chequeNumber">Cheque number</label>
-              <input id="chequeNumber" name="chequeNumber" value="CHQ-903112" />
-            </div>
-            <div class="field">
-              <label for="bankName">Bank name</label>
-              <input id="bankName" name="bankName" value="Emirates NBD" />
-            </div>
-            <div class="field">
-              <label for="amount">Amount</label>
-              <input id="amount" name="amount" value="AED 8,500" />
-            </div>
-            <div class="field">
-              <label for="dueDate">Due date</label>
-              <input id="dueDate" name="dueDate" type="date" value="2026-06-05" />
-            </div>
-            <div class="field">
-              <label>Upload proof</label>
-              <div class="upload-box">Upload receipt or cheque image.</div>
-            </div>
-            <div class="field">
-              <label for="notes">Notes</label>
-              <textarea id="notes" name="notes">June rent cheque copy attached.</textarea>
-            </div>
-            <button class="button primary" type="submit">${buttonIcon("send")}Submit proof</button>
-          </form>
-        </div>
-        <div class="section-band">
-          <div class="section-header">
-            <div>
-              <h2>Next Steps</h2>
-              <p>Management reviews and updates status.</p>
-            </div>
-          </div>
-          <ul class="timeline">
-            <li class="timeline-item done"><span class="timeline-marker">1</span><strong>Proof sent</strong>${badge("Submitted")}</li>
-            <li class="timeline-item current"><span class="timeline-marker">2</span><strong>Review</strong>${badge("In Review")}</li>
-            <li class="timeline-item"><span class="timeline-marker">3</span><strong>Decision</strong>${badge("Pending")}</li>
-          </ul>
-        </div>
-      </section>
-      <section class="section-band">
-        <div class="section-header">
-          <div>
-            <h2>Submission History</h2>
-            <p>Recent payment proof.</p>
-          </div>
-        </div>
-        ${table(["Type", "Amount", "Due Date", "Status", "Submitted On"], rows)}
-      </section>
-      <section class="section-band">
-        <div class="section-header">
-          <div>
-            <h2>Cash Visit Requests</h2>
-            <p>Visit requests sent to management.</p>
-          </div>
-          <button class="button secondary" type="button" data-modal="cashPayment">${buttonIcon("wallet")}Request cash visit</button>
-        </div>
-        ${table(["Amount", "Preferred Time", "Status", "Notes"], cashRows, {
-          emptyTitle: "No cash visit requests",
-          emptyBody: "Use Pay rent to request a cash visit time."
-        })}
       </section>
     </div>
   `;
@@ -5681,44 +5556,6 @@ document.addEventListener("submit", (event) => {
     ensureActionCenterData({ persist: true });
     renderAtTop();
     pushHistoryEntry();
-    return;
-  }
-
-  if (form.dataset.form === "tenant-payment") {
-    const formData = new FormData(form);
-    const profile = tenantProfile();
-    const dueDate = formatDateInput(formData.get("dueDate"));
-    const submission = {
-      type: formData.get("paymentType"),
-      amount: formData.get("amount"),
-      dueDate,
-      status: "Submitted",
-      submittedOn: "12 Jun 2026",
-      chequeNumber: formData.get("chequeNumber"),
-      bank: formData.get("bankName")
-    };
-    state.data.tenant.paymentSubmissions.unshift(submission);
-    const review = {
-      id: nextId("c"),
-      tenant: profile.name,
-      unit: profile.unit,
-      chequeNumber: submission.chequeNumber || "-",
-      bank: submission.bank || "-",
-      amount: submission.amount,
-      dueDate: submission.dueDate,
-      status: "Pending",
-      notes: formData.get("notes") || "Tenant submitted payment proof."
-    };
-    state.data.manager.chequeReviews.unshift(review);
-    setTenantCurrentRentStatus("Submitted", "Receipt pending");
-    setManagerRentStatus(profile.name, profile.unit, "Pending");
-    const action = ensureActionFromChequeReview(review);
-    setActionStatus(action, "Pending", "tenant", "Payment proof submitted", `${submission.amount} sent for company review.`);
-    recordTenantActivity("Payment proof sent", `${submission.amount} submitted for ${submission.dueDate}.`);
-    state.confirmations.payment = true;
-    saveData();
-    showToast("Payment proof submitted.");
-    render();
     return;
   }
 
