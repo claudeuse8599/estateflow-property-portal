@@ -36,17 +36,17 @@ function defaultFilters() {
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
 const PULL_RESET_TOP_TOLERANCE = 2;
-const PULL_RESET_START_DISTANCE = 52;
-const PULL_RESET_THRESHOLD = 190;
-const PULL_RESET_MAX_DISTANCE = 230;
+const PULL_RESET_START_DISTANCE = 80;
+const PULL_RESET_THRESHOLD = 280;
+const PULL_RESET_MAX_DISTANCE = 330;
 const PULL_RESET_COOLDOWN = 1200;
-const PULL_RESET_WHEEL_RELEASE_DELAY = 260;
-const PULL_RESET_WHEEL_IDLE_DELAY = 480;
-const PULL_RESET_TOP_STABILITY_MS = 420;
-const PULL_RESET_WHEEL_STEP_MAX = 18;
-const PULL_RESET_WHEEL_RESISTANCE = 0.26;
-const PULL_RESET_TOUCH_RESISTANCE = 0.72;
-const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.56;
+const PULL_RESET_WHEEL_RELEASE_DELAY = 320;
+const PULL_RESET_WHEEL_IDLE_DELAY = 1200;
+const PULL_RESET_TOP_STABILITY_MS = 1200;
+const PULL_RESET_WHEEL_STEP_MAX = 10;
+const PULL_RESET_WHEEL_RESISTANCE = 0.18;
+const PULL_RESET_TOUCH_RESISTANCE = 0.64;
+const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.42;
 
 const state = {
   auth: false,
@@ -5161,7 +5161,13 @@ function cancelPullToReset() {
 }
 
 function triggerPullToReset() {
-  if (state.pullToReset.isResetting || !state.pullToReset.isEligibleForPullReset) return;
+  const pull = state.pullToReset;
+  const now = Date.now();
+  if (pull.isResetting || !pull.isEligibleForPullReset) return;
+  if (!isAtPullResetStart() || now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) {
+    cancelPullToReset();
+    return;
+  }
   Object.assign(state.pullToReset, {
     phase: "refreshing",
     tracking: false,
@@ -5216,6 +5222,12 @@ function handlePullResetTouchMove(event) {
 
 function handlePullResetTouchEnd() {
   if (state.pullToReset.source === "touch") finishPullToReset();
+}
+
+function handlePullResetScroll() {
+  if (isAtPullResetStart()) return;
+  state.pullToReset.lastNonTopScrollTime = Date.now();
+  if (state.pullToReset.tracking) cancelPullToReset();
 }
 
 let pullResetWheelTimer = null;
@@ -5903,6 +5915,7 @@ window.addEventListener("touchstart", handlePullResetTouchStart, { passive: true
 window.addEventListener("touchmove", handlePullResetTouchMove, { passive: false });
 window.addEventListener("touchend", handlePullResetTouchEnd, { passive: true });
 window.addEventListener("touchcancel", cancelPullToReset, { passive: true });
+window.addEventListener("scroll", handlePullResetScroll, { passive: true });
 window.addEventListener("wheel", handlePullResetWheel, { passive: false });
 
 window.addEventListener("popstate", (event) => {
