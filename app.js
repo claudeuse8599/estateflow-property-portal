@@ -1274,6 +1274,70 @@ function getManagementQueueSummary() {
   };
 }
 
+function percentValue(value) {
+  return Number(String(value || "").replace(/[^\d.]/g, "")) || 0;
+}
+
+function getManagementDashboardSummary() {
+  const data = state.data.manager;
+  const rent = managerRentStats();
+  const properties = data.properties || [];
+  const totalUnits = properties.reduce((total, property) => total + (Number(property.units) || 0), 0);
+  const occupiedUnits = properties.reduce((total, property) => {
+    const units = Number(property.units) || 0;
+    return total + Math.round(units * (percentValue(property.occupancy) / 100));
+  }, 0);
+  const vacantUnits = Math.max(totalUnits - occupiedUnits, 0);
+  const activeMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed");
+  const maintenanceByStatus = {
+    New: data.maintenanceRequests.filter((row) => row.status === "New").length,
+    "In Progress": data.maintenanceRequests.filter((row) => row.status === "In Progress").length,
+    Scheduled: data.maintenanceRequests.filter((row) => row.status === "Scheduled").length,
+    Completed: data.maintenanceRequests.filter((row) => row.status === "Completed").length
+  };
+  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending");
+  const pendingDocuments = data.documents.filter((row) => row.status === "In Review");
+  const rentFollowUps = data.rentRows.filter((row) => row.status !== "Paid");
+
+  return {
+    tenants: {
+      total: data.tenants.length,
+      label: "Active lease records"
+    },
+    rent: {
+      collectedAmount: rent.paidAmount,
+      collectedCount: rent.paidRows.length,
+      pendingAmount: rent.pendingAmount + rent.lateAmount,
+      followUps: rentFollowUps,
+      cycleLabel: "This cycle"
+    },
+    maintenance: {
+      openCount: activeMaintenance.length,
+      byStatus: maintenanceByStatus
+    },
+    renewals: {
+      pendingCount: pendingRenewals.length
+    },
+    portfolio: {
+      totalProperties: properties.length,
+      totalUnits,
+      occupiedUnits,
+      vacantUnits
+    },
+    documents: {
+      pendingReviews: pendingDocuments.length
+    },
+    finance: {
+      rentalIncome: data.financial.income,
+      expenses: data.financial.expenses,
+      netIncome: data.financial.net,
+      operationalCosts: data.financial.operational,
+      timeframe: "This month"
+    },
+    updates: managerActivityItems()
+  };
+}
+
 function filteredActionItems() {
   const search = state.filters.actionSearch.toLowerCase().trim();
   const status = state.filters.actionStatus;
@@ -3922,21 +3986,23 @@ function renderManagementPriorityQueue(summary) {
   `;
 }
 
+function renderDashboardGroupHeader(label, copy, actions = []) {
+  return `
+    <div class="dashboard-group-header">
+      <div>
+        <span class="dashboard-section-label">${escapeHtml(label)}</span>
+        <p>${escapeHtml(copy)}</p>
+      </div>
+      ${actions.length ? renderActionButtons(actions, "inline-actions dashboard-group-actions") : ""}
+    </div>
+  `;
+}
+
 function renderManagerDashboard() {
-  const data = state.data.manager;
-  const rentStats = managerRentStats();
-  const activityItems = managerActivityItems();
   const queueSummary = getManagementQueueSummary();
-  const activeMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed");
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending");
-  const documentReviews = data.documents.filter((row) => row.status === "In Review").length;
-  const maintenanceCounts = {
-    New: data.maintenanceRequests.filter((row) => row.status === "New").length,
-    "In Progress": data.maintenanceRequests.filter((row) => row.status === "In Progress").length,
-    Scheduled: data.maintenanceRequests.filter((row) => row.status === "Scheduled").length,
-    Completed: data.maintenanceRequests.filter((row) => row.status === "Completed").length
-  };
-  const maintenanceTotal = Math.max(data.maintenanceRequests.length, 1);
+  const summary = getManagementDashboardSummary();
+  const maintenanceCounts = summary.maintenance.byStatus;
+  const maintenanceTotal = Math.max(Object.values(maintenanceCounts).reduce((total, count) => total + count, 0), 1);
   const maintenancePercent = (count) => Math.max(8, Math.round((count / maintenanceTotal) * 100));
   const actionsLabel = `${queueSummary.totalActions} ${queueSummary.totalActions === 1 ? "action" : "actions"}`;
   return `
@@ -3964,39 +4030,47 @@ function renderManagerDashboard() {
         </article>
       </section>
 
-      <section class="metric-grid dashboard-metrics insight-metrics">
-        ${metricCard("Total Tenants", "156", "Active leases", "users", "tenants")}
-        ${metricCard("Rent Collected", formatAed(rentStats.paidAmount), `${rentStats.paidRows.length} paid`, "wallet", "financial")}
-        ${metricCard("Pending Rent", formatAed(rentStats.pendingAmount + rentStats.lateAmount), "Follow up", "refresh", "rentTracking")}
-        ${metricCard("Open Maintenance", String(activeMaintenance.length), "Active requests", "tool", "maintenanceMgmt")}
-        ${metricCard("Pending Renewals", String(pendingRenewals.length), "Need decision", "file", "renewalsMgmt")}
-        ${metricCard("Total Properties", "4", "Managed portfolio", "building", "portfolio")}
+      <section class="dashboard-group">
+        ${renderDashboardGroupHeader("Operations Snapshot", "Key portfolio, rent, and request numbers for today.")}
+        <div class="metric-grid dashboard-metrics insight-metrics">
+          ${metricCard("Total Tenants", String(summary.tenants.total), summary.tenants.label, "users", "tenants", { actionLabel: "View tenants" })}
+          ${metricCard("Rent Collected", formatAed(summary.rent.collectedAmount), `${summary.rent.cycleLabel} · ${summary.rent.collectedCount} ${summary.rent.collectedCount === 1 ? "payment" : "payments"}`, "wallet", "financial", { actionLabel: "Open finance" })}
+          ${metricCard("Pending Rent", formatAed(summary.rent.pendingAmount), "Requires follow-up", "refresh", "rentTracking", { actionLabel: "Track rent" })}
+          ${metricCard("Open Maintenance", String(summary.maintenance.openCount), "Active requests", "tool", "maintenanceMgmt", { actionLabel: "Open queue" })}
+          ${metricCard("Pending Renewals", String(summary.renewals.pendingCount), "Awaiting decision", "file", "renewalsMgmt", { actionLabel: "Review renewals" })}
+          ${metricCard("Total Properties", String(summary.portfolio.totalProperties), "Current portfolio", "building", "portfolio", { actionLabel: "View portfolio" })}
+        </div>
       </section>
-      <section class="summary-strip" aria-label="Secondary dashboard links">
-        <button class="summary-link" type="button" data-page="portfolio">
-          <span>Occupied Units</span>
-          <strong>203</strong>
-        </button>
-        <button class="summary-link" type="button" data-page="portfolio">
-          <span>Vacant Units</span>
-          <strong>17</strong>
-        </button>
-        <button class="summary-link" type="button" data-page="docsMgmt">
-          <span>Document Reviews</span>
-          <strong>${documentReviews}</strong>
-        </button>
+
+      <section class="dashboard-group compact-dashboard-group">
+        ${renderDashboardGroupHeader("Portfolio and Documents", "Unit availability and pending document checks.")}
+        <div class="summary-strip" aria-label="Portfolio and document dashboard links">
+          <button class="summary-link" type="button" data-page="portfolio">
+            <span>Occupied Units</span>
+            <strong>${summary.portfolio.occupiedUnits}</strong>
+          </button>
+          <button class="summary-link" type="button" data-page="portfolio">
+            <span>Vacant Units</span>
+            <strong>${summary.portfolio.vacantUnits}</strong>
+          </button>
+          <button class="summary-link" type="button" data-page="docsMgmt">
+            <span>Document Reviews</span>
+            <strong>${summary.documents.pendingReviews} pending</strong>
+          </button>
+        </div>
       </section>
 
       <section class="layout-three">
         <div class="section-band">
           <div class="section-header">
             <div>
+              <span class="dashboard-section-label">Tenant Management</span>
               <h2>Latest Tenant Updates</h2>
               <p>Recent changes across rent, maintenance, and renewals.</p>
             </div>
           </div>
           <ul class="activity-list">
-            ${activityItems
+            ${summary.updates
               .map((item) => `<li class="activity-item"><span class="activity-dot"></span><div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></div><span>${escapeHtml(item.time)}</span></li>`)
               .join("")}
           </ul>
@@ -4004,13 +4078,13 @@ function renderManagerDashboard() {
         <div class="section-band">
           <div class="section-header">
             <div>
+              <span class="dashboard-section-label">Rent Management</span>
               <h2>Rent Follow-ups</h2>
               <p>Tenants with pending or late rent.</p>
             </div>
           </div>
           <ul class="activity-list">
-            ${data.rentRows
-              .filter((row) => row.status !== "Paid")
+            ${summary.rent.followUps
               .map((row) => `<li class="activity-item"><span class="activity-dot"></span><div><strong>${escapeHtml(row.tenant)}</strong><span>${escapeHtml(row.amount)} due ${escapeHtml(row.dueDate)}</span></div>${badgeSlot(row.status)}</li>`)
               .join("")}
           </ul>
@@ -4018,6 +4092,7 @@ function renderManagerDashboard() {
         <div class="section-band">
           <div class="section-header">
             <div>
+              <span class="dashboard-section-label">Operations Queue</span>
               <h2>Maintenance Status</h2>
               <p>Open work orders by current stage.</p>
             </div>
@@ -4034,15 +4109,17 @@ function renderManagerDashboard() {
       <section class="section-band">
         <div class="section-header">
           <div>
+            <span class="dashboard-section-label">Finance</span>
             <h2>Financial Snapshot</h2>
-            <p>Monthly operating view.</p>
+            <p>Monthly income, expense, and operating performance.</p>
           </div>
+          ${renderActionButtons([{ label: "Open finance", icon: "chart", page: "financial", variant: "secondary" }], "inline-actions dashboard-group-actions")}
         </div>
         <div class="metric-grid compact-metrics">
-          ${metricCard("Rental income", data.financial.income, "Collected and due", "chart", "financial")}
-          ${metricCard("Expenses", data.financial.expenses, "Service costs", "wallet", "financial")}
-          ${metricCard("Net income", data.financial.net, "After costs", "chart", "financial")}
-          ${metricCard("Operational costs", data.financial.operational, "Ops spend", "tool", "financial")}
+          ${metricCard("Rental income", summary.finance.rentalIncome, `${summary.finance.timeframe} · collected and due`, "chart")}
+          ${metricCard("Expenses", summary.finance.expenses, "Service costs", "wallet")}
+          ${metricCard("Net income", summary.finance.netIncome, "After costs", "chart")}
+          ${metricCard("Operational costs", summary.finance.operationalCosts, "Ops spend", "tool")}
         </div>
       </section>
     </div>

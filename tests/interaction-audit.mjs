@@ -210,6 +210,9 @@ assert.doesNotMatch(app, /Your requests, rent updates, messages, and company res
 assert.doesNotMatch(app, /meta:\s*\["Requests", "Payment updates", "Status history"\]/, "Tenant Action Center focus card should not reserve space for removed metadata chips.");
 assert.match(app, /function metricActionLabel/, "Dashboard cards should expose clearer action labels.");
 assert.match(app, /function getManagementQueueSummary\(\)/, "Management dashboard should use a shared queue summary helper.");
+assert.match(app, /function getManagementDashboardSummary\(\)/, "Management dashboard should use one shared summary helper for KPI, portfolio, document, and finance data.");
+assert.match(app, /occupiedUnits = properties\.reduce/, "Management portfolio occupancy should be derived from property data.");
+assert.match(app, /rentFollowUps = data\.rentRows\.filter\(\(row\) => row\.status !== "Paid"\)/, "Management rent follow-ups should exclude paid tenants.");
 assert.match(app, /totalActions:\s*attentionItems\.length/, "Management dashboard headline count should come from the Action Center attention queue.");
 assert.match(app, /categories:\s*activeCategories/, "Management dashboard category chips should use the shared queue summary.");
 assert.match(app, /priorityActions:\s*activeCategories\.slice\(0, 4\)/, "Management dashboard priority rows should use the same shared category data.");
@@ -217,6 +220,14 @@ assert.match(app, /renderManagementQueueChips\(queueSummary\)/, "Management dash
 assert.match(app, /renderManagementPriorityQueue\(queueSummary\)/, "Management dashboard should render one priority queue from shared data.");
 assert.match(app, /data-page="\$\{escapeHtml\(action\.page\)\}"/, "Management priority rows should navigate to the category page.");
 assert.match(app, /<h3>Actions that need priority<\/h3>/, "Management priority queue heading should use clearer priority-focused copy.");
+assert.match(app, /renderDashboardGroupHeader\("Operations Snapshot", "Key portfolio, rent, and request numbers for today\."\)/, "Management KPI row should have a clear operations grouping label.");
+assert.match(app, /renderDashboardGroupHeader\("Portfolio and Documents", "Unit availability and pending document checks\."\)/, "Management secondary strip should explain portfolio and document context.");
+assert.match(app, /dashboard-section-label">Tenant Management/, "Latest tenant updates should be labeled as tenant management.");
+assert.match(app, /dashboard-section-label">Rent Management/, "Rent follow-ups should be labeled as rent management.");
+assert.match(app, /dashboard-section-label">Operations Queue/, "Maintenance status should be labeled as operations queue.");
+assert.match(app, /dashboard-section-label">Finance/, "Financial snapshot should be labeled as finance.");
+assert.doesNotMatch(app, /metricCard\("Total Tenants", "156"/, "Management tenant KPI should not use the old hard-coded tenant total.");
+assert.match(app, /metricCard\("Rental income", summary\.finance\.rentalIncome, `\$\{summary\.finance\.timeframe\} · collected and due`, "chart"\)/, "Financial Snapshot should use one section-level finance action instead of repeated metric links.");
 assert.doesNotMatch(app, /Work that needs a response/, "Management dashboard should not repeat the old workload section heading.");
 assert.doesNotMatch(app, /Next company actions/, "Management dashboard should not keep a separate duplicate action list.");
 assert.doesNotMatch(app, /Payments awaiting review/, "Management dashboard should remove the repeated payment count card copy.");
@@ -289,6 +300,8 @@ assert.match(styles, /\.action-dismiss\s*\{[\s\S]*width:\s*30px;[\s\S]*height:\s
 assert.match(styles, /\.action-state-row\s*\{[\s\S]*display:\s*flex;[\s\S]*gap:\s*8px/, "Action Center status and unread labels should be aligned in a calmer top row.");
 assert.match(styles, /\.focus-meta span,\s*\.focus-meta button\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Screen focus route chips should keep the same calm tag surface.");
 assert.match(styles, /\.focus-meta button:hover\s*\{[\s\S]*background:\s*var\(--primary-soft\)/, "Clickable screen focus chips should have a subtle hover state.");
+assert.match(styles, /\.dashboard-group-header\s*\{[\s\S]*display:\s*flex;[\s\S]*justify-content:\s*space-between/, "Management dashboard group labels should align with optional section actions.");
+assert.match(styles, /\.dashboard-section-label\s*\{[\s\S]*text-transform:\s*uppercase/, "Management dashboard section labels should be compact and consistent.");
 assert.match(styles, /\.operations-chip-row\s*\{[\s\S]*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Management operations categories should use balanced route chips.");
 assert.match(styles, /\.manager-command-grid\s*\{[\s\S]*align-items:\s*stretch/, "Management command cards should stretch to matching heights.");
 assert.match(styles, /\.operations-summary-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, "Management summary actions should use equal-width dashboard buttons.");
@@ -352,6 +365,6 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /oneui2-20260615-71/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /oneui2-20260615-72/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");

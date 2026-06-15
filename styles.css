@@ -1086,6 +1086,50 @@ button:focus-visible {
   font-size: 14px;
 }
 
+.dashboard-group {
+  display: grid;
+  gap: 10px;
+}
+
+.compact-dashboard-group {
+  gap: 8px;
+}
+
+.dashboard-group-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-group-header p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.dashboard-section-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.dashboard-group-actions {
+  justify-content: flex-end;
+}
+
+.dashboard-group-actions .button {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
 .hero-card {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) auto;
@@ -5179,6 +5223,15 @@ td {
 
   .operations-chip-row {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-group-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-group-actions {
+    justify-content: flex-start;
   }
 
   .section-header {
