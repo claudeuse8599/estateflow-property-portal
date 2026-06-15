@@ -1223,6 +1223,224 @@ button:focus-visible {
   color: var(--apple-red-text);
 }
 
+.tenant-dashboard-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.tenant-rent-overview {
+  display: grid;
+  gap: 18px;
+  min-height: 260px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.tenant-rent-overview.metric-status-paid {
+  border-color: var(--apple-green-border);
+  background: var(--apple-green-soft);
+}
+
+.tenant-rent-overview.metric-status-warning {
+  border-color: var(--apple-orange-border);
+  background: var(--apple-orange-soft);
+}
+
+.tenant-rent-overview.metric-status-critical {
+  border-color: var(--apple-red-border);
+  background: var(--apple-red-soft);
+}
+
+.rent-overview-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.rent-overview-copy {
+  min-width: 0;
+}
+
+.rent-overview-label {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 680;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.tenant-rent-overview.metric-status-paid .rent-overview-label,
+.tenant-rent-overview.metric-status-paid h2,
+.tenant-rent-overview.metric-status-paid .rent-overview-amount strong {
+  color: var(--apple-green-text);
+}
+
+.tenant-rent-overview.metric-status-warning .rent-overview-label,
+.tenant-rent-overview.metric-status-warning h2,
+.tenant-rent-overview.metric-status-warning .rent-overview-amount strong {
+  color: var(--apple-orange-text);
+}
+
+.tenant-rent-overview.metric-status-critical .rent-overview-label,
+.tenant-rent-overview.metric-status-critical h2,
+.tenant-rent-overview.metric-status-critical .rent-overview-amount strong {
+  color: var(--apple-red-text);
+}
+
+.rent-overview-copy h2 {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 680;
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.rent-overview-copy p {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.rent-overview-amount {
+  display: grid;
+  gap: 3px;
+  min-width: 170px;
+  justify-items: end;
+  text-align: right;
+}
+
+.rent-overview-amount span,
+.rent-overview-facts strong,
+.tenant-status-card-top span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.rent-overview-amount strong {
+  color: var(--text);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 720;
+  line-height: 1.05;
+}
+
+.rent-overview-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rent-overview-facts span {
+  display: grid;
+  gap: 5px;
+  min-height: 68px;
+  align-content: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rent-overview-facts em {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.rent-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.tenant-secondary-status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.tenant-status-card {
+  display: grid;
+  gap: 12px;
+  min-height: 123px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.tenant-status-card:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-soft);
+}
+
+.tenant-status-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tenant-status-card .metric-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.tenant-status-card > strong {
+  display: block;
+  margin: 0;
+  font-size: clamp(22px, 2.1vw, 28px);
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.tenant-status-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.tenant-status-card em {
+  align-self: end;
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 680;
+  line-height: 1;
+}
+
 .hero-facts {
   display: flex;
   flex-wrap: wrap;
@@ -2260,6 +2478,14 @@ tbody tr:hover td {
 }
 
 @media (max-width: 1180px) {
+  .tenant-dashboard-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-secondary-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .metric-grid,
   .metric-grid.five,
   .metric-grid.dashboard-metrics,
@@ -2321,6 +2547,15 @@ tbody tr:hover td {
 
   .tenant-summary-facts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rent-overview-main {
+    grid-template-columns: 1fr;
+  }
+
+  .rent-overview-amount {
+    justify-items: start;
+    text-align: left;
   }
 
   .portal-layout {
@@ -2417,6 +2652,8 @@ tbody tr:hover td {
   .metric-grid.five,
   .metric-grid.dashboard-metrics,
   .metric-grid.compact-metrics,
+  .rent-overview-facts,
+  .tenant-secondary-status-grid,
   .quick-grid,
   .document-grid,
   .property-grid,
@@ -2466,6 +2703,7 @@ tbody tr:hover td {
   }
 
   .command-actions .button,
+  .rent-overview-actions .button,
   .top-actions .button,
   .top-actions .theme-toggle,
   .top-actions .profile-badge,

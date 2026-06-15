@@ -2637,6 +2637,50 @@ function tenantDashboardActivities(summary) {
   return [currentPaymentActivity, ...supportingItems].slice(0, 6);
 }
 
+function renderTenantRentOverview(summary) {
+  const rentState = summary.dashboardState;
+  const actions = [
+    { ...rentState.primaryAction, variant: "primary" },
+    ...(rentState.secondaryAction ? [{ ...rentState.secondaryAction, variant: "secondary" }] : [])
+  ];
+
+  return `
+    <article class="tenant-rent-overview ${escapeHtml(rentState.metricClass)}" aria-label="Primary rent overview">
+      <div class="rent-overview-main">
+        <div class="rent-overview-copy">
+          <span class="rent-overview-label">Rent overview</span>
+          <h2>${escapeHtml(rentState.title)}</h2>
+          <p>${escapeHtml(rentState.body)}</p>
+        </div>
+        <div class="rent-overview-amount">
+          <span>Amount</span>
+          <strong>${escapeHtml(summary.rent.amount)}</strong>
+        </div>
+      </div>
+      <div class="rent-overview-facts" aria-label="Rent details">
+        <span><strong>Cycle</strong><em>${escapeHtml(summary.rent.month)}</em></span>
+        <span><strong>Due date</strong><em>${escapeHtml(summary.rent.dueDate)}</em></span>
+        <span><strong>Status</strong><em>${escapeHtml(rentState.workflowLabel)}</em></span>
+      </div>
+      ${renderActionButtons(actions, "rent-overview-actions")}
+    </article>
+  `;
+}
+
+function renderTenantStatusCard(card) {
+  return `
+    <button class="tenant-status-card ${escapeHtml(card.className || "")}" type="button" data-page="${escapeHtml(card.page)}" aria-label="${escapeHtml(card.ariaLabel || card.title)}">
+      <div class="tenant-status-card-top">
+        <span>${escapeHtml(card.label)}</span>
+        ${metricIcon(card.icon)}
+      </div>
+      <strong>${escapeHtml(card.title)}</strong>
+      <p>${escapeHtml(card.detail)}</p>
+      <em>${escapeHtml(card.actionLabel)}</em>
+    </button>
+  `;
+}
+
 function table(headers, rows, options = {}) {
   const countLabel = options.countLabel || `${rows.length} ${rows.length === 1 ? "record" : "records"}`;
   const emptyTitle = options.emptyTitle || "No records found";
@@ -3170,7 +3214,27 @@ function renderTenantDashboard() {
   const quickActions = tenantDashboardQuickActions(summary);
   const activityItems = tenantDashboardActivities(summary);
   const contractHealth = contractHealthClass(profile.contractEnd);
-  const paymentHealth = paymentHealthClass(summary);
+  const secondaryCards = [
+    {
+      label: "Contract expiry",
+      title: profile.contractEnd,
+      detail: "Renewal available",
+      icon: "file",
+      page: "renewal",
+      actionLabel: "View renewal",
+      className: contractHealth,
+      ariaLabel: "Open contract renewal details"
+    },
+    {
+      label: "Maintenance status",
+      title: summary.maintenanceStatus,
+      detail: summary.maintenanceNote,
+      icon: "tool",
+      page: "maintenance",
+      actionLabel: "Open request",
+      ariaLabel: "Open maintenance request"
+    }
+  ];
   return `
     <div class="content-stack">
       <section class="tenant-summary-strip" aria-label="Tenant overview">
@@ -3197,13 +3261,11 @@ function renderTenantDashboard() {
         </div>
       </section>
 
-      <section class="metric-grid dashboard-metrics insight-metrics">
-        ${metricCard("Rent Amount", summary.rent.amount, summary.rent.month, "wallet", "rent")}
-        ${metricCard("Due Date", summary.rent.dueDate, rentState.urgencyNote, "file", "rent", paymentHealth ? { className: paymentHealth } : {})}
-        ${metricCard("Rent Urgency", rentState.urgencyLabel, rentState.body, "refresh", "rent", paymentHealth ? { className: paymentHealth } : {})}
-        ${metricCard("Payment Workflow", rentState.workflowLabel, rentState.workflowNote, "file", "payments", { ...(paymentHealth ? { className: paymentHealth } : {}), actionLabel: rentState.primaryAction.label })}
-        ${metricCard("Contract Expiry", profile.contractEnd, "Renewal available", "file", "renewal")}
-        ${metricCard("Maintenance Status", summary.maintenanceStatus, summary.maintenanceNote, "tool", "maintenance")}
+      <section class="tenant-dashboard-flow" aria-label="Tenant dashboard status">
+        ${renderTenantRentOverview(summary)}
+        <div class="tenant-secondary-status-grid">
+          ${secondaryCards.map(renderTenantStatusCard).join("")}
+        </div>
       </section>
 
       <div class="layout-two tenant-dashboard-lower">
