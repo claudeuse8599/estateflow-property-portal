@@ -4292,15 +4292,15 @@ function renderSidebar(profile) {
           .join("")}
       </nav>
       <div class="sidebar-footer">
+        ${renderSidebarAskAI()}
+        <div class="sidebar-actions">
+          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
+          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
+          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
+        </div>
         <div class="sidebar-note">
           <strong>Demo data</strong>
           <span>No live records</span>
-        </div>
-        ${renderSidebarAskAI()}
-        <div class="sidebar-actions">
-          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
-          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
-          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
         </div>
       </div>
     </aside>
