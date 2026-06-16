@@ -517,6 +517,8 @@ assert.match(styles, /--rent-orange-card-bg:\s*var\(--surface\)/, "Tenant warnin
 assert.match(styles, /--rent-red-card-bg:\s*var\(--surface\)/, "Tenant overdue rent card should keep a neutral surface while retaining red warning accents.");
 assert.match(styles, /\.tenant-rent-overview\.metric-status-paid\s*\{[\s\S]*--rent-card-accent:\s*var\(--apple-green\);[\s\S]*--rent-card-bg:\s*var\(--rent-green-card-bg\);[\s\S]*--rent-card-border:\s*var\(--apple-green-border\)/, "Tenant paid rent overview should use green rail and border without a green card fill.");
 assert.match(styles, /\.tenant-rent-overview\.metric-status-critical\s*\{[\s\S]*--rent-card-bg:\s*var\(--rent-red-card-bg\)/, "Tenant rent overview should keep refined status-color support for overdue states.");
+assert.match(styles, /\.tenant-rent-overview\.metric-status-critical\s*\{[\s\S]*border-color:\s*var\(--apple-red-border\)/, "Tenant overdue rent overview should keep its red border before hover.");
+assert.match(styles, /\.tenant-rent-overview\.metric-status-critical::after\s*\{[\s\S]*background:\s*var\(--apple-red\)/, "Tenant overdue rent overview should keep its red left rail before hover.");
 assert.match(styles, /\.tenant-rent-overview::after\s*\{[\s\S]*background:\s*var\(--rent-card-accent, transparent\)/, "Tenant rent overview should use a subtle status accent line.");
 assert.match(styles, /\.rent-overview-copy h2\s*\{[\s\S]*color:\s*var\(--text\)/, "Tenant rent overview title should remain primary text instead of status red.");
 assert.match(styles, /\.rent-overview-facts span\s*\{[\s\S]*min-height:\s*54px;[\s\S]*padding:\s*9px 12px/, "Tenant rent overview detail chips should stay compact.");
