@@ -1,19 +1,29 @@
+const lineIcon = (body) =>
+  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+
 const icon = {
-  home: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10.8 12 4l8 6.8V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-  wallet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7.5h15.5A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-14A2.5 2.5 0 0 1 3 17V6.5A2.5 2.5 0 0 1 5.5 4H18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M17 13h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
-  file: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5M9 13h6M9 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  tool: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20l-5-5 8.5-8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m6 15 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  refresh: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  users: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 20v-1.8c0-1.8-1.8-3.2-4-3.2s-4 1.4-4 3.2V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="9" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M20 20v-1.4c0-1.4-1.1-2.6-2.7-3M17 6.3a3 3 0 0 1 0 5.4M4 20v-1.4c0-1.4 1.1-2.6 2.7-3M7 6.3a3 3 0 0 0 0 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 16v-5M12 16V8M16 16v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  home: lineIcon('<path d="M4 10.6 12 4l8 6.6V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-9.4Z"/><path d="M9.5 21h5"/>'),
+  wallet: lineIcon('<rect x="3.5" y="6.5" width="17" height="12.5" rx="2.5"/><path d="M3.8 9.5h16.4"/><path d="M16.8 13h.01"/>'),
+  file: lineIcon('<path d="M7 3.75h6.25L18 8.5v11.75H7z"/><path d="M13 3.75V9h5"/><path d="M9.5 13h5"/><path d="M9.5 16.5h5"/>'),
+  tool: lineIcon('<rect x="3.5" y="8.25" width="17" height="10.5" rx="2.5"/><path d="M8.5 8.25V6.8A1.8 1.8 0 0 1 10.3 5h3.4a1.8 1.8 0 0 1 1.8 1.8v1.45"/><path d="M3.75 12.25h16.5"/><path d="M12 11.25v3"/>'),
+  refresh: lineIcon('<path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v5h-5"/>'),
+  users: lineIcon('<circle cx="12" cy="8.6" r="3.4"/><path d="M6.6 20a5.4 5.4 0 0 1 10.8 0"/><path d="M18.6 19a3.8 3.8 0 0 0-2.4-3.4"/><path d="M5.4 19a3.8 3.8 0 0 1 2.4-3.4"/>'),
+  chart: lineIcon('<path d="M4 19.5V5"/><path d="M4 19.5h16"/><path d="M8 16v-4"/><path d="M12 16V8"/><path d="M16 16v-6"/>'),
   building: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 21V4h9v17M14 9h5v12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h3M8 12h3M8 16h3M17 13h.01M17 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
-  bell: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 7-2 7-2 9h16c0-2-2-2-2-9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  sun: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2M12 19.2v2M4.5 4.5l1.4 1.4M18.1 18.1l1.4 1.4M2.8 12h2M19.2 12h2M4.5 19.5l1.4-1.4M18.1 5.9l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  moon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.3 15.4A8.4 8.4 0 0 1 8.6 3.7a8.8 8.8 0 1 0 11.7 11.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-  send: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-7 18-4-8-7-4 18-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-  search: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  check: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  close: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+  bell: lineIcon('<path d="M18 9.8a6 6 0 1 0-12 0c0 5.4-1.9 6.3-1.9 8.2h15.8c0-1.9-1.9-2.8-1.9-8.2Z"/><path d="M10 21h4"/>'),
+  sun: lineIcon('<circle cx="12" cy="12" r="4"/><path d="M12 2.8v2"/><path d="M12 19.2v2"/><path d="M4.5 4.5l1.4 1.4"/><path d="M18.1 18.1l1.4 1.4"/><path d="M2.8 12h2"/><path d="M19.2 12h2"/><path d="M4.5 19.5l1.4-1.4"/><path d="M18.1 5.9l1.4-1.4"/>'),
+  moon: lineIcon('<path d="M20.2 15.2A8.2 8.2 0 0 1 8.8 3.8a8.8 8.8 0 1 0 11.4 11.4Z"/>'),
+  compose: lineIcon('<path d="M12 5H6.8A2.8 2.8 0 0 0 4 7.8v9.4A2.8 2.8 0 0 0 6.8 20h9.4a2.8 2.8 0 0 0 2.8-2.8V12"/><path d="M15.4 4.9 19.1 8.6 11 16.7H7.3V13z"/>'),
+  send: lineIcon('<path d="m21 3.5-7.3 17-3.2-7-7-3.2z"/><path d="m10.5 13.5 4.1-4.1"/>'),
+  plus: lineIcon('<path d="M12 5v14"/><path d="M5 12h14"/>'),
+  mic: lineIcon('<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M9 21h6"/>'),
+  waveform: lineIcon('<path d="M5 10v4"/><path d="M9 6.5v11"/><path d="M13 9v6"/><path d="M17 5v14"/><path d="M21 10v4"/>'),
+  search: lineIcon('<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'),
+  check: lineIcon('<path d="m5 12 4.2 4.2L19 6.5"/>'),
+  download: lineIcon('<path d="M12 4v10.5"/><path d="m7.5 10 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/>'),
+  expand: lineIcon('<path d="M8.5 4H4v4.5"/><path d="M15.5 4H20v4.5"/><path d="M8.5 20H4v-4.5"/><path d="M15.5 20H20v-4.5"/><path d="m4 4 5.5 5.5"/><path d="M20 4 14.5 9.5"/><path d="m4 20 5.5-5.5"/><path d="m20 20-5.5-5.5"/>'),
+  collapse: lineIcon('<path d="M10 4v6H4"/><path d="M14 4v6h6"/><path d="M10 20v-6H4"/><path d="M14 20v-6h6"/>'),
+  close: lineIcon('<path d="m6 6 12 12"/><path d="M18 6 6 18"/>')
 };
 
 function defaultFilters() {
@@ -29,12 +39,22 @@ function defaultFilters() {
     actionStatus: "All",
     actionType: "All",
     actionSort: "Newest",
-    rentHistoryView: "Recent"
+    portfolioView: "summary",
+    portfolioMapFilter: "All",
+    portfolioCity: "All",
+    portfolioSelectedPropertyId: "",
+    portfolioMapZoom: "1"
   };
 }
 
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
+const ASK_AI_MESSAGE_LIMIT = 24;
+const ASK_AI_SESSION_LIMIT = 12;
+const ASK_AI_TYPING_DELAY = 720;
+const ACTIVITY_FEED_PREVIEW_LIMIT = 6;
+const ACTIVITY_STORE_LIMIT = 40;
+const CONTRACT_REQUEST_PREVIEW_LIMIT = 3;
 const PULL_RESET_TOP_TOLERANCE = 2;
 const PULL_RESET_START_DISTANCE = 80;
 const PULL_RESET_THRESHOLD = 280;
@@ -47,6 +67,17 @@ const PULL_RESET_WHEEL_STEP_MAX = 10;
 const PULL_RESET_WHEEL_RESISTANCE = 0.18;
 const PULL_RESET_TOUCH_RESISTANCE = 0.64;
 const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.42;
+const PORTFOLIO_MAP_CENTER = [24.65, 54.78];
+const PORTFOLIO_MAP_DEFAULT_ZOOM = 7;
+const PORTFOLIO_MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const PORTFOLIO_MAP_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const PORTFOLIO_MAP_COLORS = {
+  success: "#34c759",
+  warning: "#ff9500",
+  danger: "#ff3b30",
+  info: "#007aff",
+  neutral: "#6e6e73"
+};
 
 const state = {
   auth: false,
@@ -58,6 +89,19 @@ const state = {
   filters: defaultFilters(),
   confirmations: {},
   notificationPanelOpen: false,
+  notificationClearedIds: [],
+  askAI: {
+    isOpen: false,
+    messages: [],
+    inputValue: "",
+    isTyping: false,
+    error: null,
+    isExpanded: false,
+    activationState: "idle",
+    sessions: [],
+    activeSessionId: "",
+    search: ""
+  },
   pullToReset: {
     phase: "idle",
     tracking: false,
@@ -79,6 +123,11 @@ const state = {
   sequence: 0,
   data: {}
 };
+
+let lastFocusedElement = null;
+let portfolioLeafletMap = null;
+let portfolioLeafletMarkerLayer = null;
+let askAIScrollLockY = 0;
 
 const seedData = {
   tenant: {
@@ -184,10 +233,90 @@ const seedData = {
     complaints: [],
     suggestions: [],
     properties: [
-      { name: "Marina Heights Residence", location: "Dubai Marina", units: 84, occupancy: "96%", income: "AED 714,000", status: "Occupied", maintenance: "2 open requests" },
-      { name: "Palm View Tower", location: "Palm Jumeirah", units: 58, occupancy: "91%", income: "AED 498,000", status: "Occupied", maintenance: "1 scheduled" },
-      { name: "Creekside Court", location: "Dubai Creek Harbour", units: 42, occupancy: "88%", income: "AED 289,800", status: "Occupied", maintenance: "3 open requests" },
-      { name: "Jumeirah Garden Homes", location: "Jumeirah Village Circle", units: 36, occupancy: "83%", income: "AED 208,800", status: "Vacant", maintenance: "Ready for leasing" }
+      {
+        id: "p1",
+        propertyName: "Marina Heights Residence",
+        propertyType: "Apartment",
+        city: "Dubai",
+        area: "Dubai Marina",
+        address: "Marina Walk, Dubai Marina",
+        unitCount: 84,
+        occupiedUnits: 81,
+        vacantUnits: 3,
+        occupancyStatus: "occupied",
+        assetValue: 94000000,
+        monthlyRentPotential: 735000,
+        currentMonthlyRent: 714000,
+        latitude: 25.0800,
+        longitude: 55.1400,
+        notes: "Premium waterfront residential tower.",
+        maintenance: "2 open requests",
+        createdAt: "2026-01-01T09:00:00+04:00",
+        updatedAt: "2026-06-01T09:00:00+04:00"
+      },
+      {
+        id: "p2",
+        propertyName: "Downtown Executive Tower",
+        propertyType: "Mixed Use",
+        city: "Dubai",
+        area: "Downtown Dubai",
+        address: "Sheikh Mohammed bin Rashid Boulevard, Downtown Dubai",
+        unitCount: 58,
+        occupiedUnits: 55,
+        vacantUnits: 3,
+        occupancyStatus: "occupied",
+        assetValue: 72000000,
+        monthlyRentPotential: 520000,
+        currentMonthlyRent: 498000,
+        latitude: 25.1972,
+        longitude: 55.2744,
+        notes: "Executive tower near business and retail amenities.",
+        maintenance: "1 scheduled",
+        createdAt: "2026-01-01T09:00:00+04:00",
+        updatedAt: "2026-06-01T09:00:00+04:00"
+      },
+      {
+        id: "p3",
+        propertyName: "Saadiyat Garden Villas",
+        propertyType: "Villa",
+        city: "Abu Dhabi",
+        area: "Saadiyat Island",
+        address: "Saadiyat Island, Abu Dhabi",
+        unitCount: 42,
+        occupiedUnits: 34,
+        vacantUnits: 8,
+        occupancyStatus: "mixed",
+        assetValue: 56000000,
+        monthlyRentPotential: 320000,
+        currentMonthlyRent: 289800,
+        latitude: 24.5420,
+        longitude: 54.4350,
+        notes: "Villa community with near-term leasing availability.",
+        maintenance: "3 open requests",
+        createdAt: "2026-01-01T09:00:00+04:00",
+        updatedAt: "2026-06-01T09:00:00+04:00"
+      },
+      {
+        id: "p4",
+        propertyName: "Al Majaz Waterfront Apartments",
+        propertyType: "Apartment",
+        city: "Sharjah",
+        area: "Al Majaz",
+        address: "Al Majaz Waterfront, Sharjah",
+        unitCount: 36,
+        occupiedUnits: 18,
+        vacantUnits: 18,
+        occupancyStatus: "vacant",
+        assetValue: 26000000,
+        monthlyRentPotential: 225000,
+        currentMonthlyRent: 112500,
+        latitude: 25.3270,
+        longitude: 55.3920,
+        notes: "Leasing focus for the next operating cycle.",
+        maintenance: "Ready for leasing",
+        createdAt: "2026-01-01T09:00:00+04:00",
+        updatedAt: "2026-06-01T09:00:00+04:00"
+      }
     ],
     financial: {
       income: "AED 1.71M",
@@ -197,6 +326,253 @@ const seedData = {
       net: "AED 1.28M"
     }
   }
+};
+
+const SUPPLEMENTAL_TENANT_RECORDS = [
+  {
+    id: "t6",
+    fullName: "Priya Menon",
+    email: "priya.menon@example.com",
+    phone: "+971 50 774 1190",
+    nationality: "Indian",
+    idNumber: "784-1988-1122334-5",
+    propertyName: "Creekside Court",
+    unitNumber: "1102",
+    propertyAddress: "Dubai Creek Harbour",
+    parkingBay: "B2-18",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2026-02-01",
+    contractEndDate: "2027-01-31",
+    monthlyRent: 7400,
+    securityDeposit: 7400,
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "paid",
+    nextDueDate: "2026-07-05",
+    lastPaymentDate: "2026-06-04",
+    paymentMethod: "Bank Transfer",
+    pendingBalance: 0,
+    emergencyContactName: "Ravi Menon",
+    emergencyContactPhone: "+971 55 410 9920",
+    emergencyContactRelationship: "Spouse",
+    notes: "Prefers email updates.",
+    documentStatus: "Approved",
+    createdAt: "2026-02-01T08:30:00+04:00",
+    updatedAt: "2026-06-04T11:15:00+04:00"
+  },
+  {
+    id: "t7",
+    fullName: "Daniel Roberts",
+    email: "daniel.roberts@example.com",
+    phone: "+971 52 600 1442",
+    nationality: "British",
+    idNumber: "P-54882219",
+    propertyName: "Palm View Tower",
+    unitNumber: "1706",
+    propertyAddress: "Palm Jumeirah",
+    parkingBay: "P1-44",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2025-08-15",
+    contractEndDate: "2026-08-14",
+    monthlyRent: 10200,
+    securityDeposit: 10200,
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "due_soon",
+    nextDueDate: "2026-06-20",
+    lastPaymentDate: "2026-05-20",
+    paymentMethod: "Cheque",
+    pendingBalance: 10200,
+    emergencyContactName: "Maya Roberts",
+    emergencyContactPhone: "+971 50 820 1133",
+    emergencyContactRelationship: "Sister",
+    notes: "Cheque collection scheduled with concierge.",
+    documentStatus: "Uploaded",
+    createdAt: "2025-08-15T09:00:00+04:00",
+    updatedAt: "2026-06-10T09:20:00+04:00"
+  },
+  {
+    id: "t8",
+    fullName: "Fatima Noor",
+    email: "fatima.noor@example.com",
+    phone: "+971 56 332 7610",
+    nationality: "Emirati",
+    idNumber: "784-1992-7766554-1",
+    propertyName: "Jumeirah Garden Homes",
+    unitNumber: "118",
+    propertyAddress: "Jumeirah Village Circle",
+    parkingBay: "G-08",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2025-12-01",
+    contractEndDate: "2026-11-30",
+    monthlyRent: 6100,
+    securityDeposit: 6100,
+    contractStatus: "Active",
+    renewalStatus: "Pending",
+    rentPaymentStatus: "pending",
+    nextDueDate: "2026-06-12",
+    lastPaymentDate: "2026-05-12",
+    paymentMethod: "Bank Transfer",
+    pendingBalance: 6100,
+    emergencyContactName: "Hessa Noor",
+    emergencyContactPhone: "+971 50 221 4567",
+    emergencyContactRelationship: "Mother",
+    notes: "Renewal discussion requested for November.",
+    documentStatus: "In Review",
+    createdAt: "2025-12-01T10:00:00+04:00",
+    updatedAt: "2026-06-12T14:00:00+04:00"
+  },
+  {
+    id: "t9",
+    fullName: "Khalid Mansour",
+    email: "khalid.mansour@example.com",
+    phone: "+971 55 710 4455",
+    nationality: "Jordanian",
+    idNumber: "P-32994588",
+    propertyName: "Marina Heights Residence",
+    unitNumber: "2201",
+    propertyAddress: "Dubai Marina",
+    parkingBay: "M3-21",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2026-05-01",
+    contractEndDate: "2027-04-30",
+    monthlyRent: 11800,
+    securityDeposit: 11800,
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "paid",
+    nextDueDate: "2026-07-01",
+    lastPaymentDate: "2026-06-01",
+    paymentMethod: "Cheque",
+    pendingBalance: 0,
+    emergencyContactName: "Amina Mansour",
+    emergencyContactPhone: "+971 50 770 1414",
+    emergencyContactRelationship: "Spouse",
+    notes: "Premium unit tenant.",
+    documentStatus: "Approved",
+    createdAt: "2026-05-01T08:45:00+04:00",
+    updatedAt: "2026-06-01T13:10:00+04:00"
+  },
+  {
+    id: "t10",
+    fullName: "Mariam Ali",
+    email: "mariam.ali@example.com",
+    phone: "+971 52 980 3344",
+    nationality: "Lebanese",
+    idNumber: "784-1995-2244668-0",
+    propertyName: "Creekside Court",
+    unitNumber: "706",
+    propertyAddress: "Dubai Creek Harbour",
+    parkingBay: "B1-12",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2025-07-01",
+    contractEndDate: "2026-06-30",
+    monthlyRent: 6900,
+    securityDeposit: 6900,
+    contractStatus: "Expiring Soon",
+    renewalStatus: "Pending",
+    rentPaymentStatus: "overdue",
+    nextDueDate: "2026-06-01",
+    lastPaymentDate: "2026-05-01",
+    paymentMethod: "Cheque",
+    pendingBalance: 6900,
+    emergencyContactName: "Zaid Ali",
+    emergencyContactPhone: "+971 55 668 2190",
+    emergencyContactRelationship: "Brother",
+    notes: "Pending renewal and rent follow-up.",
+    documentStatus: "Uploaded",
+    createdAt: "2025-07-01T09:30:00+04:00",
+    updatedAt: "2026-06-14T09:10:00+04:00"
+  },
+  {
+    id: "t11",
+    fullName: "James Carter",
+    email: "james.carter@example.com",
+    phone: "+971 50 447 8002",
+    nationality: "American",
+    idNumber: "P-88441102",
+    propertyName: "Palm View Tower",
+    unitNumber: "302",
+    propertyAddress: "Palm Jumeirah",
+    parkingBay: "P2-07",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2026-03-10",
+    contractEndDate: "2027-03-09",
+    monthlyRent: 7800,
+    securityDeposit: 7800,
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "paid",
+    nextDueDate: "2026-07-10",
+    lastPaymentDate: "2026-06-10",
+    paymentMethod: "Card",
+    pendingBalance: 0,
+    emergencyContactName: "Laura Carter",
+    emergencyContactPhone: "+971 52 301 6671",
+    emergencyContactRelationship: "Spouse",
+    notes: "",
+    documentStatus: "Approved",
+    createdAt: "2026-03-10T10:20:00+04:00",
+    updatedAt: "2026-06-10T10:15:00+04:00"
+  },
+  {
+    id: "t12",
+    fullName: "Noor Haddad",
+    email: "noor.haddad@example.com",
+    phone: "+971 54 112 9008",
+    nationality: "Syrian",
+    idNumber: "P-66190027",
+    propertyName: "Jumeirah Garden Homes",
+    unitNumber: "224",
+    propertyAddress: "Jumeirah Village Circle",
+    parkingBay: "G-18",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2026-01-20",
+    contractEndDate: "2027-01-19",
+    monthlyRent: 5900,
+    securityDeposit: 5900,
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "pending",
+    nextDueDate: "2026-06-18",
+    lastPaymentDate: "2026-05-18",
+    paymentMethod: "Bank Transfer",
+    pendingBalance: 5900,
+    emergencyContactName: "Rana Haddad",
+    emergencyContactPhone: "+971 55 991 1020",
+    emergencyContactRelationship: "Sister",
+    notes: "Awaiting June transfer confirmation.",
+    documentStatus: "In Review",
+    createdAt: "2026-01-20T12:00:00+04:00",
+    updatedAt: "2026-06-13T16:30:00+04:00"
+  }
+];
+
+const PROPERTY_LOCATION_PRESETS = [
+  { label: "Dubai Marina", city: "Dubai", area: "Dubai Marina", address: "Dubai Marina, Dubai", latitude: 25.0800, longitude: 55.1400 },
+  { label: "Downtown Dubai", city: "Dubai", area: "Downtown Dubai", address: "Downtown Dubai, Dubai", latitude: 25.1972, longitude: 55.2744 },
+  { label: "Business Bay", city: "Dubai", area: "Business Bay", address: "Business Bay, Dubai", latitude: 25.1853, longitude: 55.2728 },
+  { label: "Jumeirah Village Circle", city: "Dubai", area: "Jumeirah Village Circle", address: "Jumeirah Village Circle, Dubai", latitude: 25.0600, longitude: 55.2040 },
+  { label: "Abu Dhabi Corniche", city: "Abu Dhabi", area: "Corniche", address: "Corniche Road, Abu Dhabi", latitude: 24.4764, longitude: 54.3705 },
+  { label: "Saadiyat Island", city: "Abu Dhabi", area: "Saadiyat Island", address: "Saadiyat Island, Abu Dhabi", latitude: 24.5420, longitude: 54.4350 },
+  { label: "Sharjah Al Majaz", city: "Sharjah", area: "Al Majaz", address: "Al Majaz Waterfront, Sharjah", latitude: 25.3270, longitude: 55.3920 }
+];
+
+const LEGACY_PROPERTY_PRESETS = {
+  "Marina Heights Residence": PROPERTY_LOCATION_PRESETS[0],
+  "Palm View Tower": { label: "Palm Jumeirah", city: "Dubai", area: "Palm Jumeirah", address: "Palm Jumeirah, Dubai", latitude: 25.1124, longitude: 55.1390 },
+  "Creekside Court": { label: "Dubai Creek Harbour", city: "Dubai", area: "Dubai Creek Harbour", address: "Dubai Creek Harbour, Dubai", latitude: 25.1970, longitude: 55.3490 },
+  "Jumeirah Garden Homes": PROPERTY_LOCATION_PRESETS[3],
+  "Downtown Executive Tower": PROPERTY_LOCATION_PRESETS[1],
+  "Saadiyat Garden Villas": PROPERTY_LOCATION_PRESETS[5],
+  "Al Majaz Waterfront Apartments": PROPERTY_LOCATION_PRESETS[6]
+};
+
+const UAE_MAP_BOUNDS = {
+  minLat: 22.4,
+  maxLat: 26.5,
+  minLng: 51.4,
+  maxLng: 56.7
 };
 
 const nav = {
@@ -223,6 +599,8 @@ const nav = {
   ]
 };
 
+const utilityPages = ["uiKit"];
+
 const pageMeta = {
   tenant: {
     dashboard: ["Tenant Dashboard", "Rent, requests, renewals, and documents."],
@@ -230,7 +608,8 @@ const pageMeta = {
     rent: ["Rent", "Check balance and payment status."],
     maintenance: ["Maintenance", "Report an issue in a few fields."],
     renewal: ["Renewal", "Review terms and request renewal."],
-    documents: ["Documents", "View contracts, IDs, cheques, and receipts."]
+    documents: ["Documents", "View contracts, IDs, cheques, and receipts."],
+    uiKit: ["UI Kit", "Reusable dashboard tokens, components, and states."]
   },
   manager: {
     dashboard: ["Management Dashboard", "Tenants, rent, renewals, and maintenance."],
@@ -243,12 +622,257 @@ const pageMeta = {
     docsMgmt: ["Documents", "Find tenant documents fast."],
     notifications: ["Notifications", "Send tenant updates."],
     financial: ["Finance", "Income, costs, and net position."],
-    portfolio: ["Portfolio", "Properties, occupancy, and income."]
+    portfolio: ["Portfolio", "Properties, occupancy, and income."],
+    uiKit: ["UI Kit", "Reusable dashboard tokens, components, and states."]
   }
 };
 
 function cloneData() {
   return JSON.parse(JSON.stringify(seedData));
+}
+
+function toDateInputValue(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const parsed = parseDemoDate(raw);
+  if (!parsed) return "";
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function displayDateValue(value) {
+  const date = toDateInputValue(value);
+  return date ? formatDateInput(date) : "";
+}
+
+function contractDateParts(row = {}) {
+  const [start = "", end = ""] = String(row.contract || "").split(/\s+-\s+/);
+  return {
+    start: toDateInputValue(row.contractStartDate || start),
+    end: toDateInputValue(row.contractEndDate || end)
+  };
+}
+
+function normalizeContractStatus(value, endDate) {
+  const direct = String(value || "").trim();
+  if (direct) return direct;
+  const daysRemaining = endDate ? daysUntilDate(displayDateValue(endDate)) : Number.POSITIVE_INFINITY;
+  if (daysRemaining < 0) return "Expired";
+  if (daysRemaining <= 30) return "Expiring Soon";
+  return "Active";
+}
+
+function normalizeRentPaymentStatus(value) {
+  const status = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (["paid", "approved", "confirmed"].includes(status)) return "paid";
+  if (["late", "overdue", "payment_overdue"].includes(status)) return "overdue";
+  if (["due_soon", "soon", "due"].includes(status)) return "due_soon";
+  if (["pending", "submitted", "in_review", "under_review"].includes(status)) return "pending";
+  return status || "pending";
+}
+
+function rentPaymentStatusLabel(value) {
+  const status = normalizeRentPaymentStatus(value);
+  const labels = {
+    paid: "Paid",
+    pending: "Pending",
+    overdue: "Overdue",
+    due_soon: "Due Soon"
+  };
+  return labels[status] || String(value || "Pending");
+}
+
+function rentRowStatusFromTenantStatus(value) {
+  const status = normalizeRentPaymentStatus(value);
+  if (status === "paid") return "Paid";
+  if (status === "overdue") return "Late";
+  return "Pending";
+}
+
+function occupancyStatusLabel(value) {
+  const status = String(value || "Occupied").trim();
+  if (!status) return "Occupied";
+  return status.charAt(0).toUpperCase() + status.slice(1).replaceAll("_", " ");
+}
+
+function defaultTenantCreatedAt(index = 0) {
+  return `2026-01-${String(Math.min(index + 1, 28)).padStart(2, "0")}T09:00:00+04:00`;
+}
+
+function normalizeTenantRecord(row = {}, index = 0) {
+  const dates = contractDateParts(row);
+  const fullName = String(row.fullName || row.name || "").trim() || `Tenant ${index + 1}`;
+  const propertyName = String(row.propertyName || row.property || "").trim();
+  const unitNumber = String(row.unitNumber || row.unit || "").trim();
+  const monthlyRent = amountNumber(row.monthlyRent ?? row.rent);
+  const securityDeposit = amountNumber(row.securityDeposit);
+  const pendingBalance = amountNumber(row.pendingBalance);
+  const rentPaymentStatus = normalizeRentPaymentStatus(row.rentPaymentStatus || row.rentStatus);
+  const createdAt = row.createdAt || defaultTenantCreatedAt(index);
+  const updatedAt = row.updatedAt || createdAt;
+  const contractStatus = normalizeContractStatus(row.contractStatus, dates.end);
+  const renewalStatus = String(row.renewalStatus || "Not Requested").trim();
+  const documentStatus = row.documentStatus || "Uploaded";
+
+  return {
+    ...row,
+    id: row.id || `tenant-${index + 1}-${unitNumber || fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    fullName,
+    name: fullName,
+    email: String(row.email || "").trim(),
+    phone: String(row.phone || "").trim(),
+    nationality: String(row.nationality || "").trim(),
+    idNumber: String(row.idNumber || row.emiratesId || "").trim(),
+    propertyName,
+    property: propertyName,
+    unitNumber,
+    unit: unitNumber,
+    propertyAddress: String(row.propertyAddress || "").trim(),
+    parkingBay: String(row.parkingBay || "").trim(),
+    occupancyStatus: occupancyStatusLabel(row.occupancyStatus),
+    contractStartDate: dates.start,
+    contractEndDate: dates.end,
+    contract: dates.start && dates.end ? `${formatDateInput(dates.start)} - ${formatDateInput(dates.end)}` : String(row.contract || ""),
+    monthlyRent,
+    rent: formatAed(monthlyRent),
+    securityDeposit,
+    contractStatus,
+    renewalStatus,
+    rentPaymentStatus,
+    rentStatus: rentPaymentStatusLabel(rentPaymentStatus),
+    nextDueDate: toDateInputValue(row.nextDueDate),
+    lastPaymentDate: toDateInputValue(row.lastPaymentDate),
+    paymentMethod: String(row.paymentMethod || "").trim(),
+    pendingBalance,
+    emergencyContactName: String(row.emergencyContactName || "").trim(),
+    emergencyContactPhone: String(row.emergencyContactPhone || "").trim(),
+    emergencyContactRelationship: String(row.emergencyContactRelationship || "").trim(),
+    notes: String(row.notes || "").trim(),
+    documentStatus,
+    cheque: row.cheque || row.paymentMethod || "-",
+    createdAt,
+    updatedAt
+  };
+}
+
+function ensureSeedTenantRecords(tenants) {
+  const records = Array.isArray(tenants) ? tenants.map(normalizeTenantRecord) : [];
+  const existingKeys = new Set(records.map((tenant) => `${tenant.id}|${tenant.email}|${tenant.unitNumber}`));
+  SUPPLEMENTAL_TENANT_RECORDS.forEach((seed, index) => {
+    const normalized = normalizeTenantRecord(seed, records.length + index);
+    const key = `${normalized.id}|${normalized.email}|${normalized.unitNumber}`;
+    if (!existingKeys.has(key) && !records.some((tenant) => tenant.id === normalized.id || (tenant.email && tenant.email === normalized.email))) {
+      records.push(normalized);
+      existingKeys.add(key);
+    }
+  });
+  return records;
+}
+
+function normalizeOccupancyStatus(value, occupiedUnits = 0, vacantUnits = 0) {
+  const status = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (["occupied", "vacant", "mixed"].includes(status)) return status;
+  if (status === "reserved") return "mixed";
+  if (status === "active") return "occupied";
+  if (occupiedUnits > 0 && vacantUnits > 0) return "mixed";
+  if (occupiedUnits > 0) return "occupied";
+  if (vacantUnits > 0) return "vacant";
+  return "mixed";
+}
+
+function propertyStatusLabel(status) {
+  const labels = {
+    occupied: "Occupied",
+    vacant: "Vacant",
+    mixed: "Mixed"
+  };
+  return labels[normalizeOccupancyStatus(status)] || "Mixed";
+}
+
+function propertyTypeLabel(value) {
+  const type = String(value || "Apartment").trim();
+  return type || "Apartment";
+}
+
+function normalizePropertyRecord(row = {}, index = 0) {
+  const name = String(row.propertyName || row.name || "").trim() || `Property ${index + 1}`;
+  const preset = LEGACY_PROPERTY_PRESETS[name] || PROPERTY_LOCATION_PRESETS.find((item) =>
+    [row.area, row.location, row.city].filter(Boolean).some((value) => String(value).toLowerCase().includes(item.area.toLowerCase()) || String(value).toLowerCase().includes(item.label.toLowerCase()))
+  ) || PROPERTY_LOCATION_PRESETS[0];
+  const unitCount = Number(row.unitCount ?? row.units) || 0;
+  const occupancyPercent = percentValue(row.occupancy);
+  const occupiedUnits = Number(row.occupiedUnits) || (occupancyPercent ? Math.round(unitCount * (occupancyPercent / 100)) : 0);
+  const vacantUnits = Number(row.vacantUnits) || Math.max(unitCount - occupiedUnits, 0);
+  const occupancyStatus = normalizeOccupancyStatus(row.occupancyStatus || row.status, occupiedUnits, vacantUnits);
+  const currentMonthlyRent = amountNumber(row.currentMonthlyRent ?? row.income);
+  const monthlyRentPotential = Number(row.monthlyRentPotential) || Math.max(currentMonthlyRent, unitCount * 8500);
+  const assetValue = amountNumber(row.assetValue) || Math.max(monthlyRentPotential * 130, unitCount * 650000);
+  const latitude = Number(row.latitude ?? preset.latitude);
+  const longitude = Number(row.longitude ?? preset.longitude);
+  const occupancy = unitCount ? `${Math.round((occupiedUnits / unitCount) * 100)}%` : "0%";
+  const city = String(row.city || preset.city || "").trim();
+  const area = String(row.area || row.location || preset.area || "").trim();
+
+  return {
+    ...row,
+    id: row.id || `property-${index + 1}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    propertyName: name,
+    name,
+    propertyType: propertyTypeLabel(row.propertyType),
+    city,
+    area,
+    address: String(row.address || preset.address || area || city).trim(),
+    location: area || city,
+    unitCount,
+    units: unitCount,
+    occupiedUnits,
+    vacantUnits,
+    occupancyStatus,
+    status: propertyStatusLabel(occupancyStatus),
+    occupancy,
+    assetValue,
+    monthlyRentPotential,
+    currentMonthlyRent,
+    income: formatAed(currentMonthlyRent),
+    latitude,
+    longitude,
+    notes: String(row.notes || "").trim(),
+    amenities: String(row.amenities || "").trim(),
+    maintenanceNotes: String(row.maintenanceNotes || "").trim(),
+    managementRemarks: String(row.managementRemarks || "").trim(),
+    maintenance: String(row.maintenance || "No open requests").trim(),
+    createdAt: row.createdAt || defaultTenantCreatedAt(index),
+    updatedAt: row.updatedAt || row.createdAt || defaultTenantCreatedAt(index)
+  };
+}
+
+function ensureSeedPropertyRecords(properties) {
+  if (!Array.isArray(properties) || !properties.length) {
+    return cloneData().manager.properties.map(normalizePropertyRecord);
+  }
+  return properties.map(normalizePropertyRecord);
+}
+
+function getPortfolioSummary(properties = state.data.manager.properties) {
+  const records = (properties || []).map(normalizePropertyRecord);
+  const sum = (key) => records.reduce((total, property) => total + (Number(property[key]) || 0), 0);
+  const occupiedProperties = records.filter((property) => property.occupancyStatus === "occupied" || property.occupiedUnits > 0).length;
+  const vacantProperties = records.filter((property) => property.occupancyStatus === "vacant" || property.vacantUnits > 0).length;
+
+  return {
+    totalProperties: records.length,
+    occupiedProperties,
+    vacantProperties,
+    totalUnits: sum("unitCount"),
+    occupiedUnits: sum("occupiedUnits"),
+    vacantUnits: sum("vacantUnits"),
+    totalAssetValue: sum("assetValue"),
+    currentMonthlyRent: sum("currentMonthlyRent"),
+    monthlyRentPotential: sum("monthlyRentPotential")
+  };
 }
 
 function normalizeData(data) {
@@ -279,9 +903,22 @@ function normalizeData(data) {
     ...(normalized.manager.financial || {})
   };
 
+  normalized.manager.tenants = ensureSeedTenantRecords(normalized.manager.tenants);
+  normalized.manager.properties = ensureSeedPropertyRecords(normalized.manager.properties);
+
+  normalized.manager.notifications.forEach((row, index) => {
+    if (!row.id) row.id = `msg-seed-${index + 1}`;
+  });
+
   normalized.tenant.maintenanceRequests.forEach((row, index) => {
     if (!row.id) row.id = `tm-${index + 1}`;
     if (!row.photo) row.photo = "Photo placeholder attached";
+  });
+
+  normalized.tenant.activities.forEach((row, index) => {
+    if (!row.id) row.id = `activity-seed-${index + 1}`;
+    if (!row.detail) row.detail = row.description || "";
+    if (!row.time) row.time = row.date || "Current";
   });
 
   if (!normalized.tenant.receipts.length) {
@@ -335,11 +972,333 @@ function saveData() {
   }
 }
 
+function askAIStorageRole(role = state.role) {
+  return role === "manager" ? "management" : "tenant";
+}
+
+function askAIStorageKey(role = state.role) {
+  return `estateflow-ask-ai-${askAIStorageRole(role)}-messages-v1`;
+}
+
+function askAISessionsStorageKey(role = state.role) {
+  return `askAI:${askAIStorageRole(role)}:sessions`;
+}
+
+function normalizeAskAIMessage(message = {}) {
+  return {
+    id: message.id || nextId("ai-message"),
+    role: message.role === "assistant" ? "assistant" : "user",
+    content: String(message.content || "").trim(),
+    createdAt: message.createdAt || new Date().toISOString(),
+    status: message.status || "sent"
+  };
+}
+
+function trimAskAIText(value, maxLength = 56) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}...` : text;
+}
+
+function askAIChatTitle(messages = []) {
+  const firstUserMessage = messages.find((message) => message.role === "user" && message.content)?.content;
+  return trimAskAIText(firstUserMessage, 48) || "New chat";
+}
+
+function askAIChatPreview(messages = []) {
+  const latest = [...messages].reverse().find((message) => message.content);
+  return trimAskAIText(latest?.content, 74) || "No messages yet.";
+}
+
+function askAISessionDateLabel(session = {}) {
+  const updatedAt = session.updatedAt || session.createdAt;
+  if (!updatedAt) return "Now";
+  const date = new Date(updatedAt);
+  if (Number.isNaN(date.getTime())) return "Now";
+  const today = new Date();
+  const isToday = date.toDateString() === today.toDateString();
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function createAskAISession(role = state.role, options = {}) {
+  const createdAt = options.createdAt || new Date().toISOString();
+  const messages = Array.isArray(options.messages)
+    ? options.messages.map(normalizeAskAIMessage).filter((message) => message.content).slice(-ASK_AI_MESSAGE_LIMIT)
+    : [];
+  return {
+    id: options.id || nextId("ai-chat"),
+    title: trimAskAIText(options.title, 48) || askAIChatTitle(messages),
+    role: askAIStorageRole(role),
+    messages,
+    inputValue: options.inputValue || "",
+    createdAt,
+    updatedAt: options.updatedAt || createdAt
+  };
+}
+
+function normalizeAskAISession(session = {}, role = state.role) {
+  const normalized = createAskAISession(role, session);
+  normalized.title = askAIChatTitle(normalized.messages);
+  normalized.updatedAt = session.updatedAt || normalized.updatedAt;
+  return normalized;
+}
+
+function loadLegacyAskAIMessages(role = state.role) {
+  try {
+    const raw = localStorage.getItem(askAIStorageKey(role));
+    if (!raw) return [];
+    const messages = JSON.parse(raw);
+    return Array.isArray(messages)
+      ? messages.map(normalizeAskAIMessage).filter((message) => message.content).slice(-ASK_AI_MESSAGE_LIMIT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadAskAISessions(role = state.role) {
+  try {
+    const raw = localStorage.getItem(askAISessionsStorageKey(role));
+    const sessions = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(sessions) && sessions.length) {
+      return sessions
+        .map((session) => normalizeAskAISession(session, role))
+        .slice(0, ASK_AI_SESSION_LIMIT);
+    }
+  } catch {
+    // Fall back to legacy storage below.
+  }
+
+  const legacyMessages = loadLegacyAskAIMessages(role);
+  return legacyMessages.length
+    ? [createAskAISession(role, { messages: legacyMessages, title: askAIChatTitle(legacyMessages) })]
+    : [];
+}
+
+function saveAskAISessions(role = state.role) {
+  try {
+    localStorage.setItem(
+      askAISessionsStorageKey(role),
+      JSON.stringify(state.askAI.sessions.slice(0, ASK_AI_SESSION_LIMIT))
+    );
+  } catch {
+    // Ask AI remains usable if browser storage is unavailable.
+  }
+}
+
+function activeAskAISession() {
+  return state.askAI.sessions.find((session) => session.id === state.askAI.activeSessionId)
+    || state.askAI.sessions[0]
+    || null;
+}
+
+function syncAskAIStateFromSession() {
+  const session = activeAskAISession();
+  state.askAI.activeSessionId = session?.id || "";
+  state.askAI.messages = session?.messages || [];
+  state.askAI.inputValue = session?.inputValue || "";
+}
+
+function moveAskAISessionToTop(session) {
+  if (!session) return;
+  state.askAI.sessions = [
+    session,
+    ...state.askAI.sessions.filter((item) => item.id !== session.id)
+  ].slice(0, ASK_AI_SESSION_LIMIT);
+}
+
+function persistActiveAskAISession(role = state.role) {
+  const session = activeAskAISession();
+  if (!session) return;
+  session.messages = state.askAI.messages
+    .map(normalizeAskAIMessage)
+    .filter((message) => message.content)
+    .slice(-ASK_AI_MESSAGE_LIMIT);
+  session.inputValue = state.askAI.inputValue;
+  session.title = askAIChatTitle(session.messages);
+  session.updatedAt = new Date().toISOString();
+  moveAskAISessionToTop(session);
+  state.askAI.activeSessionId = session.id;
+  saveAskAISessions(role);
+}
+
+function loadAskAIMessages(role = state.role) {
+  const sessions = loadAskAISessions(role);
+  return sessions[0]?.messages || [];
+}
+
+function saveAskAIMessages(role = state.role) {
+  persistActiveAskAISession(role);
+  try {
+    localStorage.setItem(
+      askAIStorageKey(role),
+      JSON.stringify(state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT))
+    );
+  } catch {
+    // Ask AI remains usable if browser storage is unavailable.
+  }
+}
+
+function ensureAskAIMessages(role = state.role) {
+  const sessions = loadAskAISessions(role);
+  state.askAI.sessions = sessions.length ? sessions : [createAskAISession(role)];
+  if (!state.askAI.activeSessionId || !state.askAI.sessions.some((session) => session.id === state.askAI.activeSessionId)) {
+    state.askAI.activeSessionId = state.askAI.sessions[0].id;
+  }
+  syncAskAIStateFromSession();
+  saveAskAISessions(role);
+}
+
+function selectAskAISession(sessionId) {
+  persistActiveAskAISession();
+  const session = state.askAI.sessions.find((item) => item.id === sessionId);
+  if (!session) return;
+  state.askAI.activeSessionId = session.id;
+  state.askAI.error = null;
+  state.askAI.isTyping = false;
+  syncAskAIStateFromSession();
+}
+
+function startNewAskAIChat() {
+  persistActiveAskAISession();
+  const session = createAskAISession(state.role, { title: "New chat" });
+  state.askAI.sessions = [session, ...state.askAI.sessions].slice(0, ASK_AI_SESSION_LIMIT);
+  state.askAI.activeSessionId = session.id;
+  state.askAI.messages = [];
+  state.askAI.inputValue = "";
+  state.askAI.error = null;
+  state.askAI.isTyping = false;
+  state.askAI.search = "";
+  saveAskAISessions();
+}
+
+function filteredAskAISessions() {
+  const query = state.askAI.search.trim().toLowerCase();
+  if (!query) return state.askAI.sessions;
+  return state.askAI.sessions.filter((session) => {
+    const firstUser = session.messages.find((message) => message.role === "user")?.content || "";
+    const latestAssistant = [...session.messages].reverse().find((message) => message.role === "assistant")?.content || "";
+    const haystack = [
+      session.title,
+      firstUser,
+      latestAssistant,
+      askAIChatPreview(session.messages),
+      askAISessionDateLabel(session)
+    ].join(" ").toLowerCase();
+    return haystack.includes(query);
+  });
+}
+
+function buildAskAIContext(message) {
+  const role = state.role || state.selectedRole;
+  const profile = role === "tenant" ? state.data.tenant?.profile : state.data.manager?.profile;
+  const pageMetaCopy = pageMeta[role]?.[state.page] || ["Dashboard", ""];
+  return {
+    message,
+    role,
+    pageContext: {
+      page: state.page,
+      title: pageMetaCopy[0],
+      subtitle: pageMetaCopy[1]
+    },
+    dashboardData: {
+      profile,
+      tenant: role === "tenant" ? tenantRentSummary() : null,
+      management: role === "manager" ? getManagementDashboardSummary() : null,
+      actionCount: actionCenterCountForRole(role)
+    },
+    history: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
+    conversationHistory: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
+    chatId: state.askAI.activeSessionId
+  };
+}
+
+function mockAskAIResponse({ role, pageContext }) {
+  const roleCopy = role === "manager"
+    ? "Ask AI is ready to help summarize actions, rent follow-ups, maintenance, renewals, and portfolio status once an API is connected."
+    : "Ask AI is ready to help with rent, maintenance, contracts, and receipts once an API is connected.";
+  return new Promise((resolve) => {
+    window.setTimeout(() => {
+      resolve({
+        id: nextId("ai"),
+        role: "assistant",
+        content: `${roleCopy} You are viewing ${pageContext.title}.`,
+        tone: "demo",
+        createdAt: new Date().toISOString()
+      });
+    }, ASK_AI_TYPING_DELAY);
+  });
+}
+
+// Future API integration point. Do not connect an API yet.
+async function askAI({ message, role, pageContext, dashboardData, history, conversationHistory, chatId }) {
+  return mockAskAIResponse({ message, role, pageContext, dashboardData, history, conversationHistory, chatId });
+}
+
 const storedSnapshot = loadStoredSnapshot();
 state.data = normalizeData(storedSnapshot?.data || cloneData());
 state.sequence = storedSnapshot?.sequence || 0;
 
 let toastCounter = 0;
+
+// Design-system rule: add new dashboard UI patterns here first, then use them on pages.
+const STATUS_VARIANT_MAP = {
+  active: "info",
+  approved: "success",
+  available: "success",
+  acknowledged: "warning",
+  assigned: "info",
+  canceled: "danger",
+  cancelled: "danger",
+  completed: "success",
+  dueSoon: "warning",
+  expiringSoon: "warning",
+  expired: "danger",
+  failed: "danger",
+  high: "danger",
+  infoRequested: "warning",
+  inProgress: "warning",
+  inReview: "warning",
+  late: "danger",
+  low: "neutral",
+  medium: "warning",
+  mixed: "info",
+  new: "danger",
+  occupied: "success",
+  open: "danger",
+  overdue: "danger",
+  paid: "success",
+  pending: "warning",
+  read: "info",
+  rejected: "danger",
+  scheduled: "warning",
+  sent: "info",
+  submitted: "warning",
+  success: "success",
+  underReview: "warning",
+  unread: "neutral",
+  uploaded: "neutral",
+  vacant: "warning"
+};
+
+const STATUS_LABELS = {
+  "Info Requested": "Needs Info",
+  dueSoon: "Due soon",
+  inProgress: "In Progress",
+  inReview: "In Review",
+  underReview: "Under Review"
+};
+
+const TOAST_VARIANT_COPY = {
+  success: { title: "Success", status: "status" },
+  warning: { title: "Warning", status: "status" },
+  error: { title: "Error", status: "alert" },
+  info: { title: "Info", status: "status" },
+  neutral: { title: "Update", status: "status" }
+};
 
 function nextId(prefix) {
   state.sequence += 1;
@@ -385,12 +1344,73 @@ function currentTenantPaymentSubmission() {
 function currentTenantCashRequest() {
   const rent = currentTenantRent();
   return state.data.tenant.cashRequests.find((row) =>
-    row.amount === rent.amount && row.dueDate === rent.dueDate && row.status !== "Rejected"
+    row.amount === rent.amount && row.dueDate === rent.dueDate && isOpenRequestStatus(row.status)
   ) || null;
 }
 
 function activeTenantMaintenance() {
-  return state.data.tenant.maintenanceRequests.find((row) => row.status !== "Completed");
+  return state.data.tenant.maintenanceRequests.find((row) => isActiveRepeatableRequest(row));
+}
+
+function normalizeRequestText(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function isResolvedRepeatableRequest(status) {
+  return ["approved", "rejected", "completed", "canceled", "cancelled", "resolved", "reviewed"].includes(normalizeRequestText(status));
+}
+
+function isActiveRepeatableRequest(row) {
+  return !isResolvedRepeatableRequest(row?.status);
+}
+
+function isOpenRequestStatus(status) {
+  return !["canceled", "cancelled", "rejected"].includes(normalizeRequestText(status));
+}
+
+function showDuplicateRequestToast(label) {
+  showToast(`${label} already submitted.`, { variant: "warning" });
+}
+
+function renewalRequestAlreadySubmitted(profile = tenantProfile()) {
+  const request = activeTenantRenewalRequest(profile);
+  return Boolean(request && isActiveRepeatableRequest(request));
+}
+
+function contractRequestAlreadySubmitted(requestType) {
+  const profile = tenantProfile();
+  return state.data.tenant.contractRequests.some((row) =>
+    row.tenant === profile.name &&
+    row.unit === profile.unit &&
+    row.requestType === requestType &&
+    isActiveRepeatableRequest(row)
+  );
+}
+
+function maintenanceRequestAlreadySubmitted(category, description) {
+  const categoryKey = normalizeRequestText(category);
+  const descriptionKey = normalizeRequestText(description);
+  return state.data.tenant.maintenanceRequests.some((row) =>
+    normalizeRequestText(row.category || row.issue) === categoryKey &&
+    normalizeRequestText(row.description) === descriptionKey &&
+    isActiveRepeatableRequest(row)
+  );
+}
+
+function complaintAlreadySubmitted(description) {
+  const descriptionKey = normalizeRequestText(description);
+  return state.data.tenant.complaints.some((row) =>
+    normalizeRequestText(row.description) === descriptionKey &&
+    isActiveRepeatableRequest(row)
+  );
+}
+
+function suggestionAlreadySubmitted(description) {
+  const descriptionKey = normalizeRequestText(description);
+  return state.data.tenant.suggestions.some((row) =>
+    normalizeRequestText(row.description) === descriptionKey &&
+    isActiveRepeatableRequest(row)
+  );
 }
 
 function normalizePaymentWorkflow({ rent, payment, cashRequest }) {
@@ -479,7 +1499,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Paid",
       note: "No dues.",
       description: "Payment confirmed for this rent cycle.",
-      action: { label: "View receipt", icon: "file", page: "rent" },
+      action: { label: "View receipt", icon: "file", modal: "receiptPreview" },
       activityTitle: "Rent paid",
       activityDetail: "Payment confirmed for this rent cycle."
     },
@@ -487,7 +1507,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       label: "Paid",
       note: "No dues.",
       description: "Payment confirmed for this rent cycle.",
-      action: { label: "View receipt", icon: "file", page: "rent" },
+      action: { label: "View receipt", icon: "file", modal: "receiptPreview" },
       activityTitle: "Rent paid",
       activityDetail: "Payment confirmed for this rent cycle."
     },
@@ -524,7 +1544,7 @@ function getRentDashboardState(rentCycle, today = new Date()) {
       body: "Payment is confirmed for this rent cycle.",
       label: "Paid",
       note: "No dues.",
-      action: { label: "View Receipt", icon: "file", page: "rent" },
+      action: { label: "View receipt", icon: "file", modal: "receiptPreview" },
       secondaryAction: null,
       activityTitle: "Rent paid",
       activityDetail: "Payment confirmed for this rent cycle."
@@ -669,7 +1689,11 @@ function setManagerRentStatus(tenantName, unit, status) {
 
   const tenant = state.data.manager.tenants.find((row) => row.name === tenantName && row.unit === unit);
   if (tenant) {
-    tenant.rentStatus = status;
+    tenant.rentPaymentStatus = normalizeRentPaymentStatus(status);
+    tenant.rentStatus = rentPaymentStatusLabel(status);
+    tenant.pendingBalance = tenant.rentPaymentStatus === "paid" ? 0 : amountNumber(tenant.rent || tenant.monthlyRent);
+    tenant.lastPaymentDate = tenant.rentPaymentStatus === "paid" ? toDateInputValue(new Date().toISOString().slice(0, 10)) : tenant.lastPaymentDate;
+    tenant.updatedAt = new Date().toISOString();
   }
 }
 
@@ -680,11 +1704,43 @@ function setTenantCurrentRentStatus(status, receipt = "Awaiting payment") {
 }
 
 function recordTenantActivity(title, detail) {
-  const activity = { title, detail, time: "Just now" };
-  state.data.tenant.activities = [
-    activity,
-    ...state.data.tenant.activities.filter((item) => item.title !== title || item.detail !== detail)
-  ].slice(0, 6);
+  const activity = {
+    id: nextId("activity"),
+    title,
+    detail,
+    time: "Just now",
+    createdAt: new Date().toISOString()
+  };
+  state.data.tenant.activities = [activity, ...state.data.tenant.activities].slice(0, ACTIVITY_STORE_LIMIT);
+}
+
+function activityTimestamp(item, now = Date.now()) {
+  const createdAt = new Date(item?.createdAt || "");
+  if (!Number.isNaN(createdAt.getTime())) return createdAt.getTime();
+
+  const value = String(item?.time || item?.date || "").trim();
+  const lowerValue = value.toLowerCase();
+  if (!value || lowerValue === "current") return 0;
+  if (lowerValue === "just now") return now;
+  if (lowerValue === "today") return now - 60 * 60 * 1000;
+  if (lowerValue === "yesterday") return now - 24 * 60 * 60 * 1000;
+
+  const daysAgo = lowerValue.match(/^(\d+)\s+days?\s+ago$/);
+  if (daysAgo) return now - Number(daysAgo[1]) * 24 * 60 * 60 * 1000;
+
+  const demoDate = parseDemoDate(value);
+  if (demoDate) return demoDate.getTime();
+
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? 0 : fallback.getTime();
+}
+
+function sortActivityItems(items) {
+  const now = Date.now();
+  return items
+    .map((item, index) => ({ ...item, sortTime: activityTimestamp(item, now), sortIndex: index }))
+    .sort((a, b) => b.sortTime - a.sortTime || a.sortIndex - b.sortIndex)
+    .map(({ sortTime, sortIndex, ...item }) => item);
 }
 
 function actionSourceId(kind, id) {
@@ -949,11 +2005,18 @@ function appendActionHistory(item, by, action, note) {
   item.history.push({ at: new Date().toISOString(), by, action, note });
 }
 
+function restoreClearedNotifications(...ids) {
+  const idSet = new Set(ids.filter(Boolean));
+  if (!idSet.size) return;
+  state.notificationClearedIds = (state.notificationClearedIds || []).filter((id) => !idSet.has(id));
+}
+
 function setActionStatus(item, status, byRole, action, note) {
   item.status = status;
   item.updatedAt = new Date().toISOString();
   item.updatedBy = byRole;
   item.readBy = [byRole];
+  if (byRole === "manager") restoreClearedNotifications(item.id);
   appendActionHistory(item, byRole === "manager" ? "Property Management" : tenantProfile().name, action, note);
 }
 
@@ -1174,11 +2237,10 @@ function countItemsByType(items, matcher) {
 }
 
 function getManagementQueueSummary() {
-  const data = state.data.manager;
   const attentionItems = managementActionItemsNeedingAttention();
-  const pendingPayments = data.chequeReviews.filter((row) => row.status === "Pending").length;
-  const openMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed").length;
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending").length;
+  const pendingPayments = countItemsByType(attentionItems, (item) => item.type === "Rent Payment" || item.type === "Cash Payment");
+  const openMaintenance = countItemsByType(attentionItems, (item) => item.type === "Maintenance");
+  const pendingRenewals = countItemsByType(attentionItems, (item) => item.type.startsWith("Contract"));
   const complaintFollowups = countItemsByType(attentionItems, (item) => item.type === "Complaint");
   const suggestionFollowups = countItemsByType(attentionItems, (item) => item.type === "Suggestion");
   const messageFollowups = countItemsByType(attentionItems, (item) => item.type === "Message");
@@ -1282,6 +2344,7 @@ function getManagementDashboardSummary() {
   const data = state.data.manager;
   const rent = managerRentStats();
   const properties = data.properties || [];
+  const portfolioSummary = getPortfolioSummary(properties);
   const totalUnits = properties.reduce((total, property) => total + (Number(property.units) || 0), 0);
   const occupiedUnits = properties.reduce((total, property) => {
     const units = Number(property.units) || 0;
@@ -1319,10 +2382,11 @@ function getManagementDashboardSummary() {
       pendingCount: pendingRenewals.length
     },
     portfolio: {
-      totalProperties: properties.length,
-      totalUnits,
-      occupiedUnits,
-      vacantUnits
+      totalProperties: portfolioSummary.totalProperties,
+      totalUnits: portfolioSummary.totalUnits || totalUnits,
+      occupiedUnits: portfolioSummary.occupiedUnits || occupiedUnits,
+      vacantUnits: portfolioSummary.vacantUnits || vacantUnits,
+      totalAssetValue: portfolioSummary.totalAssetValue
     },
     documents: {
       pendingReviews: pendingDocuments.length
@@ -1413,6 +2477,39 @@ function upsertReceiptRecord({ receipt, month, amount, date, source }) {
   });
 }
 
+function tenantReceiptByReference(reference) {
+  const value = String(reference || "").trim();
+  if (!value) return null;
+  return state.data.tenant.receipts.find((item) => item.id === value || item.receipt === value) || null;
+}
+
+function receiptSortTime(receipt) {
+  const parsed = parseDemoDate(receipt?.date || receipt?.month);
+  return parsed ? parsed.getTime() : 0;
+}
+
+function latestTenantReceipt() {
+  return [...state.data.tenant.receipts].sort((a, b) => receiptSortTime(b) - receiptSortTime(a))[0] || null;
+}
+
+function tenantReceiptForPreview(reference = "") {
+  const summary = tenantRentSummary();
+  const currentReceipt = summary.isPaid ? tenantReceiptByReference(summary.receipt) : null;
+  const receipt = tenantReceiptByReference(reference) || currentReceipt || latestTenantReceipt();
+  if (receipt) return receipt;
+  if (!summary.isPaid) return null;
+
+  return {
+    id: "current-receipt",
+    month: summary.rent.month,
+    amount: summary.rent.amount,
+    receipt: summary.receipt,
+    date: summary.rent.dueDate,
+    status: "Available",
+    source: summary.payment?.type || "Demo payment"
+  };
+}
+
 function markTenantRentPaid({ receipt = "REC-DEMO-0626", source = "Demo payment" } = {}) {
   const profile = tenantProfile();
   const rent = currentTenantRent();
@@ -1472,7 +2569,11 @@ function markTenantRentPaid({ receipt = "REC-DEMO-0626", source = "Demo payment"
 function upsertManagerRenewalRequest() {
   const profile = tenantProfile();
   const createdAt = new Date().toISOString();
-  const existing = state.data.manager.renewals.find((row) => row.tenant === profile.name && row.unit === profile.unit);
+  const existing = state.data.manager.renewals.find((row) =>
+    row.tenant === profile.name &&
+    row.unit === profile.unit &&
+    isActiveRepeatableRequest(row)
+  );
   if (existing) {
     existing.status = "Pending";
     existing.updatedAt = createdAt;
@@ -1580,6 +2681,56 @@ function contractRequestSubmittedTitle(requestType) {
   return `${name} Request Submitted`;
 }
 
+function contractRequestSortTime(row) {
+  const date = new Date(row?.updatedAt || row?.createdAt || "");
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function tenantContractRequestHistory(profile = tenantProfile()) {
+  const renewalRequests = state.data.manager.renewals
+    .filter((row) => row.tenant === profile.name && row.unit === profile.unit)
+    .filter((row) => row.createdAt || row.updatedAt || row.status !== "Pending" || profile.renewalStatus !== "Pending")
+    .map((row) => {
+      const requestedAt = row.createdAt || row.updatedAt || demoDateIso(row.endDate, "09:30");
+      return {
+        id: `renewal-${row.id}`,
+        requestType: "Contract Renewal",
+        details: `Contract renewal requested for ${row.endDate}.`,
+        status: row.status || profile.renewalStatus || "Submitted",
+        notes: row.decisionNote || (["Approved", "Rejected"].includes(row.status) ? `Renewal request ${row.status.toLowerCase()}.` : "Awaiting management review"),
+        createdAt: requestedAt,
+        updatedAt: row.updatedAt || requestedAt,
+        summaryStatus: row.status === "Pending" ? "Submitted" : row.status || profile.renewalStatus || "Submitted"
+      };
+    });
+
+  const contractRequests = state.data.tenant.contractRequests
+    .filter((row) => (!row.tenant || row.tenant === profile.name) && (!row.unit || row.unit === profile.unit))
+    .map((row) => ({
+      id: row.id,
+      requestType: row.requestType,
+      details: row.notes || `${row.requestType} requested from tenant portal.`,
+      status: row.status || "Pending",
+      notes: row.decisionNote || "Awaiting management review",
+      createdAt: row.createdAt || row.updatedAt || new Date().toISOString(),
+      updatedAt: row.updatedAt || row.createdAt || ""
+    }));
+
+  return [...renewalRequests, ...contractRequests].sort((a, b) => contractRequestSortTime(b) - contractRequestSortTime(a));
+}
+
+function contractRequestHistoryRows(items) {
+  return items.map((row) => `
+    <tr>
+      <td>${escapeHtml(contractRequestDisplayName(row.requestType))}</td>
+      <td>${escapeHtml(row.details)}</td>
+      <td>${escapeHtml(formatActionDate(row.createdAt))}</td>
+      <td>${badge(row.status)}</td>
+      <td>${escapeHtml(row.notes)}</td>
+    </tr>
+  `);
+}
+
 function contractRequestSummaryStatus(request, fallbackStatus = "Pending") {
   if (!request) return fallbackStatus;
 
@@ -1622,14 +2773,7 @@ function activeTenantRenewalRequest(profile) {
 }
 
 function latestTenantContractRequest(profile) {
-  const renewal = activeTenantRenewalRequest(profile);
-  const contract = state.data.tenant.contractRequests.find((row) => row.tenant === profile.name && row.unit === profile.unit);
-  if (!renewal) return contract || null;
-  if (!contract) return renewal;
-
-  const renewalTime = Date.parse(renewal.updatedAt || renewal.createdAt || "") || 0;
-  const contractTime = Date.parse(contract.updatedAt || contract.createdAt || "") || 0;
-  return contractTime >= renewalTime ? contract : renewal;
+  return tenantContractRequestHistory(profile)[0] || null;
 }
 
 function requestTimelineStatuses(request) {
@@ -1696,6 +2840,84 @@ function downloadDemoDocument(title, owner) {
   URL.revokeObjectURL(url);
 }
 
+function downloadDemoReceipt(reference) {
+  const receipt = tenantReceiptForPreview(reference);
+  const profile = tenantProfile();
+  const rent = currentTenantRent();
+  const receiptNumber = receipt?.receipt || reference || "Receipt";
+  const safeTitle = String(receiptNumber).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "receipt";
+  const body = [
+    "EstateFlow Demo Receipt",
+    `Receipt: ${receiptNumber}`,
+    `Tenant: ${profile.name}`,
+    `Property: ${profile.property}`,
+    `Unit: ${profile.unit}`,
+    `Cycle: ${receipt?.month || rent.month}`,
+    `Amount: ${receipt?.amount || rent.amount}`,
+    `Payment date: ${receipt?.date || rent.dueDate}`,
+    `Payment method: ${receipt?.source || currentTenantPaymentSubmission()?.type || "Demo payment"}`,
+    "Status: Paid",
+    "This static MVP does not include live receipt storage."
+  ].join("\n");
+  const blob = new Blob([body], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeTitle}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function tenantReceiptDownloadRows() {
+  const rowsByReceipt = new Map();
+  state.data.tenant.rentHistory.forEach((row) => {
+    if (row.status === "Paid" && String(row.receipt || "").startsWith("REC")) {
+      rowsByReceipt.set(row.receipt, {
+        receipt: row.receipt,
+        month: row.month,
+        amount: row.amount,
+        date: row.dueDate,
+        status: "Available",
+        source: "Rent history"
+      });
+    }
+  });
+  state.data.tenant.receipts.forEach((receipt) => {
+    if (String(receipt.receipt || "").startsWith("REC")) {
+      rowsByReceipt.set(receipt.receipt, {
+        ...rowsByReceipt.get(receipt.receipt),
+        ...receipt
+      });
+    }
+  });
+  return [...rowsByReceipt.values()].sort((a, b) => receiptSortTime(b) - receiptSortTime(a));
+}
+
+function downloadTenantReceipts() {
+  const receipts = tenantReceiptDownloadRows();
+  if (!receipts.length) return false;
+  const header = ["Receipt", "Month", "Amount", "Payment date", "Status", "Source"];
+  const bodyRows = receipts.map((receipt) => [
+    receipt.receipt,
+    receipt.month,
+    receipt.amount,
+    receipt.date,
+    receipt.status || "Available",
+    receipt.source || "Demo payment"
+  ]);
+  const csv = [header, ...bodyRows].map((row) => row.map(csvCell).join(",")).join("\n");
+  const filename = `tenant-receipts-${new Date().toISOString().slice(0, 10)}.csv`;
+  downloadBlob(new Blob([csv], { type: "text/csv" }), filename);
+  return true;
+}
+
 function app() {
   let root = document.querySelector("#app");
   if (!root) {
@@ -1758,8 +2980,24 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function statusKey(status) {
+  return String(status || "neutral")
+    .trim()
+    .replaceAll(" / ", " ")
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, letter) => letter.toUpperCase())
+    .replace(/^[A-Z]/, (letter) => letter.toLowerCase()) || "neutral";
+}
+
+function statusSlug(status) {
+  return String(status || "neutral").toLowerCase().replaceAll(" / ", "-").replaceAll(" ", "-");
+}
+
+function statusVariant(status) {
+  return STATUS_VARIANT_MAP[statusKey(status)] || STATUS_VARIANT_MAP[statusSlug(status)] || "neutral";
+}
+
 function statusClass(status) {
-  return String(status).toLowerCase().replaceAll(" / ", "-").replaceAll(" ", "-");
+  return `${statusSlug(status)} status-${statusVariant(status)}`;
 }
 
 function parseDemoDate(value) {
@@ -1805,10 +3043,7 @@ function paymentHealthClass(summary) {
 }
 
 function statusLabel(status) {
-  const labels = {
-    "Info Requested": "Needs Info"
-  };
-  return labels[status] || status;
+  return STATUS_LABELS[status] || status;
 }
 
 function actionStatusLabel(status) {
@@ -1967,18 +3202,31 @@ function actionCardPresentation(item) {
 }
 
 function badge(status, label = statusLabel(status)) {
-  return `<span class="status ${statusClass(status)}">${escapeHtml(label)}</span>`;
+  const variant = statusVariant(status);
+  return `<span class="status ${statusClass(status)}" data-status="${escapeHtml(statusSlug(status))}" data-status-variant="${escapeHtml(variant)}">${escapeHtml(label)}</span>`;
 }
 
 function badgeSlot(status, label) {
   return `<span class="status-slot">${badge(status, label)}</span>`;
 }
 
-function brand() {
+function brand(options = {}) {
+  const content = `
+    <span class="brand-mark">${icon.building}</span>
+    <span>EstateFlow</span>
+  `;
+
+  if (options.clickable) {
+    return `
+      <button class="brand brand-button" type="button" data-page="dashboard" aria-label="Go to dashboard">
+        ${content}
+      </button>
+    `;
+  }
+
   return `
     <div class="brand">
-      <span class="brand-mark">${icon.building}</span>
-      <span>EstateFlow</span>
+      ${content}
     </div>
   `;
 }
@@ -1988,13 +3236,368 @@ function navIcon(name) {
 }
 
 function navBadge(item) {
-  if (item.id !== "actionCenter") return "";
-  const count = actionCenterCountForRole();
-  return count ? `<span class="nav-count">${count}</span>` : "";
+  if (item.id === "actionCenter") {
+    const count = actionCenterCountForRole();
+    return count ? `<span class="nav-count">${count}</span>` : "";
+  }
+
+  const notificationCount = notificationCountForPage(item.id);
+  return notificationCount ? `<span class="nav-notification-dot" aria-hidden="true"></span>` : "";
 }
 
 function buttonIcon(name) {
   return `<span class="button-icon">${icon[name] || ""}</span>`;
+}
+
+function askAIIcon() {
+  return `
+    <svg class="ask-ai-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2.9c.45 3.58 2.42 5.76 6.1 6.72-3.68.96-5.65 3.14-6.1 6.72-.45-3.58-2.42-5.76-6.1-6.72 3.68-.96 5.65-3.14 6.1-6.72Z" fill="currentColor"/>
+      <path d="M18.8 14.2c.22 1.66 1.18 2.62 2.8 2.96-1.62.34-2.58 1.3-2.8 2.96-.22-1.66-1.18-2.62-2.8-2.96 1.62-.34 2.58-1.3 2.8-2.96ZM5.2 4.6c.15 1.06.78 1.69 1.84 1.84-1.06.15-1.69.78-1.84 1.84-.15-1.06-.78-1.69-1.84-1.84 1.06-.15 1.69-.78 1.84-1.84Z" fill="currentColor" opacity=".58"/>
+    </svg>
+  `;
+}
+
+function askAICopy() {
+  if (state.role === "manager") {
+    return {
+      helper: "Ask about actions, rent, tenants, maintenance, renewals, documents, or portfolio status.",
+      placeholder: "Ask AI about today's operations...",
+      suggestions: ["What needs action today?", "Show rent follow-ups.", "Which maintenance requests are open?", "What renewals need review?", "Summarize portfolio status."]
+    };
+  }
+
+  return {
+    helper: "Ask about rent, receipts, contracts, maintenance, requests, or documents.",
+    placeholder: "Ask AI about your rent or requests...",
+    suggestions: ["How do I pay rent?", "Where is my receipt?", "How do I request maintenance?", "How do I view my contract?", "What needs my attention?"]
+  };
+}
+
+function renderAskAIMessage(message) {
+  const isUser = message.role === "user";
+  return `
+    <div class="ask-ai-message ${isUser ? "user" : "assistant"}">
+      <span class="ask-ai-message-role">${isUser ? "You" : "Ask AI"}</span>
+      <p>${escapeHtml(message.content)}</p>
+    </div>
+  `;
+}
+
+function renderAskAITypingMessage() {
+  return `<div class="ask-ai-message assistant typing"><span class="ask-ai-message-role">Ask AI</span><p><span></span><span></span><span></span></p></div>`;
+}
+
+function renderAskAISuggestionButton(prompt) {
+  return `<button type="button" data-action="ask-ai-suggestion" data-prompt="${escapeHtml(prompt)}">${escapeHtml(prompt)}</button>`;
+}
+
+function renderAskAISessionItem(session) {
+  const active = session.id === state.askAI.activeSessionId;
+  return `
+    <button class="ask-ai-session-item ${active ? "active" : ""}" type="button" data-action="select-ask-ai-session" data-id="${escapeHtml(session.id)}" aria-current="${active ? "true" : "false"}">
+      <span>${escapeHtml(session.title || askAIChatTitle(session.messages))}</span>
+    </button>
+  `;
+}
+
+function renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState, isWorkspace = false }) {
+  const composerClass = classNames("ask-ai-form", isWorkspace && "ask-ai-workspace-form", "ask-ai-composer");
+  return `
+    <div class="ask-ai-composer-shell ${isWorkspace ? "workspace" : "panel"}">
+      <form class="${composerClass}" data-form="ask-ai">
+        <button class="ask-ai-composer-control ask-ai-attach" type="button" aria-label="Add context">${icon.plus}</button>
+        <label class="sr-only" for="ask-ai-input">Ask AI about this dashboard</label>
+        <textarea
+          id="ask-ai-input"
+          name="message"
+          rows="1"
+          data-ask-ai-input
+          placeholder="${escapeHtml(placeholder)}"
+          ${askAIState.isTyping ? "disabled" : ""}
+        >${escapeHtml(askAIState.inputValue)}</textarea>
+        <div class="ask-ai-composer-trailing">
+          <button class="ask-ai-composer-control ask-ai-mic" type="button" aria-label="Voice input">${icon.mic}</button>
+          <button class="ask-ai-send" type="submit" aria-label="Send Ask AI message" ${!hasInput || askAIState.isTyping ? "disabled" : ""}>${icon.waveform}</button>
+        </div>
+      </form>
+      <button class="ask-ai-clear" type="button" data-action="clear-ask-ai" ${clearDisabled ? "disabled" : ""}>Clear chat</button>
+    </div>
+  `;
+}
+
+function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled }) {
+  const askAIState = state.askAI;
+  const activeSession = activeAskAISession();
+  const filteredSessions = filteredAskAISessions();
+  const recentSessions = filteredSessions.filter((session) => session.messages.some((message) => message.role === "user" && message.content));
+  const sessionItems = recentSessions.length
+    ? recentSessions.map(renderAskAISessionItem).join("")
+    : `<div class="ask-ai-session-empty">${askAIState.search.trim() ? "No chats found." : "No recent chats yet."}</div>`;
+  const title = activeSession?.title || "New chat";
+  const hasMessages = askAIState.messages.length > 0;
+  const messageContent = hasMessages
+    ? askAIState.messages.map(renderAskAIMessage).join("")
+    : `
+      <section class="ask-ai-workspace-empty">
+        <span class="ask-ai-workspace-orb">${askAIIcon()}</span>
+        <h3>Where should we begin?</h3>
+        <p>${escapeHtml(helper)}</p>
+        <div class="ask-ai-empty-prompts" aria-label="Suggested Ask AI prompts">
+          ${suggestions.map(renderAskAISuggestionButton).join("")}
+        </div>
+      </section>
+    `;
+
+  return `
+    <aside id="ask-ai-panel" class="ask-ai-panel expanded ask-ai-workspace" role="dialog" aria-modal="true" aria-label="Expanded Ask AI chat workspace">
+      <div class="ask-ai-workspace-sidebar">
+        <div class="ask-ai-workspace-brand">
+          <h3>Ask AI</h3>
+        </div>
+        <div class="ask-ai-workspace-menu" aria-label="Ask AI actions">
+          <button class="ask-ai-menu-item ask-ai-new-chat" type="button" data-action="ask-ai-new-chat">${icon.compose}<span>New chat</span></button>
+          <label class="ask-ai-menu-item ask-ai-chat-search" for="ask-ai-session-search">
+            <span class="sr-only">Search chats</span>
+            ${icon.search}
+            <input id="ask-ai-session-search" type="search" value="${escapeHtml(askAIState.search)}" data-ask-ai-session-search placeholder="Search chats" autocomplete="off" />
+          </label>
+        </div>
+        <div class="ask-ai-session-heading">Recents</div>
+        <div class="ask-ai-session-list" role="list" aria-label="Previous Ask AI chats">
+          ${sessionItems}
+        </div>
+      </div>
+      <div class="ask-ai-workspace-main">
+        <header class="ask-ai-workspace-header">
+          <div>
+            <h3>${escapeHtml(title)}</h3>
+          </div>
+          <div class="ask-ai-panel-actions">
+            <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="Collapse Ask AI" aria-expanded="true">${icon.collapse}</button>
+            <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
+          </div>
+        </header>
+        <div class="ask-ai-messages ask-ai-workspace-messages ${hasMessages ? "" : "empty"}" aria-live="polite">
+          ${messageContent}
+          ${askAIState.isTyping ? renderAskAITypingMessage() : ""}
+          ${askAIState.error ? `<div class="ask-ai-error" role="alert">${escapeHtml(askAIState.error)}</div>` : ""}
+        </div>
+        ${renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState, isWorkspace: true })}
+      </div>
+    </aside>
+  `;
+}
+
+function renderSidebarAskAI() {
+  const askAIState = state.askAI;
+  return `
+    <section class="ask-ai-shell ${askAIState.isOpen ? "open" : ""} ${escapeHtml(askAIState.activationState)}" aria-label="Ask AI assistant">
+      <button
+        id="ask-ai-trigger"
+        class="ask-ai-entry"
+        type="button"
+        data-action="toggle-ask-ai"
+        aria-expanded="${askAIState.isOpen ? "true" : "false"}"
+        aria-controls="ask-ai-panel"
+      >
+        <span class="ask-ai-entry-icon">${askAIIcon()}</span>
+        <span class="ask-ai-entry-copy">
+          <strong>Ask AI</strong>
+          <span>Ask about this dashboard</span>
+        </span>
+        <span class="ask-ai-entry-badge">Demo</span>
+      </button>
+    </section>
+  `;
+}
+
+function renderAskAIPanel() {
+  const askAIState = state.askAI;
+  if (!askAIState.isOpen) return "";
+  if (!askAIState.sessions.length) ensureAskAIMessages();
+  const { helper, placeholder, suggestions } = askAICopy();
+  const hasInput = askAIState.inputValue.trim().length > 0;
+  const clearDisabled = askAIState.messages.length === 0 && !askAIState.inputValue.trim();
+  const expanded = askAIState.isExpanded;
+  if (expanded) {
+    return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
+  }
+
+  const messages = askAIState.messages.length
+    ? askAIState.messages.map(renderAskAIMessage).join("")
+    : `<div class="ask-ai-empty"><strong>Ready when you are.</strong><span>Ask about rent, requests, documents, or dashboard actions.</span></div>`;
+
+  return `
+    <aside id="ask-ai-panel" class="ask-ai-panel ${expanded ? "expanded" : ""}" role="dialog" aria-modal="${expanded ? "true" : "false"}" aria-label="${expanded ? "Expanded Ask AI demo panel" : "Ask AI demo panel"}">
+      <div class="ask-ai-panel-head">
+        <div class="ask-ai-title-row">
+          <span class="ask-ai-panel-icon">${askAIIcon()}</span>
+          <div>
+            <span class="ask-ai-mode">Demo mode</span>
+            <h3>Ask AI</h3>
+          </div>
+        </div>
+        <div class="ask-ai-panel-actions">
+          <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="${expanded ? "Collapse Ask AI" : "Expand Ask AI"}" aria-expanded="${expanded ? "true" : "false"}">${expanded ? icon.collapse : icon.expand}</button>
+          <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
+        </div>
+      </div>
+      <div class="ask-ai-intro">
+        <p>${escapeHtml(helper)}</p>
+      </div>
+      <div class="ask-ai-suggestions" aria-label="Suggested Ask AI prompts">
+        ${suggestions.map(renderAskAISuggestionButton).join("")}
+      </div>
+      <div class="ask-ai-messages" aria-live="polite">
+        ${messages}
+        ${askAIState.isTyping ? renderAskAITypingMessage() : ""}
+        ${askAIState.error ? `<div class="ask-ai-error" role="alert">${escapeHtml(askAIState.error)}</div>` : ""}
+      </div>
+      ${renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState })}
+    </aside>
+  `;
+}
+
+function classNames(...parts) {
+  return parts.flat().filter(Boolean).join(" ");
+}
+
+function extraAttributes(attributes = {}) {
+  return Object.entries(attributes)
+    .filter(([, value]) => value !== undefined && value !== null && value !== false)
+    .map(([key, value]) => value === true ? key : `${key}="${escapeHtml(value)}"`)
+    .join(" ");
+}
+
+function renderButton({
+  label,
+  variant = "secondary",
+  size = "",
+  iconName = "",
+  className = "",
+  type = "button",
+  page = "",
+  modal = "",
+  action = "",
+  id = "",
+  tenant = "",
+  command = "",
+  form = "",
+  disabled = false,
+  loading = false,
+  ariaLabel = "",
+  attrs = {}
+}) {
+  const classes = classNames("button", variant, size, className, loading && "is-loading");
+  const attributes = {
+    type,
+    ...(page ? { "data-page": page } : {}),
+    ...(modal ? { "data-modal": modal } : {}),
+    ...(action ? { "data-action": action } : {}),
+    ...(id ? { "data-id": id } : {}),
+    ...(tenant ? { "data-tenant": tenant } : {}),
+    ...(command ? { "data-command": command } : {}),
+    ...(form ? { form } : {}),
+    ...(disabled ? { disabled: true, "aria-disabled": "true" } : {}),
+    ...(loading ? { "aria-busy": "true" } : {}),
+    ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
+    ...attrs
+  };
+
+  return `<button class="${classes}" ${extraAttributes(attributes)}>${iconName ? buttonIcon(iconName) : ""}<span>${escapeHtml(label)}</span></button>`;
+}
+
+function renderSectionHeader({ eyebrow = "", title, description = "", action = "", count = "" }) {
+  return `
+    <div class="section-header">
+      <div>
+        ${eyebrow ? `<span class="dashboard-section-label">${escapeHtml(eyebrow)}</span>` : ""}
+        <h2>${escapeHtml(title)}</h2>
+        ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+      </div>
+      ${count ? `<span class="badge-count">${escapeHtml(count)}</span>` : ""}
+      ${action}
+    </div>
+  `;
+}
+
+function renderEmptyState({ title = "No records found", description = "Try a different filter.", action = "" } = {}) {
+  return `
+    <div class="empty-state">
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(description)}</span>
+      ${action ? `<div class="empty-state-actions">${action}</div>` : ""}
+    </div>
+  `;
+}
+
+function renderLoadingState(label = "Loading dashboard data") {
+  return `
+    <div class="loading-state" aria-label="${escapeHtml(label)}" aria-busy="true">
+      <span class="skeleton-line wide"></span>
+      <span class="skeleton-line"></span>
+      <span class="skeleton-line short"></span>
+    </div>
+  `;
+}
+
+function renderMetadataGrid(items = [], className = "metadata-grid") {
+  const rows = items.filter((item) => String(item?.value || "").trim());
+  if (!rows.length) return "";
+  return `
+    <div class="${escapeHtml(className)}">
+      ${rows.map((row) => `<span><strong>${escapeHtml(row.label)}</strong>${escapeHtml(row.value)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderActivityItem(item) {
+  return `
+    <li class="activity-item">
+      <span class="activity-dot"></span>
+      <div>
+        <strong>${escapeHtml(item.title)}</strong>
+        <span>${escapeHtml(item.detail || item.description || "")}</span>
+      </div>
+      <span>${escapeHtml(item.time || item.date || "")}</span>
+    </li>
+  `;
+}
+
+function renderProgressBar({ label, value, width = value } = {}) {
+  return `
+    <div class="bar-row">
+      <div class="bar-label"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width: ${Math.max(0, Math.min(Number(width) || 0, 100))}%"></div></div>
+    </div>
+  `;
+}
+
+function renderNotificationCard({ title, description, status, unread = false, metadata = [], actions = "", dismissible = false, id = "", history = "" } = {}) {
+  const dismissButton = dismissible && id
+    ? `<button class="action-dismiss" type="button" data-action="action-center" data-command="dismiss-card" data-id="${escapeHtml(id)}" aria-label="Dismiss update">${icon.close}</button>`
+    : "";
+  return `
+    <article class="action-center-item ${unread ? "unread" : ""}" ${id ? `data-item-id="${escapeHtml(id)}"` : ""}>
+      <div class="action-card-topline">
+        <div class="action-state-row">
+          ${badge(status, actionStatusLabel(status))}
+          ${unread ? `<span class="unread-dot">Unread</span>` : ""}
+        </div>
+        ${dismissButton}
+      </div>
+      <div class="action-item-main">
+        <h3 class="action-item-title">${escapeHtml(title)}</h3>
+        ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+      </div>
+      ${renderMetadataGrid(metadata, "action-meta-grid")}
+      ${history}
+      <div class="action-center-actions">
+        ${actions || `<span class="action-muted">No action needed</span>`}
+      </div>
+    </article>
+  `;
 }
 
 function metricActionLabel(targetPage) {
@@ -2049,77 +3652,78 @@ function pageContext() {
     ];
   }
 
-  return ["4 properties", "220 units", "June 2026 snapshot"];
+  const portfolio = getPortfolioSummary();
+  return [`${portfolio.totalProperties} properties`, `${portfolio.totalUnits} units`, formatAed(portfolio.totalAssetValue, { compact: true })];
+}
+
+function isRentNotification(row) {
+  const text = `${row?.type || ""} ${row?.message || ""}`.toLowerCase();
+  return text.includes("rent") || text.includes("payment");
 }
 
 function notificationItems() {
-  if (state.role === "tenant") {
-    const profile = tenantProfile();
-    const summary = tenantRentSummary();
-    const maintenance = state.data.tenant.maintenanceRequests[0];
-    const latestContractRequest = latestTenantContractRequest(profile);
-    const renewalStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
+  const clearedIds = new Set(state.notificationClearedIds || []);
+  const rows = state.data.manager.notifications
+    .filter(isRentNotification)
+    .filter((row) => !clearedIds.has(row.id));
+  const scopedRows = state.role === "tenant"
+    ? rows.filter((row) => row.tenant === tenantProfile().name)
+    : rows;
 
-    return [
-      {
-        title: "Rent payment",
-        detail: summary.dashboardState.body,
-        status: summary.dashboardState.workflowLabel,
-        page: "rent"
-      },
-      {
-        title: "Maintenance",
-        detail: maintenance ? `${maintenance.category} request is ${maintenance.status.toLowerCase()}.` : "No active maintenance requests.",
-        status: maintenance?.status || "Completed",
-        page: "maintenance"
-      },
-      {
-        title: "Renewal",
-        detail: `Contract ends ${profile.contractEnd}.`,
-        status: renewalStatus,
-        page: "renewal"
-      },
-      {
-        title: "Documents",
-        detail: "Tenancy files and receipts are available.",
-        status: "Uploaded",
-        page: "documents"
-      }
-    ];
-  }
+  const rentItems = scopedRows.map((row) => ({
+    id: row.id,
+    title: row.type || "Rent notification",
+    detail: state.role === "tenant" ? row.message : `${row.tenant}: ${row.message}`,
+    status: row.status || "Sent",
+    page: state.role === "tenant" ? "rent" : "notifications"
+  }));
 
-  const data = state.data.manager;
-  const pendingPayments = data.chequeReviews.filter((row) => row.status === "Pending").length;
-  const openMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed").length;
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending").length;
-  const latestNotification = data.notifications[0];
+  return state.role === "tenant"
+    ? [...tenantActionNotificationItems(clearedIds), ...rentItems].sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0))
+    : rentItems;
+}
 
-  return [
-    {
-      title: "Payment reviews",
-      detail: `${pendingPayments} submissions need a decision.`,
-      status: pendingPayments ? "Pending" : "Completed",
-      page: "chequeReview"
-    },
-    {
-      title: "Maintenance queue",
-      detail: `${openMaintenance} requests are still open.`,
-      status: openMaintenance ? "In Progress" : "Completed",
-      page: "maintenanceMgmt"
-    },
-    {
-      title: "Renewals",
-      detail: `${pendingRenewals} renewal requests need review.`,
-      status: pendingRenewals ? "Pending" : "Completed",
-      page: "renewalsMgmt"
-    },
-    {
-      title: latestNotification?.tenant || "Notifications",
-      detail: latestNotification?.message || "No tenant updates sent yet.",
-      status: latestNotification?.status || "Pending",
-      page: "notifications"
-    }
-  ];
+function notificationCountForPage(page) {
+  if (!page || page === "actionCenter") return 0;
+  return notificationItems().filter((item) => item.page === page).length;
+}
+
+function tenantActionNotificationItems(clearedIds = new Set(state.notificationClearedIds || [])) {
+  const profile = tenantProfile();
+  return (state.data.actions || [])
+    .filter((item) =>
+      item.updatedBy === "manager" &&
+      item.type !== "Message" &&
+      item.tenant === profile.name &&
+      (!item.unit || item.unit === profile.unit) &&
+      !item.readBy?.includes("tenant") &&
+      !clearedIds.has(item.id)
+    )
+    .map((item) => {
+      const latestHistory = [...(item.history || [])].reverse().find((entry) => entry.by === "Property Management") || {};
+      const status = item.status || "Updated";
+      return {
+        id: item.id,
+        title: tenantActionNotificationTitle(item),
+        detail: latestHistory.note || item.description || "Property Management updated your request.",
+        status,
+        page: actionSourcePage(item),
+        recent: true,
+        sortTime: Date.parse(item.updatedAt || item.createdAt || "") || 0
+      };
+    });
+}
+
+function tenantActionNotificationTitle(item) {
+  const status = String(item.status || "updated").toLowerCase();
+  if (item.type === "Contract Renewal") return `Renewal ${status}`;
+  if (item.type === "Cash Payment") return `Cash payment ${status}`;
+  if (item.type === "Rent Payment") return `Payment ${status}`;
+  if (item.type === "Maintenance") return `Maintenance ${status}`;
+  if (item.type === "Complaint") return `Complaint ${status}`;
+  if (item.type === "Suggestion") return `Suggestion ${status}`;
+  if (item.type?.startsWith("Contract")) return `${item.type} ${status}`;
+  return `${item.title || "Request"} ${status}`;
 }
 
 function groupedNavItems() {
@@ -2133,17 +3737,51 @@ function groupedNavItems() {
   }, []);
 }
 
+function availablePages(role = state.role) {
+  return [...nav[role].map((item) => item.id), ...utilityPages];
+}
+
+function isAskAIExpandedOverlayOpen() {
+  return Boolean(state.auth && state.askAI.isOpen && state.askAI.isExpanded);
+}
+
+function syncAskAIScrollLock() {
+  const locked = isAskAIExpandedOverlayOpen();
+  const alreadyLocked = document.body.classList.contains("ask-ai-scroll-locked");
+
+  if (locked && !alreadyLocked) {
+    askAIScrollLockY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    document.body.style.setProperty("--ask-ai-scroll-y", `-${askAIScrollLockY}px`);
+    document.documentElement.classList.add("ask-ai-scroll-locked");
+    document.body.classList.add("ask-ai-scroll-locked");
+  } else if (!locked && alreadyLocked) {
+    document.documentElement.classList.remove("ask-ai-scroll-locked");
+    document.body.classList.remove("ask-ai-scroll-locked");
+    document.body.style.removeProperty("--ask-ai-scroll-y");
+    window.scrollTo({ top: askAIScrollLockY, left: 0 });
+    askAIScrollLockY = 0;
+  }
+
+  if (locked && state.pullToReset.phase !== "idle") {
+    cancelPullToReset();
+  }
+}
+
 function render() {
   applyTheme();
 
   if (!state.auth) {
     state.notificationPanelOpen = false;
+    state.askAI.isOpen = false;
+    state.askAI.isExpanded = false;
+    syncAskAIScrollLock();
     app().innerHTML = renderLogin();
     modalRoot().innerHTML = "";
+    cleanupPortfolioLeafletMap();
     return;
   }
 
-  const pages = nav[state.role].map((item) => item.id);
+  const pages = availablePages();
   if (!pages.includes(state.page)) {
     state.page = "dashboard";
   }
@@ -2151,6 +3789,8 @@ function render() {
 
   app().innerHTML = renderPortal();
   renderModal();
+  syncAskAIScrollLock();
+  runPostRenderEffects();
 }
 
 function renderAtTop() {
@@ -2218,6 +3858,136 @@ function renderPreservingControl(control) {
   }
 }
 
+function runPostRenderEffects() {
+  window.requestAnimationFrame(initializePortfolioLeafletMap);
+}
+
+function cleanupPortfolioLeafletMap() {
+  if (!portfolioLeafletMap) return;
+  portfolioLeafletMap.remove();
+  portfolioLeafletMap = null;
+  portfolioLeafletMarkerLayer = null;
+}
+
+function portfolioMapPoint(property) {
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return [latitude, longitude];
+}
+
+function portfolioMarkerColor(property) {
+  return PORTFOLIO_MAP_COLORS[statusVariant(property.status)] || PORTFOLIO_MAP_COLORS.neutral;
+}
+
+function updatePortfolioLeafletMarkers(properties) {
+  if (!portfolioLeafletMap || !portfolioLeafletMarkerLayer || !window.L) return;
+  portfolioLeafletMarkerLayer.clearLayers();
+  const selectedId = state.filters.portfolioSelectedPropertyId;
+
+  properties.forEach((property) => {
+    const point = portfolioMapPoint(property);
+    if (!point) return;
+    const selected = property.id === selectedId;
+    const color = portfolioMarkerColor(property);
+    const marker = window.L.circleMarker(point, {
+      radius: selected ? 9 : 7,
+      color,
+      fillColor: color,
+      fillOpacity: selected ? 0.94 : 0.82,
+      opacity: 0.95,
+      weight: selected ? 3 : 2,
+      className: selected ? "portfolio-leaflet-marker selected" : "portfolio-leaflet-marker"
+    }).addTo(portfolioLeafletMarkerLayer);
+
+    marker.bindPopup(`
+      <strong>${escapeHtml(property.name)}</strong><br>
+      ${escapeHtml(`${property.area}, ${property.city}`)}<br>
+      ${escapeHtml(`${property.occupiedUnits} occupied · ${property.vacantUnits} vacant`)}
+    `);
+    marker.on("click", () => {
+      state.filters.portfolioSelectedPropertyId = property.id;
+      render();
+    });
+    if (selected) marker.openPopup();
+  });
+}
+
+function fitPortfolioLeafletMap(properties) {
+  if (!portfolioLeafletMap || !window.L) return;
+  const selected = properties.find((property) => property.id === state.filters.portfolioSelectedPropertyId);
+  const selectedPoint = selected ? portfolioMapPoint(selected) : null;
+  const points = properties.map(portfolioMapPoint).filter(Boolean);
+
+  if (selectedPoint) {
+    portfolioLeafletMap.setView(selectedPoint, Math.max(portfolioLeafletMap.getZoom() || PORTFOLIO_MAP_DEFAULT_ZOOM, 11), { animate: false });
+    return;
+  }
+
+  if (points.length > 1) {
+    portfolioLeafletMap.fitBounds(window.L.latLngBounds(points), { padding: [34, 34], maxZoom: 11, animate: false });
+    return;
+  }
+
+  if (points.length === 1) {
+    portfolioLeafletMap.setView(points[0], 11, { animate: false });
+    return;
+  }
+
+  portfolioLeafletMap.setView(PORTFOLIO_MAP_CENTER, PORTFOLIO_MAP_DEFAULT_ZOOM, { animate: false });
+}
+
+function initializePortfolioLeafletMap() {
+  const container = document.getElementById("portfolioPropertyMap");
+  if (!container) {
+    cleanupPortfolioLeafletMap();
+    return;
+  }
+
+  const shell = container.closest(".portfolio-map-shell");
+  const fallback = shell?.querySelector("[data-portfolio-map-fallback]");
+  if (!window.L) {
+    shell?.classList.add("is-unavailable");
+    if (fallback) {
+      fallback.hidden = false;
+      fallback.querySelector("strong").textContent = "Map library unavailable";
+      fallback.querySelector("span").textContent = "Check your connection and reload to show OpenStreetMap.";
+    }
+    return;
+  }
+
+  if (portfolioLeafletMap && portfolioLeafletMap.getContainer() !== container) {
+    cleanupPortfolioLeafletMap();
+  }
+
+  if (!portfolioLeafletMap) {
+    portfolioLeafletMap = window.L.map(container, {
+      zoomControl: true,
+      attributionControl: true,
+      scrollWheelZoom: false
+    }).setView(PORTFOLIO_MAP_CENTER, PORTFOLIO_MAP_DEFAULT_ZOOM);
+    window.L.tileLayer(PORTFOLIO_MAP_TILE_URL, {
+      maxZoom: 19,
+      attribution: PORTFOLIO_MAP_ATTRIBUTION
+    }).addTo(portfolioLeafletMap);
+    portfolioLeafletMarkerLayer = window.L.layerGroup().addTo(portfolioLeafletMap);
+  }
+
+  shell?.classList.remove("is-unavailable");
+  shell?.classList.add("leaflet-ready");
+  if (fallback) fallback.hidden = true;
+  const properties = filteredPortfolioProperties();
+  updatePortfolioLeafletMarkers(properties);
+  fitPortfolioLeafletMap(properties);
+  window.setTimeout(() => portfolioLeafletMap?.invalidateSize(), 80);
+}
+
+function scrollToPortfolioMapCard() {
+  window.requestAnimationFrame(() => {
+    document.getElementById("portfolio-map-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function historySnapshot() {
   return {
     app: "estateflow",
@@ -2225,7 +3995,8 @@ function historySnapshot() {
     selectedRole: state.selectedRole,
     role: state.role,
     page: state.page,
-    modal: state.modal
+    modal: state.modal,
+    filters: { ...state.filters }
   };
 }
 
@@ -2265,6 +4036,10 @@ function restoreFromHistory(snapshot) {
   }
   state.page = snapshot.page || "dashboard";
   state.modal = snapshot.modal || null;
+  state.filters = {
+    ...defaultFilters(),
+    ...(snapshot.filters || {})
+  };
   state.notificationPanelOpen = false;
   renderAtTop();
 }
@@ -2273,8 +4048,30 @@ function closeModal({ replaceHistory = true } = {}) {
   state.modal = null;
   state.notificationPanelOpen = false;
   render();
+  if (lastFocusedElement && document.contains(lastFocusedElement)) {
+    lastFocusedElement.focus({ preventScroll: true });
+  }
+  lastFocusedElement = null;
   if (replaceHistory) {
     replaceHistoryEntry();
+  }
+}
+
+function trapModalFocus(event) {
+  const modal = modalRoot().querySelector(".modal");
+  if (!modal) return;
+  const focusable = [...modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter((element) => !element.disabled && element.offsetParent !== null);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
   }
 }
 
@@ -2335,12 +4132,13 @@ function renderThemeToggle() {
 
 function renderNotificationPanel() {
   const items = notificationItems();
-  const countLabel = `${items.length} ${items.length === 1 ? "update" : "updates"}`;
+  const countLabel = `${items.length} ${items.length === 1 ? "notification" : "notifications"}`;
+  const hasNotifications = items.length > 0;
 
   return `
     <div class="notifications-menu">
       <button class="notification-button ${state.notificationPanelOpen ? "active" : ""}" type="button" data-action="notify" aria-label="${state.notificationPanelOpen ? "Hide" : "Show"} notifications" aria-expanded="${state.notificationPanelOpen}" aria-controls="notification-panel">
-        ${icon.bell}<span aria-hidden="true"></span>
+        ${icon.bell}${hasNotifications ? `<span aria-hidden="true"></span>` : ""}
       </button>
       ${state.notificationPanelOpen
         ? `<section class="notification-panel" id="notification-panel" role="region" aria-label="Notifications">
@@ -2349,12 +4147,14 @@ function renderNotificationPanel() {
                 <strong>Notifications</strong>
                 <span>${escapeHtml(countLabel)}</span>
               </div>
+              <button class="button secondary compact" type="button" data-action="clear-notifications" ${hasNotifications ? "" : "disabled"}>Clear all</button>
             </div>
             <div class="notification-list">
-              ${items
-                .map(
-                  (item) => `
-                    <button class="notification-item" type="button" data-page="actionCenter" aria-label="Open Action Center for ${escapeHtml(item.title)}">
+              ${hasNotifications
+                ? items
+                  .map(
+                    (item) => `
+                    <button class="notification-item ${item.recent ? "recent" : ""}" type="button" data-page="${escapeHtml(item.page)}" aria-label="Open notification for ${escapeHtml(item.title)}">
                       <span class="notification-item-copy">
                         <strong>${escapeHtml(item.title)}</strong>
                         <span>${escapeHtml(item.detail)}</span>
@@ -2362,11 +4162,11 @@ function renderNotificationPanel() {
                       ${badgeSlot(item.status)}
                     </button>
                   `
-                )
-                .join("")}
-            </div>
-            <div class="notification-panel-footer">
-              <button class="button secondary compact" type="button" data-page="actionCenter">${buttonIcon("bell")}Open Action Center</button>
+                  )
+                  .join("")
+                : `<div class="notification-empty">
+                    <strong>No new notifications.</strong>
+                  </div>`}
             </div>
           </section>`
         : ""}
@@ -2405,19 +4205,13 @@ function renderPortal() {
             ${state.page !== "dashboard" ? `<button class="button secondary compact dashboard-return" type="button" data-page="dashboard">${buttonIcon("home")}Dashboard</button>` : ""}
             ${renderThemeToggle()}
             ${renderNotificationPanel()}
-            <div class="profile-badge">
-              ${renderAvatar(profile)}
-              <div>
-                <strong>${escapeHtml(profile.name)}</strong>
-                <span>${state.role === "tenant" ? "Tenant" : "Property Management"}</span>
-              </div>
-            </div>
           </div>
         </header>
         ${showScreenFocus ? renderScreenFocus() : ""}
         ${renderRouteChips()}
         ${state.role === "tenant" ? renderTenantPage() : renderManagerPage()}
       </main>
+      ${renderAskAIPanel()}
       ${renderMobileNav()}
     </div>
   `;
@@ -2428,7 +4222,7 @@ function renderSidebar(profile) {
   return `
     <aside class="sidebar">
       <div class="sidebar-top">
-        ${brand()}
+        ${brand({ clickable: true })}
         <div class="sidebar-role">${label}</div>
         <div class="sidebar-profile">
           ${renderAvatar(profile)}
@@ -2465,9 +4259,11 @@ function renderSidebar(profile) {
           <strong>Demo data</strong>
           <span>No live records</span>
         </div>
+        ${renderSidebarAskAI()}
         <div class="sidebar-actions">
           <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
           <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
+          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
         </div>
       </div>
     </aside>
@@ -2487,7 +4283,8 @@ function shortNavLabel(label) {
     "Documents": "Docs",
     "Notifications": "Notify",
     "Finance": "Finance",
-    "Portfolio": "Portfolio"
+    "Portfolio": "Portfolio",
+    "UI Kit": "UI Kit"
   };
   return labels[label] || label;
 }
@@ -2557,15 +4354,16 @@ function renderActionButtons(actions = [], className = "focus-actions") {
   if (!actions.length) return "";
   return `
     <div class="${className}">
-      ${actions
-        .map(
-          (action) => `
-            <button class="button ${action.variant || "secondary"}" ${actionAttrs(action)}>
-              ${action.icon ? buttonIcon(action.icon) : ""}${escapeHtml(action.label)}
-            </button>
-          `
-        )
-        .join("")}
+      ${actions.map((action) => renderButton({
+        label: action.label,
+        variant: action.variant || "secondary",
+        iconName: action.icon,
+        page: action.page,
+        modal: action.modal,
+        action: action.action,
+        id: action.id,
+        tenant: action.tenant
+      })).join("")}
     </div>
   `;
 }
@@ -2642,6 +4440,15 @@ function pageFocus() {
         value: "4 files",
         meta: ["2 approved", "1 in review"],
         actions: []
+      },
+      uiKit: {
+        eyebrow: "UI Kit",
+        title: "Component Demo",
+        body: "Generic examples for dashboard buttons, cards, forms, tables, and states.",
+        value: "UI Kit",
+        valueLabel: "Demo page",
+        meta: ["Buttons", "Cards", "States"],
+        actions: []
       }
     };
     return map[state.page] || map.dashboard;
@@ -2675,8 +4482,8 @@ function pageFocus() {
       eyebrow: "Tenant records",
       title: "Find tenant records",
       body: "Search by tenant, unit, or property.",
-      value: "156 tenants",
-      meta: ["5 sample records", "Linked documents"],
+      value: `${data.tenants.length} tenants`,
+      meta: [`${data.tenants.length} records`, "Linked documents"],
       actions: [{ label: "Add tenant", icon: "users", action: "add-tenant", variant: "primary" }]
     },
     rentTracking: {
@@ -2737,11 +4544,20 @@ function pageFocus() {
     },
     portfolio: {
       eyebrow: "Portfolio",
-      title: "Four properties, 220 units, 92% occupied",
-      body: "Scan occupancy, income, and maintenance.",
-      value: "AED 248M",
-      meta: ["203 occupied", "17 vacant"],
-      actions: [{ label: "View tenants", icon: "users", page: "tenants", variant: "primary" }]
+      title: `${getPortfolioSummary().totalProperties} Properties`,
+      body: "Open the map, inspect assets, and add properties.",
+      value: formatAed(getPortfolioSummary().totalAssetValue, { compact: true }),
+      meta: [`${getPortfolioSummary().occupiedUnits} occupied`, `${getPortfolioSummary().vacantUnits} vacant`],
+      actions: [{ label: "Open map", icon: "building", action: "open-portfolio-map", variant: "primary" }]
+    },
+    uiKit: {
+      eyebrow: "UI Kit",
+      title: "Component Demo",
+      body: "Generic examples for dashboard buttons, cards, forms, tables, and states.",
+      value: "UI Kit",
+      valueLabel: "Demo page",
+      meta: ["Buttons", "Cards", "States"],
+      actions: []
     }
   };
   return map[state.page] || map.dashboard;
@@ -2856,7 +4672,7 @@ function tenantDashboardActivities(summary) {
     time: summary.dashboardState.activityTime || "Current"
   };
   const supportingItems = state.data.tenant.activities.filter((item) => !paymentTitles.has(item.title));
-  return [currentPaymentActivity, ...supportingItems].slice(0, 6);
+  return sortActivityItems([currentPaymentActivity, ...supportingItems]);
 }
 
 function renderTenantRentOverview(summary) {
@@ -2910,10 +4726,12 @@ function table(headers, rows, options = {}) {
 
   return `
     <div class="table-shell">
-      <div class="table-meta">
-        <span>${escapeHtml(countLabel)}</span>
-        <span>${escapeHtml(options.meta || "Demo data")}</span>
-      </div>
+      ${options.hideMeta ? "" : `
+        <div class="table-meta">
+          <span>${escapeHtml(countLabel)}</span>
+          <span>${escapeHtml(options.meta || "Demo data")}</span>
+        </div>
+      `}
       <div class="table-wrap">
         <table>
           <thead>
@@ -2922,7 +4740,7 @@ function table(headers, rows, options = {}) {
           <tbody>
             ${rows.length
               ? rows.join("")
-              : `<tr class="empty-table-row"><td class="empty-table-cell" colspan="${headers.length}"><div class="empty-state table-empty-state"><strong>${escapeHtml(emptyTitle)}</strong><span>${escapeHtml(emptyBody)}</span></div></td></tr>`}
+              : `<tr class="empty-table-row"><td class="empty-table-cell" colspan="${headers.length}">${renderEmptyState({ title: emptyTitle, description: emptyBody }).replace('class="empty-state"', 'class="empty-state table-empty-state"')}</td></tr>`}
           </tbody>
         </table>
       </div>
@@ -2932,16 +4750,148 @@ function table(headers, rows, options = {}) {
 
 function renderActionCenterButtons(item) {
   const actions = actionButtonsForItem(item);
-  if (!actions.length) return `<span class="action-muted">No action needed</span>`;
+  const sourcePage = actionSourcePage(item);
+  const reviewAction = state.role === "manager" && sourcePage !== "actionCenter" && !actions.some((action) => action.page)
+    ? [{ label: "View record", page: sourcePage, variant: "ghost" }]
+    : [];
+  const visibleActions = [...actions, ...reviewAction];
 
-  return actions
+  if (!visibleActions.length) return `<span class="action-muted">No action needed</span>`;
+
+  return visibleActions
     .map((action) => {
       if (action.page) {
-        return `<button class="button ${action.variant || "secondary"} compact" type="button" data-page="${escapeHtml(action.page)}">${escapeHtml(action.label)}</button>`;
+        return renderButton({
+          label: action.label,
+          variant: action.variant || "secondary",
+          size: "compact",
+          page: action.page
+        });
       }
-      return `<button class="button ${action.variant || "secondary"} compact" type="button" data-action="action-center" data-command="${escapeHtml(action.command)}" data-id="${escapeHtml(item.id)}">${escapeHtml(action.label)}</button>`;
+      return renderButton({
+        label: action.label,
+        variant: action.variant || "secondary",
+        size: "compact",
+        action: "action-center",
+        command: action.command,
+        id: item.id
+      });
     })
     .join("");
+}
+
+function actionCenterCommandNeedsConfirmation(command) {
+  return [
+    "approve-payment",
+    "reject-payment",
+    "approve-cash",
+    "reject-cash",
+    "resolve-maintenance",
+    "approve-renewal",
+    "reject-renewal",
+    "approve-contract",
+    "reject-contract",
+    "resolve-complaint",
+    "reject-complaint",
+    "resolve-suggestion"
+  ].includes(command);
+}
+
+function actionCenterConfirmationCopy(item, command) {
+  const copies = {
+    "approve-payment": {
+      title: "Approve payment?",
+      subtitle: "This will mark the payment proof as approved.",
+      body: "Tenant rent and management records will be updated together.",
+      label: "Approve payment",
+      variant: "success"
+    },
+    "reject-payment": {
+      title: "Reject payment?",
+      subtitle: "This will send the payment back to the tenant.",
+      body: "The tenant will need to submit corrected payment details.",
+      label: "Reject payment",
+      variant: "danger"
+    },
+    "approve-cash": {
+      title: "Approve cash visit?",
+      subtitle: "This confirms the tenant's requested office visit.",
+      body: "The tenant cash request and Action Center status will be updated.",
+      label: "Approve visit",
+      variant: "success"
+    },
+    "reject-cash": {
+      title: "Reject cash visit?",
+      subtitle: "This asks the tenant to choose another visit time.",
+      body: "The cash request will be marked rejected and the tenant will need to resubmit.",
+      label: "Reject visit",
+      variant: "danger"
+    },
+    "resolve-maintenance": {
+      title: "Resolve maintenance request?",
+      subtitle: "This closes the maintenance item.",
+      body: "The tenant and management maintenance records will both be marked complete.",
+      label: "Mark resolved",
+      variant: "success"
+    },
+    "approve-renewal": {
+      title: "Approve renewal?",
+      subtitle: "This approves the tenant renewal request.",
+      body: "The renewal queue and tenant renewal status will be updated together.",
+      label: "Approve renewal",
+      variant: "success"
+    },
+    "reject-renewal": {
+      title: "Reject renewal?",
+      subtitle: "This rejects the tenant renewal request.",
+      body: "The renewal queue and tenant renewal status will be updated together.",
+      label: "Reject renewal",
+      variant: "danger"
+    },
+    "approve-contract": {
+      title: "Approve contract request?",
+      subtitle: "This approves the submitted contract change.",
+      body: "The contract request and Action Center item will both be marked approved.",
+      label: "Approve request",
+      variant: "success"
+    },
+    "reject-contract": {
+      title: "Reject contract request?",
+      subtitle: "This rejects the submitted contract change.",
+      body: "The contract request and Action Center item will both be marked rejected.",
+      label: "Reject request",
+      variant: "danger"
+    },
+    "resolve-complaint": {
+      title: "Resolve complaint?",
+      subtitle: "This closes the tenant complaint.",
+      body: "The complaint will move to completed in the Action Center and notification records.",
+      label: "Resolve complaint",
+      variant: "success"
+    },
+    "reject-complaint": {
+      title: "Reject complaint?",
+      subtitle: "This rejects the tenant complaint.",
+      body: "The complaint will move to rejected in the Action Center and notification records.",
+      label: "Reject complaint",
+      variant: "danger"
+    },
+    "resolve-suggestion": {
+      title: "Mark suggestion reviewed?",
+      subtitle: "This closes the suggestion follow-up.",
+      body: "The suggestion will move to completed in the Action Center and notification records.",
+      label: "Mark reviewed",
+      variant: "success"
+    }
+  };
+
+  return copies[command] || {
+    title: "Confirm action?",
+    subtitle: `This updates ${item.type.toLowerCase()}.`,
+    body: "The linked record and Action Center status will be updated together.",
+    label: "Confirm",
+    variant: "primary"
+  };
 }
 
 function renderActionHistory(item) {
@@ -2976,11 +4926,7 @@ function renderActionMeta(item) {
   add("Created", item.createdAt ? formatActionDate(item.createdAt) : "");
 
   if (!rows.length) return "";
-  return `
-    <div class="action-meta-grid">
-      ${rows.map((row) => `<span><strong>${escapeHtml(row.label)}</strong>${escapeHtml(row.value)}</span>`).join("")}
-    </div>
-  `;
+  return renderMetadataGrid(rows, "action-meta-grid");
 }
 
 function renderActionCenterItem(item) {
@@ -3195,7 +5141,11 @@ function applyActionCenterCommand(itemId, command, options = {}) {
   }
 
   if (command === "request-payment-info") {
-    if (source) source.status = "In Review";
+    if (source) {
+      source.status = "Info Requested";
+      source.updatedAt = new Date().toISOString();
+      syncTenantPaymentStatus(source);
+    }
     updateTenantPaymentForInfoRequest(item, "Company requested more payment information.");
     setActionStatus(item, "Info Requested", "manager", "More info requested", "Tenant must clarify the payment details.");
     saveData();
@@ -3310,8 +5260,11 @@ function applyActionCenterCommand(itemId, command, options = {}) {
   }
 
   if (command === "request-renewal-info") {
-    if (source) source.status = "In Review";
-    if (source) source.updatedAt = new Date().toISOString();
+    if (source) {
+      source.status = "Info Requested";
+      source.updatedAt = new Date().toISOString();
+      syncTenantRenewalStatus(source);
+    }
     updateTenantRenewalForInfoRequest(item, "Company requested renewal clarification.");
     setActionStatus(item, "Info Requested", "manager", "More info requested", "Tenant must clarify renewal details.");
     saveData();
@@ -3409,8 +5362,152 @@ function applyActionCenterCommand(itemId, command, options = {}) {
   showToast("Action unavailable.");
 }
 
+function renderDesignSystemShowcase() {
+  const sampleRows = [
+    `<tr><td>Primary row</td><td>Supporting detail</td><td>${badge("Pending")}</td><td>${renderButton({ label: "Table Button", variant: "secondary", size: "compact" })}</td></tr>`,
+    `<tr><td>Secondary row</td><td>Supporting detail</td><td>${badge("Paid")}</td><td>${renderButton({ label: "Ghost Button", variant: "ghost", size: "compact" })}</td></tr>`
+  ];
+  const statusSamples = ["Paid", "Pending", "In Review", "Completed", "Rejected", "Uploaded", "Sent"];
+
+  return `
+    <div class="content-stack ui-kit-page">
+      <section class="screen-focus ui-kit-hero" aria-label="Design system overview">
+        <div class="screen-focus-copy">
+          <span class="focus-eyebrow">Internal design system</span>
+          <h2>UI Kit Component Demo</h2>
+          <p>Shared tokens, states, spacing, badges, forms, cards, lists, tables, modals, and feedback patterns for the dashboard portal.</p>
+          <div class="focus-meta">
+            <span>Light and dark themes</span>
+            <span>Status-driven color</span>
+            <span>Reusable CSS variables</span>
+          </div>
+        </div>
+        <div class="screen-focus-side">
+          <strong>53</strong>
+          <span>Component states covered</span>
+          ${renderButton({ label: "Hero Button", iconName: "home", variant: "primary" })}
+        </div>
+      </section>
+
+      <section class="section-band">
+        ${renderSectionHeader({ eyebrow: "Actions", title: "Buttons", description: "Consistent height, radius, focus, disabled, loading, and icon spacing." })}
+        <div class="component-row">
+          ${renderButton({ label: "Primary Button", variant: "primary", iconName: "check" })}
+          ${renderButton({ label: "Secondary Button", variant: "secondary", iconName: "file" })}
+          ${renderButton({ label: "Ghost Button", variant: "ghost", iconName: "bell" })}
+          ${renderButton({ label: "Danger Button", variant: "danger", iconName: "close" })}
+          ${renderButton({ label: "Loading Button", variant: "secondary", loading: true, disabled: true })}
+          ${renderButton({ label: "Disabled Button", variant: "secondary", disabled: true })}
+        </div>
+      </section>
+
+      <section class="section-band">
+        ${renderSectionHeader({ eyebrow: "Status", title: "Badges and Chips", description: "Every app status maps to success, warning, danger, info, or neutral." })}
+        <div class="component-row">
+          ${statusSamples.map((status) => badge(status)).join("")}
+          <span class="chip">Default Chip</span>
+          <span class="chip selected">Selected</span>
+          <span class="badge-count">12</span>
+        </div>
+      </section>
+
+      <section class="metric-grid compact-metrics" aria-label="Stat card examples">
+        ${metricCard("Metric Card", "24", "Primary metric with context", "wallet")}
+        ${metricCard("Alert Metric", "3", "Requires attention", "tool")}
+        ${metricCard("Review Metric", "1", "Waiting for review", "file")}
+        ${metricCard("Trend Metric", "92%", "Current period", "chart")}
+      </section>
+
+      <section class="layout-two">
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "Cards", title: "Notification Card", description: "Notification cards share status, metadata, unread state, history, and optional controls." })}
+          ${renderNotificationCard({
+            id: "ui-kit-card",
+            title: "Notification card title",
+            description: "Use this pattern for a dashboard item that needs status, details, and optional controls.",
+            status: "Pending",
+            unread: true,
+            metadata: [
+              { label: "Label", value: "Primary value" },
+              { label: "Detail", value: "Secondary value" },
+              { label: "Time", value: "Today, 10:00" }
+            ],
+            actions: `${renderButton({ label: "Success Button", variant: "success", size: "compact" })}${renderButton({ label: "Secondary Button", variant: "secondary", size: "compact" })}`
+          })}
+        </div>
+
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "Forms", title: "Fields and Feedback", description: "Labels, helper copy, error state, disabled state, and upload surfaces use one rhythm." })}
+          <form class="form-grid">
+            <div class="field">
+              <label for="uiKitInput">Text field</label>
+              <input id="uiKitInput" value="Text field value" />
+            </div>
+            <div class="field field-error">
+              <label for="uiKitError">Required field</label>
+              <input id="uiKitError" value="" aria-describedby="uiKitErrorText" />
+              <span id="uiKitErrorText" class="form-message">This field is required.</span>
+            </div>
+            <div class="field">
+              <label for="uiKitSelect">Select menu</label>
+              <select id="uiKitSelect">
+                <option>Pending</option>
+                <option>Approved</option>
+                <option>Rejected</option>
+              </select>
+            </div>
+            <div class="upload-box">Upload surface</div>
+          </form>
+        </div>
+      </section>
+
+      <section class="layout-two">
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "Tables", title: "Records Table", description: "Shared row height, hover, empty state, and compact actions." })}
+          ${table(["Item", "Detail", "Status", "Control"], sampleRows, { countLabel: "2 records", meta: "UI kit sample" })}
+        </div>
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "State", title: "Empty and Loading", description: "Stable placeholders avoid blank or jumpy dashboard sections." })}
+          ${renderEmptyState({
+            title: "Empty state title",
+            description: "Use this state when a dashboard section has no records to show yet.",
+            action: renderButton({ label: "Empty State Button", variant: "secondary", size: "compact" })
+          })}
+          ${renderLoadingState("Loading dashboard cards")}
+        </div>
+      </section>
+
+      <section class="layout-two">
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "Activity", title: "Activity Items", description: "Compact list rows for repeated dashboard updates." })}
+          <ul class="activity-list">
+            ${renderActivityItem({ title: "Activity item title", detail: "Short supporting activity detail.", time: "Today" })}
+            ${renderActivityItem({ title: "Second activity item", detail: "Use this pattern for repeated updates.", time: "Yesterday" })}
+          </ul>
+        </div>
+        <div class="section-band">
+          ${renderSectionHeader({ eyebrow: "Progress", title: "Status Bars and Variant Buttons", description: "Simple progress bars and visual button variants." })}
+          <div class="financial-bars">
+            ${renderProgressBar({ label: "Primary progress", value: "92%", width: 92 })}
+            ${renderProgressBar({ label: "Secondary progress", value: "78%", width: 78 })}
+          </div>
+          <div class="component-row toast-demo-row">
+            ${["success", "warning", "error", "info"].map((variant) => renderButton({
+              label: `${variant[0].toUpperCase()}${variant.slice(1)} Button`,
+              variant: variant === "error" ? "danger" : variant === "warning" ? "warning" : variant === "success" ? "success" : "secondary",
+              size: "compact"
+            })).join("")}
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function renderTenantPage() {
   switch (state.page) {
+    case "uiKit":
+      return renderDesignSystemShowcase();
     case "actionCenter":
       return renderActionCenter();
     case "rent":
@@ -3433,6 +5530,9 @@ function renderTenantDashboard() {
   const rentState = summary.dashboardState;
   const quickActions = tenantDashboardQuickActions(summary);
   const activityItems = tenantDashboardActivities(summary);
+  const visibleActivityItems = activityItems.slice(0, ACTIVITY_FEED_PREVIEW_LIMIT);
+  const hiddenActivityCount = Math.max(0, activityItems.length - ACTIVITY_FEED_PREVIEW_LIMIT);
+  const activityModalLabel = `Show all (${activityItems.length})`;
   const contractHealth = contractHealthClass(profile.contractEnd);
   const secondaryCards = [
     {
@@ -3507,22 +5607,10 @@ function renderTenantDashboard() {
               <h2>Recent Activity</h2>
               <p>Latest tenant updates.</p>
             </div>
+            ${hiddenActivityCount ? `<button class="button ghost compact activity-toggle-button" type="button" data-modal="activityHistory">${escapeHtml(activityModalLabel)}</button>` : ""}
           </div>
           <ul class="activity-list">
-            ${activityItems
-              .map(
-                (item) => `
-                  <li class="activity-item">
-                    <span class="activity-dot"></span>
-                    <div>
-                      <strong>${escapeHtml(item.title)}</strong>
-                      <span>${escapeHtml(item.detail)}</span>
-                    </div>
-                    <span>${escapeHtml(item.time)}</span>
-                  </li>
-                `
-              )
-              .join("")}
+            ${visibleActivityItems.map(renderActivityItem).join("")}
           </ul>
         </section>
       </div>
@@ -3530,29 +5618,35 @@ function renderTenantDashboard() {
   `;
 }
 
-function renderTenantRent() {
-  const summary = tenantRentSummary();
-  const rentState = summary.dashboardState;
-  const paymentHealth = paymentHealthClass(summary);
-  const historyExpanded = state.filters.rentHistoryView === "All";
-  const currentRow = currentTenantRent();
-  const recentPaidRows = state.data.tenant.rentHistory.filter((row) => row.status === "Paid" && row !== currentRow).slice(0, 2);
-  const visibleHistory = historyExpanded ? state.data.tenant.rentHistory : [currentRow, ...recentPaidRows];
-  const rentRows = visibleHistory.map(
+function rentReceiptCell(row) {
+  return String(row.receipt || "").startsWith("REC")
+    ? `<button class="button ghost compact" type="button" data-action="download-receipt" data-receipt="${escapeHtml(row.receipt)}">${escapeHtml(row.receipt)}</button>`
+    : escapeHtml(row.receipt);
+}
+
+function rentHistoryRows(rows) {
+  return rows.map(
     (row) => `
       <tr>
         <td>${escapeHtml(row.month)}</td>
         <td>${escapeHtml(row.amount)}</td>
         <td>${escapeHtml(row.dueDate)}</td>
         <td>${badge(row.status)}</td>
-        <td>
-          ${String(row.receipt || "").startsWith("REC")
-            ? `<button class="button ghost compact" type="button" data-action="download-doc" data-doc-title="${escapeHtml(row.receipt)}" data-doc-owner="${escapeHtml(row.month)}">${escapeHtml(row.receipt)}</button>`
-            : escapeHtml(row.receipt)}
-        </td>
+        <td>${rentReceiptCell(row)}</td>
       </tr>
     `
   );
+}
+
+function renderTenantRent() {
+  const summary = tenantRentSummary();
+  const rentState = summary.dashboardState;
+  const paymentHealth = paymentHealthClass(summary);
+  const currentRow = currentTenantRent();
+  const recentPaidRows = state.data.tenant.rentHistory.filter((row) => row.status === "Paid" && row !== currentRow).slice(0, 2);
+  const visibleHistory = [currentRow, ...recentPaidRows];
+  const hiddenHistoryCount = Math.max(0, state.data.tenant.rentHistory.length - visibleHistory.length);
+  const rentRows = rentHistoryRows(visibleHistory);
 
   return `
     <div class="content-stack">
@@ -3566,10 +5660,10 @@ function renderTenantRent() {
         <div class="section-header">
           <div>
             <h2>Payment History</h2>
-            <p>${historyExpanded ? "Full monthly history." : "Recent paid rents and current balance."}</p>
+            <p>Recent paid rents and current balance.</p>
           </div>
           <span class="cell-actions">
-            <button class="button ghost" type="button" data-action="toggle-rent-history">${historyExpanded ? "Show recent" : "Show full history"}</button>
+            ${hiddenHistoryCount ? `<button class="button ghost" type="button" data-modal="rentHistory">Show full history</button>` : ""}
             ${summary.isPaid ? "" : `<button class="button secondary" type="button" data-modal="payRent">${buttonIcon("wallet")}Pay rent</button>`}
           </span>
         </div>
@@ -3772,6 +5866,10 @@ function renderTenantMaintenance() {
               <label for="suggestionText">Suggestion</label>
               <textarea id="suggestionText" name="description">Add parcel pickup hours to the tenant portal.</textarea>
             </div>
+            <div class="field">
+              <label>Supporting file</label>
+              <div class="upload-box">Attach photo or document.</div>
+            </div>
             <button class="button primary" type="submit">${buttonIcon("send")}Submit suggestion</button>
           </form>
         </div>
@@ -3785,6 +5883,9 @@ function renderTenantMaintenance() {
 
 function renderTenantRenewal() {
   const profile = state.data.tenant.profile;
+  const contractHistory = tenantContractRequestHistory(profile);
+  const visibleContractHistory = contractHistory.slice(0, CONTRACT_REQUEST_PREVIEW_LIMIT);
+  const hiddenContractHistoryCount = Math.max(0, contractHistory.length - visibleContractHistory.length);
   const latestRequest = latestTenantContractRequest(profile);
   const status = latestRequest?.summaryStatus || latestRequest?.status || profile.renewalStatus;
   const timelineStatuses = latestRequest ? requestTimelineStatuses(latestRequest) : null;
@@ -3806,16 +5907,7 @@ function renderTenantRenewal() {
             <span>Request renewal to view the timeline.</span>
           </div>
         `;
-  const requestRows = state.data.tenant.contractRequests.map(
-    (row) => `
-      <tr>
-        <td>${escapeHtml(row.requestType)}</td>
-        <td>${escapeHtml(row.notes)}</td>
-        <td>${badge(row.status)}</td>
-        <td>${escapeHtml(row.decisionNote || "Awaiting management review")}</td>
-      </tr>
-    `
-  );
+  const requestRows = contractRequestHistoryRows(visibleContractHistory);
 
   return `
     <div class="content-stack">
@@ -3855,13 +5947,16 @@ function renderTenantRenewal() {
       <section class="section-band">
         <div class="section-header">
           <div>
-            <h2>Contract Requests</h2>
-            <p>Renewal, cancellation, and amendment requests.</p>
+            <h2>Contract Request History</h2>
+            <p>Latest renewal, cancellation, and amendment records.</p>
           </div>
+          ${hiddenContractHistoryCount ? `<button class="button ghost" type="button" data-modal="contractHistory">View all contract requests</button>` : ""}
         </div>
-        ${table(["Type", "Details", "Status", "Notes"], requestRows, {
+        ${table(["Request", "Details", "Request made", "Status", "Notes"], requestRows, {
+          countLabel: contractHistory.length ? `${visibleContractHistory.length} of ${contractHistory.length} requests` : "0 requests",
+          meta: hiddenContractHistoryCount ? `${hiddenContractHistoryCount} more in history` : "Latest requests",
           emptyTitle: "No contract requests",
-          emptyBody: "Submitted contract requests will appear here."
+          emptyBody: "Submitted renewal, cancellation, and amendment requests will appear here."
         })}
       </section>
     </div>
@@ -3908,6 +6003,8 @@ function renderTenantDocuments() {
 
 function renderManagerPage() {
   switch (state.page) {
+    case "uiKit":
+      return renderDesignSystemShowcase();
     case "actionCenter":
       return renderActionCenter();
     case "tenants":
@@ -4136,24 +6233,38 @@ function renderManagerDashboard() {
 }
 
 function renderTenantRecords() {
-  const properties = ["All", ...new Set(state.data.manager.tenants.map((tenant) => tenant.property))];
-  const rentStatuses = ["All", "Paid", "Pending", "Late"];
+  const properties = ["All", ...new Set(state.data.manager.tenants.map((tenant) => tenant.propertyName || tenant.property).filter(Boolean))];
+  const rentStatuses = ["All", "Paid", "Pending", "Overdue", "Due Soon"];
   const filtered = state.data.manager.tenants.filter((tenant) => {
-    const search = state.filters.tenantSearch.toLowerCase();
-    const searchMatch = !search || `${tenant.name} ${tenant.unit} ${tenant.property}`.toLowerCase().includes(search);
-    const propertyMatch = state.filters.tenantProperty === "All" || tenant.property === state.filters.tenantProperty;
-    const rentMatch = state.filters.tenantRent === "All" || tenant.rentStatus === state.filters.tenantRent;
+    const search = state.filters.tenantSearch.toLowerCase().trim();
+    const searchHaystack = [
+      tenant.fullName,
+      tenant.name,
+      tenant.email,
+      tenant.phone,
+      tenant.propertyName,
+      tenant.property,
+      tenant.unitNumber,
+      tenant.unit,
+      tenant.contractStatus,
+      tenant.rentStatus,
+      tenant.rentPaymentStatus
+    ].join(" ").toLowerCase();
+    const searchMatch = !search || searchHaystack.includes(search);
+    const propertyMatch = state.filters.tenantProperty === "All" || (tenant.propertyName || tenant.property) === state.filters.tenantProperty;
+    const rentMatch = state.filters.tenantRent === "All" || rentPaymentStatusLabel(tenant.rentPaymentStatus || tenant.rentStatus) === state.filters.tenantRent;
     return searchMatch && propertyMatch && rentMatch;
   });
   const rows = filtered.map(
     (tenant) => `
       <tr>
-        <td>${escapeHtml(tenant.name)}</td>
-        <td>${escapeHtml(tenant.unit)}</td>
-        <td>${escapeHtml(tenant.property)}</td>
+        <td><strong>${escapeHtml(tenant.fullName || tenant.name)}</strong><br><span class="table-subtext">${escapeHtml(tenant.email || tenant.phone)}</span></td>
+        <td>${escapeHtml(tenant.unitNumber || tenant.unit)}</td>
+        <td>${escapeHtml(tenant.propertyName || tenant.property)}</td>
+        <td>${escapeHtml(formatAed(tenant.monthlyRent || amountNumber(tenant.rent)))}</td>
+        <td>${badge(rentPaymentStatusLabel(tenant.rentPaymentStatus || tenant.rentStatus))}</td>
         <td>${badge(tenant.contractStatus)}</td>
-        <td>${badge(tenant.rentStatus)}</td>
-        <td>${badge(tenant.documentStatus)}</td>
+        <td>${escapeHtml(displayDateValue(tenant.contractEndDate) || "Not set")}</td>
         <td><button class="button secondary compact" type="button" data-modal="tenantDetail" data-id="${tenant.id}">View</button></td>
       </tr>
     `
@@ -4165,13 +6276,13 @@ function renderTenantRecords() {
         <div class="section-header">
           <div>
             <h2>Tenant Database</h2>
-            <p>Search and open tenant profiles.</p>
+            <p>Search, add, and export tenant records.</p>
           </div>
         </div>
         <div class="control-row">
           <div class="field">
             <label for="tenantSearch">Search tenant</label>
-            <input id="tenantSearch" value="${escapeHtml(state.filters.tenantSearch)}" data-filter="tenantSearch" placeholder="Name, unit, or property" />
+            <input id="tenantSearch" value="${escapeHtml(state.filters.tenantSearch)}" data-filter="tenantSearch" placeholder="Name, email, phone, unit, or status" />
           </div>
           <div class="field">
             <label for="tenantProperty">Filter by property</label>
@@ -4185,9 +6296,14 @@ function renderTenantRecords() {
               ${rentStatuses.map((status) => `<option ${state.filters.tenantRent === status ? "selected" : ""}>${escapeHtml(status)}</option>`).join("")}
             </select>
           </div>
-          <button class="button secondary" type="button" data-action="add-tenant">${buttonIcon("users")}Add tenant</button>
+          <button class="button secondary" type="button" data-action="export-tenants">${buttonIcon("download")}Export Excel</button>
+          <button class="button secondary" type="button" data-action="add-tenant">${buttonIcon("users")}Add Tenant Record</button>
         </div>
-        ${table(["Tenant Name", "Unit", "Property", "Contract Status", "Rent Status", "Document Status", "Action"], rows)}
+        ${table(["Tenant", "Unit", "Property", "Monthly Rent", "Rent Status", "Contract Status", "Contract End", "Action"], rows, {
+          emptyTitle: "No tenant records found.",
+          emptyBody: "Try another search or add a tenant record."
+        })}
+        ${!filtered.length ? `<div class="section-actions"><button class="button secondary compact" type="button" data-action="add-tenant">${buttonIcon("users")}Add Tenant Record</button></div>` : ""}
       </section>
     </div>
   `;
@@ -4596,19 +6712,225 @@ function renderFinancial() {
   `;
 }
 
+function portfolioSummaryCard(label, value, note, iconName, filter = "All", options = {}) {
+  return `
+    <button class="metric-card metric-link" type="button" data-action="open-portfolio-map" data-filter="${escapeHtml(filter)}" data-focus="${escapeHtml(options.focus || "")}" aria-label="Open ${escapeHtml(label)} on map">
+      <div class="metric-top">
+        <span class="label">${escapeHtml(label)}</span>
+        ${metricIcon(iconName)}
+      </div>
+      <p class="metric-value">${escapeHtml(value)}</p>
+      <div class="metric-foot">
+        <span class="metric-note">${escapeHtml(note)}</span>
+        <span class="metric-action">Open map</span>
+      </div>
+    </button>
+  `;
+}
+
+function portfolioMapTitle(filter = state.filters.portfolioMapFilter) {
+  const titles = {
+    All: "All Properties",
+    Occupied: "Occupied Properties",
+    Vacant: "Vacant Properties",
+    Mixed: "Mixed Properties"
+  };
+  return titles[filter] || "All Properties";
+}
+
+function portfolioFilterMatches(property, filter = state.filters.portfolioMapFilter) {
+  if (filter === "Occupied") return property.occupiedUnits > 0 || property.occupancyStatus === "occupied";
+  if (filter === "Vacant") return property.vacantUnits > 0 || property.occupancyStatus === "vacant";
+  if (filter === "Mixed") return property.occupancyStatus === "mixed";
+  return true;
+}
+
+function filteredPortfolioProperties() {
+  const city = state.filters.portfolioCity;
+  return state.data.manager.properties
+    .map(normalizePropertyRecord)
+    .filter((property) => portfolioFilterMatches(property))
+    .filter((property) => city === "All" || property.city === city);
+}
+
+function propertyMapPosition(property) {
+  const x = ((property.longitude - UAE_MAP_BOUNDS.minLng) / (UAE_MAP_BOUNDS.maxLng - UAE_MAP_BOUNDS.minLng)) * 100;
+  const y = ((UAE_MAP_BOUNDS.maxLat - property.latitude) / (UAE_MAP_BOUNDS.maxLat - UAE_MAP_BOUNDS.minLat)) * 100;
+  return {
+    x: Math.min(96, Math.max(4, x)),
+    y: Math.min(92, Math.max(8, y))
+  };
+}
+
+function selectedPortfolioProperty(properties) {
+  return properties.find((property) => property.id === state.filters.portfolioSelectedPropertyId) || properties[0] || null;
+}
+
+function renderPortfolioMarker(property, selectedId) {
+  const position = propertyMapPosition(property);
+  const selected = property.id === selectedId;
+  return `
+    <button
+      class="property-marker status-${escapeHtml(statusVariant(property.status))} ${selected ? "selected" : ""}"
+      type="button"
+      style="left:${position.x}%; top:${position.y}%"
+      data-action="select-property"
+      data-id="${escapeHtml(property.id)}"
+      aria-label="Select ${escapeHtml(property.name)}"
+    >
+      <span></span>
+      <strong>${escapeHtml(property.name)}</strong>
+    </button>
+  `;
+}
+
+function renderPortfolioMapBase(properties, selectedId) {
+  return `
+    <div class="portfolio-map-shell portfolio-leaflet-shell" aria-label="Interactive property map">
+      <div class="portfolio-map-toolbar" aria-label="Map controls">
+        <button class="button secondary compact" type="button" data-action="portfolio-map-pan" data-direction="left" aria-label="Pan map left">←</button>
+        <button class="button secondary compact" type="button" data-action="portfolio-map-pan" data-direction="up" aria-label="Pan map up">↑</button>
+        <button class="button secondary compact" type="button" data-action="portfolio-map-pan" data-direction="down" aria-label="Pan map down">↓</button>
+        <button class="button secondary compact" type="button" data-action="portfolio-map-pan" data-direction="right" aria-label="Pan map right">→</button>
+        <button class="button secondary compact" type="button" data-action="portfolio-map-zoom" data-direction="out" aria-label="Zoom map out">-</button>
+        <span>OSM</span>
+        <button class="button secondary compact" type="button" data-action="portfolio-map-zoom" data-direction="in" aria-label="Zoom map in">+</button>
+        <button class="button ghost compact" type="button" data-action="portfolio-map-reset">Reset</button>
+      </div>
+      <div
+        id="portfolioPropertyMap"
+        class="portfolio-leaflet-map"
+        data-property-count="${escapeHtml(String(properties.length))}"
+        data-selected-id="${escapeHtml(selectedId)}"
+      ></div>
+      <div class="portfolio-map-fallback" data-portfolio-map-fallback>
+        <strong>Loading property map</strong>
+        <span>Leaflet and OpenStreetMap tiles will appear here.</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderPortfolioMapCard({ showBack = false } = {}) {
+  const properties = filteredPortfolioProperties();
+  const selected = selectedPortfolioProperty(properties);
+  const selectedId = selected?.id || "";
+  const allCities = ["All", ...new Set(state.data.manager.properties.map((property) => normalizePropertyRecord(property).city).filter(Boolean))];
+  const filterButtons = ["All", "Occupied", "Vacant", "Mixed"];
+
+  return `
+    <section class="section-band portfolio-map-card" id="portfolio-map-card">
+      <div class="section-header portfolio-map-header">
+        <div>
+          <h2>Property Map</h2>
+          <p>${escapeHtml(`${properties.length} ${properties.length === 1 ? "property" : "properties"} shown with live OpenStreetMap tiles.`)}</p>
+        </div>
+        <div class="section-actions contract-action-row">
+          ${showBack ? `<button class="button ghost compact" type="button" data-action="portfolio-back">${buttonIcon("home")}Back to Portfolio</button>` : ""}
+          <button class="button secondary compact" type="button" data-action="add-property">${buttonIcon("building")}Add Property</button>
+        </div>
+      </div>
+      <div class="control-row portfolio-map-controls">
+        <div class="tabs" aria-label="Portfolio map filters">
+          ${filterButtons.map((filter) => `<button class="tab-button ${state.filters.portfolioMapFilter === filter ? "active" : ""}" type="button" data-action="set-portfolio-map-filter" data-filter="${filter}">${filter}</button>`).join("")}
+        </div>
+        <div class="field portfolio-city-field">
+          <label class="sr-only" for="portfolioCity">City</label>
+          <select id="portfolioCity" data-filter="portfolioCity">
+            ${allCities.map((city) => `<option ${state.filters.portfolioCity === city ? "selected" : ""}>${escapeHtml(city)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="portfolio-map-layout">
+        ${renderPortfolioMapBase(properties, selectedId)}
+        ${renderPortfolioDetailPanel(selected)}
+      </div>
+      ${renderPortfolioPropertyList(properties, selectedId)}
+    </section>
+  `;
+}
+
+function renderPortfolioDetailPanel(property) {
+  if (!property) {
+    return renderEmptyState({
+      title: "No properties added yet.",
+      description: "Add your first property to start building the portfolio map.",
+      action: `<button class="button secondary compact" type="button" data-action="add-property">${buttonIcon("building")}Add Property</button>`
+    });
+  }
+
+  return `
+    <aside class="property-detail-panel" aria-label="Selected property details">
+      <div class="card-title-row">
+        ${metricIcon("building")}
+        ${badge(property.status)}
+      </div>
+      <h3>${escapeHtml(property.name)}</h3>
+      <p>${escapeHtml(property.propertyType)} · ${escapeHtml(property.area)}, ${escapeHtml(property.city)}</p>
+      <div class="detail-grid">
+        <div class="detail-item"><span>Address</span><strong>${escapeHtml(property.address)}</strong></div>
+        <div class="detail-item"><span>Units</span><strong>${escapeHtml(`${property.occupiedUnits} occupied · ${property.vacantUnits} vacant`)}</strong></div>
+        <div class="detail-item"><span>Asset value</span><strong>${escapeHtml(formatAed(property.assetValue, { compact: true }))}</strong></div>
+        <div class="detail-item"><span>Monthly rent</span><strong>${escapeHtml(formatAed(property.currentMonthlyRent))}</strong></div>
+        <div class="detail-item"><span>Coordinates</span><strong>${escapeHtml(`${property.latitude.toFixed(4)}, ${property.longitude.toFixed(4)}`)}</strong></div>
+        <div class="detail-item"><span>Maintenance</span><strong>${escapeHtml(property.maintenance)}</strong></div>
+      </div>
+      <div class="property-notes">
+        <strong>Notes</strong>
+        <span>${escapeHtml(property.notes || "No property notes yet.")}</span>
+      </div>
+      <div class="section-actions contract-action-row">
+        <button class="button secondary compact" type="button" data-modal="propertyDetail" data-id="${escapeHtml(property.id)}">View Details</button>
+      </div>
+    </aside>
+  `;
+}
+
+function renderPortfolioPropertyList(properties, selectedId) {
+  if (!properties.length) {
+    return renderEmptyState({
+      title: `No ${state.filters.portfolioMapFilter.toLowerCase()} properties found.`,
+      description: "Clear the filter or add a property.",
+      action: `<button class="button secondary compact" type="button" data-action="set-portfolio-map-filter" data-filter="All">Clear filter</button>`
+    });
+  }
+
+  return `
+    <div class="portfolio-property-list" aria-label="Mapped properties">
+      ${properties.map((property) => `
+        <button class="portfolio-property-row ${property.id === selectedId ? "selected" : ""}" type="button" data-action="select-property" data-id="${escapeHtml(property.id)}">
+          <span>
+            <strong>${escapeHtml(property.name)}</strong>
+            <em>${escapeHtml(property.area)}, ${escapeHtml(property.city)}</em>
+          </span>
+          ${badgeSlot(property.status)}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderPortfolioMapView() {
+  return `
+    <div class="content-stack portfolio-map-view">
+      ${renderPortfolioMapCard({ showBack: true })}
+    </div>
+  `;
+}
+
 function renderPortfolio() {
-  const totalProperties = state.data.manager.properties.length;
-  const occupiedProperties = state.data.manager.properties.filter((property) => property.status === "Occupied").length;
-  const vacantProperties = state.data.manager.properties.filter((property) => property.status === "Vacant").length;
-  const rows = state.data.manager.properties.map(
+  const properties = state.data.manager.properties.map(normalizePropertyRecord);
+  const summary = getPortfolioSummary(properties);
+  const rows = properties.map(
     (property) => `
       <tr>
-        <td>${escapeHtml(property.name)}</td>
-        <td>${escapeHtml(property.location)}</td>
-        <td>${escapeHtml(property.units)}</td>
-        <td>${escapeHtml(property.occupancy)}</td>
-        <td>${escapeHtml(property.income)}</td>
-        <td>${badge(property.status)}</td>
+        <td><strong>${escapeHtml(property.name)}</strong><br><span class="table-subtext">${escapeHtml(`${property.area}, ${property.city}`)}</span></td>
+        <td>${escapeHtml(property.propertyType)}</td>
+        <td>${escapeHtml(property.unitCount)}</td>
+        <td>${escapeHtml(`${property.occupiedUnits} / ${property.vacantUnits}`)}</td>
+        <td>${escapeHtml(formatAed(property.currentMonthlyRent))}</td>
+        <td class="portfolio-status-cell">${badge(property.status)}</td>
+        <td><button class="button secondary compact" type="button" data-action="open-portfolio-map" data-filter="All" data-id="${escapeHtml(property.id)}">Map</button></td>
       </tr>
     `
   );
@@ -4616,40 +6938,47 @@ function renderPortfolio() {
   return `
     <div class="content-stack">
       <section class="metric-grid five">
-        ${metricCard("Total Properties", String(totalProperties), "Assets", "building")}
-        ${metricCard("Occupied Properties", String(occupiedProperties), "Active assets", "users")}
-        ${metricCard("Vacant Properties", String(vacantProperties), "Needs leasing", "file")}
-        ${metricCard("Total Units", "220", "Units", "home")}
-        ${metricCard("Total Assets", "AED 248M", "Portfolio value", "chart")}
+        ${portfolioSummaryCard("Total Properties", String(summary.totalProperties), "Properties", "building", "All")}
+        ${portfolioSummaryCard("Occupied Properties", String(summary.occupiedProperties), `${summary.occupiedUnits} occupied units`, "users", "Occupied")}
+        ${portfolioSummaryCard("Vacant Properties", String(summary.vacantProperties), `${summary.vacantUnits} vacant units`, "file", "Vacant")}
+        ${portfolioSummaryCard("Total Units", String(summary.totalUnits), "Managed units", "home", "All")}
+        ${portfolioSummaryCard("Total Assets", formatAed(summary.totalAssetValue, { compact: true }), "Portfolio value", "chart", "All", { focus: "assets" })}
       </section>
       <section class="section-band">
         <div class="section-header">
           <div>
             <h2>Properties</h2>
-            <p>Portfolio summary.</p>
+            <p>Portfolio summary and map entry points.</p>
           </div>
+          <button class="button secondary compact" type="button" data-action="add-property">${buttonIcon("building")}Add Property</button>
         </div>
-        <div class="property-grid">
-          ${state.data.manager.properties
-            .map(
-              (property) => `
-                <article class="property-card">
-                  <div class="card-title-row">
-                    ${metricIcon("building")}
-                    ${badgeSlot(property.status)}
-                  </div>
-                  <h3>${escapeHtml(property.name)}</h3>
-                  <div class="property-meta">
-                    <span>${escapeHtml(property.location)}</span>
-                    <span>${escapeHtml(property.units)} units · ${escapeHtml(property.occupancy)} occupied</span>
-                    <span>Monthly income ${escapeHtml(property.income)}</span>
-                    <span>Maintenance: ${escapeHtml(property.maintenance)}</span>
-                  </div>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
+        ${properties.length ? `
+          <div class="property-grid">
+            ${properties
+              .map(
+                (property) => `
+                  <button class="property-card" type="button" data-action="open-portfolio-map" data-filter="All" data-id="${escapeHtml(property.id)}">
+                    <div class="card-title-row">
+                      ${metricIcon("building")}
+                      ${badgeSlot(property.status)}
+                    </div>
+                    <h3>${escapeHtml(property.name)}</h3>
+                    <div class="property-meta">
+                      <span>${escapeHtml(property.area)}, ${escapeHtml(property.city)}</span>
+                      <span>${escapeHtml(property.unitCount)} units · ${escapeHtml(property.occupancy)} occupied</span>
+                      <span>Monthly income ${escapeHtml(formatAed(property.currentMonthlyRent))}</span>
+                      <span>Maintenance: ${escapeHtml(property.maintenance)}</span>
+                    </div>
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
+        ` : renderEmptyState({
+          title: "No properties added yet.",
+          description: "Add your first property to start building the portfolio map.",
+          action: `<button class="button secondary compact" type="button" data-action="add-property">${buttonIcon("building")}Add Property</button>`
+        })}
       </section>
       <section class="section-band">
         <div class="section-header">
@@ -4658,8 +6987,12 @@ function renderPortfolio() {
             <p>Key portfolio metrics.</p>
           </div>
         </div>
-        ${table(["Property", "Location", "Units", "Occupancy", "Monthly Income", "Status"], rows)}
+        ${table(["Property", "Type", "Units", "Occupied / Vacant", "Monthly Income", "Status", "Action"], rows, {
+          emptyTitle: "No properties added yet.",
+          emptyBody: "Add a property to populate the portfolio table."
+        })}
       </section>
+      ${renderPortfolioMapCard()}
     </div>
   `;
 }
@@ -4691,9 +7024,13 @@ function renderModal() {
   }
 
   const modal = modalContent(state.modal);
+  const modalClassName = ["modal", modal.large ? "large" : "", modal.className || ""]
+    .filter(Boolean)
+    .map(escapeHtml)
+    .join(" ");
   modalRoot().innerHTML = `
     <div class="modal-backdrop" data-action="close-modal">
-      <section class="modal ${modal.large ? "large" : ""}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <section class="${modalClassName}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-header">
           <div>
             <h2 id="modal-title">${escapeHtml(modal.title)}</h2>
@@ -4707,8 +7044,1042 @@ function renderModal() {
     </div>
   `;
   window.requestAnimationFrame(() => {
-    modalRoot().querySelector(".modal-close")?.focus({ preventScroll: true });
+    (modalRoot().querySelector("[data-autofocus]") || modalRoot().querySelector(".modal-close"))?.focus({ preventScroll: true });
   });
+}
+
+function defaultTenantRecordValues() {
+  return {
+    fullName: "",
+    email: "",
+    phone: "",
+    nationality: "",
+    idNumber: "",
+    propertyName: "",
+    unitNumber: "",
+    propertyAddress: "",
+    parkingBay: "",
+    occupancyStatus: "Occupied",
+    contractStartDate: "2026-06-01",
+    contractEndDate: "2027-05-31",
+    monthlyRent: "",
+    securityDeposit: "",
+    contractStatus: "Active",
+    renewalStatus: "Not Requested",
+    rentPaymentStatus: "paid",
+    nextDueDate: "2026-07-05",
+    lastPaymentDate: "",
+    paymentMethod: "Bank Transfer",
+    pendingBalance: "0",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    emergencyContactRelationship: "",
+    notes: ""
+  };
+}
+
+function tenantRecordValue(values, name) {
+  return String(values?.[name] ?? defaultTenantRecordValues()[name] ?? "");
+}
+
+function tenantRecordField({ values, errors, name, label, type = "text", required = false, options = null, textarea = false, step = "", min = "" }) {
+  const id = `tenantRecord-${name}`;
+  const value = tenantRecordValue(values, name);
+  const error = errors?.[name] || "";
+  const invalidAttrs = error ? ` aria-invalid="true" aria-describedby="${id}-error"` : "";
+  const requiredAttrs = required ? " required" : "";
+  const typeAttrs = type ? ` type="${escapeHtml(type)}"` : "";
+  const stepAttr = step ? ` step="${escapeHtml(step)}"` : "";
+  const minAttr = min !== "" ? ` min="${escapeHtml(min)}"` : "";
+  const fieldClass = `field${error ? " field-error" : ""}`;
+  const labelCopy = `${label}${required ? " *" : ""}`;
+
+  if (options) {
+    return `
+      <div class="${fieldClass}">
+        <label for="${id}">${escapeHtml(labelCopy)}</label>
+        <select id="${id}" name="${escapeHtml(name)}"${requiredAttrs}${invalidAttrs}>
+          ${options.map((option) => `<option value="${escapeHtml(option.value)}" ${value === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+        </select>
+        ${error ? `<span id="${id}-error" class="form-message">${escapeHtml(error)}</span>` : ""}
+      </div>
+    `;
+  }
+
+  if (textarea) {
+    return `
+      <div class="${fieldClass}">
+        <label for="${id}">${escapeHtml(labelCopy)}</label>
+        <textarea id="${id}" name="${escapeHtml(name)}"${requiredAttrs}${invalidAttrs}>${escapeHtml(value)}</textarea>
+        ${error ? `<span id="${id}-error" class="form-message">${escapeHtml(error)}</span>` : ""}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="${fieldClass}">
+      <label for="${id}">${escapeHtml(labelCopy)}</label>
+      <input id="${id}" name="${escapeHtml(name)}" value="${escapeHtml(value)}"${typeAttrs}${requiredAttrs}${stepAttr}${minAttr}${invalidAttrs}${name === "fullName" ? " data-autofocus" : ""} />
+      ${error ? `<span id="${id}-error" class="form-message">${escapeHtml(error)}</span>` : ""}
+    </div>
+  `;
+}
+
+function tenantRecordFormSection(title, description, fields) {
+  return `
+    <section class="section-band">
+      <div class="section-header">
+        <div>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(description)}</p>
+        </div>
+      </div>
+      <div class="detail-grid">${fields.join("")}</div>
+    </section>
+  `;
+}
+
+function tenantRecordModal(values = {}, errors = {}) {
+  const field = (config) => tenantRecordField({ values, errors, ...config });
+  const occupancyOptions = ["Occupied", "Vacant", "Reserved"].map((value) => ({ value, label: value }));
+  const contractOptions = ["Active", "Expiring Soon", "Expired", "In Review"].map((value) => ({ value, label: value }));
+  const renewalOptions = ["Not Requested", "Pending", "Approved", "Rejected"].map((value) => ({ value, label: value }));
+  const rentOptions = [
+    { value: "paid", label: "Paid" },
+    { value: "pending", label: "Pending" },
+    { value: "overdue", label: "Overdue" },
+    { value: "due_soon", label: "Due Soon" }
+  ];
+
+  return {
+    large: true,
+    title: "Add Tenant Record",
+    subtitle: "Create a persisted management record.",
+    body: `
+      <form class="form-grid" id="tenantRecordForm" data-form="tenant-record" novalidate>
+        ${Object.keys(errors || {}).length ? `<div class="confirmation warning">Fix the highlighted fields before saving.</div>` : ""}
+        ${tenantRecordFormSection("Personal Information", "Required contact details for the tenant profile.", [
+          field({ name: "fullName", label: "Full name", required: true }),
+          field({ name: "email", label: "Email", type: "email", required: true }),
+          field({ name: "phone", label: "Phone number", type: "tel", required: true }),
+          field({ name: "nationality", label: "Nationality" }),
+          field({ name: "idNumber", label: "ID / Passport number" })
+        ])}
+        ${tenantRecordFormSection("Property and Unit", "Link the tenant to the managed property and unit.", [
+          field({ name: "propertyName", label: "Property name", required: true }),
+          field({ name: "unitNumber", label: "Unit number", required: true }),
+          field({ name: "propertyAddress", label: "Property address" }),
+          field({ name: "parkingBay", label: "Parking bay" }),
+          field({ name: "occupancyStatus", label: "Occupancy status", options: occupancyOptions })
+        ])}
+        ${tenantRecordFormSection("Contract Details", "Lease dates, rent, and renewal state.", [
+          field({ name: "contractStartDate", label: "Contract start date", type: "date", required: true }),
+          field({ name: "contractEndDate", label: "Contract end date", type: "date", required: true }),
+          field({ name: "monthlyRent", label: "Monthly rent amount", type: "number", required: true, min: "1", step: "100" }),
+          field({ name: "securityDeposit", label: "Security deposit", type: "number", min: "0", step: "100" }),
+          field({ name: "contractStatus", label: "Contract status", options: contractOptions }),
+          field({ name: "renewalStatus", label: "Renewal status", options: renewalOptions })
+        ])}
+        ${tenantRecordFormSection("Payment Details", "Current rent state and finance follow-up fields.", [
+          field({ name: "rentPaymentStatus", label: "Rent payment status", required: true, options: rentOptions }),
+          field({ name: "nextDueDate", label: "Next due date", type: "date" }),
+          field({ name: "lastPaymentDate", label: "Last payment date", type: "date" }),
+          field({ name: "paymentMethod", label: "Payment method" }),
+          field({ name: "pendingBalance", label: "Pending balance", type: "number", min: "0", step: "100" })
+        ])}
+        ${tenantRecordFormSection("Emergency Contact", "Optional fallback contact for urgent situations.", [
+          field({ name: "emergencyContactName", label: "Contact name" }),
+          field({ name: "emergencyContactPhone", label: "Contact phone", type: "tel" }),
+          field({ name: "emergencyContactRelationship", label: "Relationship" })
+        ])}
+        <section class="section-band">
+          <div class="section-header">
+            <div>
+              <h3>Notes</h3>
+              <p>Internal management notes.</p>
+            </div>
+          </div>
+          ${field({ name: "notes", label: "Notes", textarea: true })}
+        </section>
+      </form>
+    `,
+    actions: `
+      <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+      <button class="button success" type="submit" form="tenantRecordForm">${buttonIcon("users")}Add Tenant Record</button>
+    `
+  };
+}
+
+function tenantRecordValuesFromForm(form) {
+  const formData = new FormData(form);
+  const values = defaultTenantRecordValues();
+  Object.keys(values).forEach((key) => {
+    values[key] = String(formData.get(key) || "").trim();
+  });
+  return values;
+}
+
+function validateTenantRecord(values) {
+  const errors = {};
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const monthlyRent = Number(values.monthlyRent);
+  const securityDeposit = values.securityDeposit === "" ? 0 : Number(values.securityDeposit);
+  const pendingBalance = values.pendingBalance === "" ? 0 : Number(values.pendingBalance);
+  const startDate = values.contractStartDate ? new Date(`${values.contractStartDate}T00:00:00`) : null;
+  const endDate = values.contractEndDate ? new Date(`${values.contractEndDate}T00:00:00`) : null;
+
+  if (!values.fullName) errors.fullName = "Full name is required.";
+  if (!values.email) {
+    errors.email = "Email is required.";
+  } else if (!emailPattern.test(values.email)) {
+    errors.email = "Enter a valid email address.";
+  }
+  if (!values.phone) errors.phone = "Phone number is required.";
+  if (!values.propertyName) errors.propertyName = "Property name is required.";
+  if (!values.unitNumber) errors.unitNumber = "Unit number is required.";
+  if (!values.contractStartDate) errors.contractStartDate = "Start date is required.";
+  if (!values.contractEndDate) errors.contractEndDate = "End date is required.";
+  if (!Number.isFinite(monthlyRent) || monthlyRent <= 0) errors.monthlyRent = "Monthly rent must be greater than zero.";
+  if (!values.rentPaymentStatus) errors.rentPaymentStatus = "Rent status is required.";
+  if (startDate && endDate && endDate < startDate) errors.contractEndDate = "End date cannot be before start date.";
+  if (!Number.isFinite(securityDeposit) || securityDeposit < 0) errors.securityDeposit = "Security deposit cannot be negative.";
+  if (!Number.isFinite(pendingBalance) || pendingBalance < 0) errors.pendingBalance = "Pending balance cannot be negative.";
+
+  return errors;
+}
+
+function addTenantRecord(values) {
+  const now = new Date().toISOString();
+  const record = normalizeTenantRecord({
+    ...values,
+    id: nextId("tenant"),
+    monthlyRent: Number(values.monthlyRent),
+    securityDeposit: values.securityDeposit === "" ? 0 : Number(values.securityDeposit),
+    pendingBalance: values.pendingBalance === "" ? 0 : Number(values.pendingBalance),
+    documentStatus: "Uploaded",
+    createdAt: now,
+    updatedAt: now
+  }, state.data.manager.tenants.length);
+
+  state.data.manager.tenants.unshift(record);
+  state.data.manager.rentRows.unshift({
+    id: nextId("r"),
+    tenant: record.name,
+    unit: record.unit,
+    property: record.property,
+    amount: formatAed(record.monthlyRent),
+    dueDate: displayDateValue(record.nextDueDate) || "05 Jun 2026",
+    status: rentRowStatusFromTenantStatus(record.rentPaymentStatus)
+  });
+  state.data.manager.documents.unshift({
+    id: nextId("d"),
+    tenant: record.name,
+    unit: record.unit,
+    type: "Tenancy Contract",
+    status: "Uploaded",
+    lastUpdated: displayDateValue(record.createdAt) || "12 Jun 2026"
+  });
+  return record;
+}
+
+function xmlEscape(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function columnLetter(index) {
+  let value = index;
+  let output = "";
+  while (value > 0) {
+    value -= 1;
+    output = String.fromCharCode(65 + (value % 26)) + output;
+    value = Math.floor(value / 26);
+  }
+  return output;
+}
+
+function excelDateSerial(value) {
+  const dateValue = toDateInputValue(value);
+  if (!dateValue) return null;
+  const date = new Date(`${dateValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.round(date.getTime() / 86400000 + 25569);
+}
+
+function xlsxCell(rowIndex, columnIndex, value, { style = 0, type = "string" } = {}) {
+  const ref = `${columnLetter(columnIndex)}${rowIndex}`;
+  const styleAttr = style ? ` s="${style}"` : "";
+  if (value === null || value === undefined || value === "") return `<c r="${ref}"${styleAttr}/>`;
+  if (type === "number") return `<c r="${ref}"${styleAttr}><v>${Number(value) || 0}</v></c>`;
+  return `<c r="${ref}" t="inlineStr"${styleAttr}><is><t>${xmlEscape(value)}</t></is></c>`;
+}
+
+function tenantExportColumns() {
+  return [
+    { key: "id", label: "Tenant ID", width: 24 },
+    { key: "fullName", label: "Full Name", width: 22 },
+    { key: "email", label: "Email", width: 28 },
+    { key: "phone", label: "Phone", width: 18 },
+    { key: "nationality", label: "Nationality", width: 16 },
+    { key: "idNumber", label: "ID / Passport Number", width: 22 },
+    { key: "propertyName", label: "Property Name", width: 26 },
+    { key: "unitNumber", label: "Unit Number", width: 13 },
+    { key: "propertyAddress", label: "Property Address", width: 28 },
+    { key: "occupancyStatus", label: "Occupancy Status", width: 18 },
+    { key: "contractStartDate", label: "Contract Start Date", width: 18, type: "date" },
+    { key: "contractEndDate", label: "Contract End Date", width: 18, type: "date" },
+    { key: "contractStatus", label: "Contract Status", width: 18 },
+    { key: "renewalStatus", label: "Renewal Status", width: 18 },
+    { key: "monthlyRent", label: "Monthly Rent", width: 16, type: "currency" },
+    { key: "securityDeposit", label: "Security Deposit", width: 18, type: "currency" },
+    { key: "rentPaymentStatus", label: "Rent Payment Status", width: 20, type: "rentStatus" },
+    { key: "nextDueDate", label: "Next Due Date", width: 16, type: "date" },
+    { key: "lastPaymentDate", label: "Last Payment Date", width: 18, type: "date" },
+    { key: "paymentMethod", label: "Payment Method", width: 18 },
+    { key: "pendingBalance", label: "Pending Balance", width: 18, type: "currency" },
+    { key: "emergencyContactName", label: "Emergency Contact Name", width: 24 },
+    { key: "emergencyContactPhone", label: "Emergency Contact Phone", width: 24 },
+    { key: "emergencyContactRelationship", label: "Emergency Contact Relationship", width: 28 },
+    { key: "notes", label: "Notes", width: 34, type: "wrap" },
+    { key: "createdAt", label: "Created At", width: 18, type: "date" },
+    { key: "updatedAt", label: "Updated At", width: 18, type: "date" }
+  ];
+}
+
+function tenantExportValue(record, key) {
+  const values = {
+    propertyName: record.propertyName || record.property,
+    unitNumber: record.unitNumber || record.unit,
+    rentPaymentStatus: rentPaymentStatusLabel(record.rentPaymentStatus || record.rentStatus)
+  };
+  return values[key] ?? record[key] ?? "";
+}
+
+function rentStatusExportStyle(value) {
+  const status = normalizeRentPaymentStatus(value);
+  if (status === "paid") return 5;
+  if (status === "overdue") return 7;
+  if (status === "pending" || status === "due_soon") return 6;
+  return 0;
+}
+
+function buildTenantRecordsWorksheet(records) {
+  const columns = tenantExportColumns();
+  const lastCell = `${columnLetter(columns.length)}${records.length + 1}`;
+  const columnXml = columns
+    .map((column, index) => `<col min="${index + 1}" max="${index + 1}" width="${column.width}" customWidth="1"/>`)
+    .join("");
+  const headerRow = `<row r="1" ht="22" customHeight="1">${columns.map((column, index) => xlsxCell(1, index + 1, column.label, { style: 1 })).join("")}</row>`;
+  const bodyRows = records.map((record, rowIndex) => {
+    const rowNumber = rowIndex + 2;
+    const cells = columns.map((column, columnIndex) => {
+      const value = tenantExportValue(record, column.key);
+      if (column.type === "date") {
+        const serial = excelDateSerial(value);
+        return xlsxCell(rowNumber, columnIndex + 1, serial, { style: 2, type: serial === null ? "string" : "number" });
+      }
+      if (column.type === "currency") {
+        return xlsxCell(rowNumber, columnIndex + 1, Number(value) || 0, { style: 3, type: "number" });
+      }
+      if (column.type === "rentStatus") {
+        return xlsxCell(rowNumber, columnIndex + 1, value, { style: rentStatusExportStyle(value) });
+      }
+      if (column.type === "wrap") {
+        return xlsxCell(rowNumber, columnIndex + 1, value, { style: 4 });
+      }
+      return xlsxCell(rowNumber, columnIndex + 1, value);
+    }).join("");
+    return `<row r="${rowNumber}">${cells}</row>`;
+  }).join("");
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:${lastCell}"/>
+  <sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols>${columnXml}</cols>
+  <sheetData>${headerRow}${bodyRows}</sheetData>
+  <autoFilter ref="A1:${lastCell}"/>
+  <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
+</worksheet>`;
+}
+
+function buildTenantRecordsStyles() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <numFmts count="2">
+    <numFmt numFmtId="164" formatCode="dd mmm yyyy"/>
+    <numFmt numFmtId="165" formatCode="&quot;AED&quot; #,##0"/>
+  </numFmts>
+  <fonts count="2">
+    <font><sz val="11"/><color theme="1"/><name val="Aptos"/><family val="2"/></font>
+    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Aptos"/><family val="2"/></font>
+  </fonts>
+  <fills count="6">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF111111"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFEAF7EE"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFFF4DE"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFFECE8"/><bgColor indexed="64"/></patternFill></fill>
+  </fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="8">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+    <xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>
+    <xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>
+    <xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+}
+
+function uint16(value) {
+  const bytes = new Uint8Array(2);
+  new DataView(bytes.buffer).setUint16(0, value, true);
+  return bytes;
+}
+
+function uint32(value) {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setUint32(0, value >>> 0, true);
+  return bytes;
+}
+
+const CRC32_TABLE = Array.from({ length: 256 }, (_, index) => {
+  let crc = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+  }
+  return crc >>> 0;
+});
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function concatBytes(parts) {
+  const totalLength = parts.reduce((total, part) => total + part.length, 0);
+  const output = new Uint8Array(totalLength);
+  let offset = 0;
+  parts.forEach((part) => {
+    output.set(part, offset);
+    offset += part.length;
+  });
+  return output;
+}
+
+function createZipBlob(files) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  files.forEach((file) => {
+    const nameBytes = encoder.encode(file.name);
+    const dataBytes = typeof file.content === "string" ? encoder.encode(file.content) : file.content;
+    const checksum = crc32(dataBytes);
+    const localHeader = concatBytes([
+      uint32(0x04034b50),
+      uint16(20),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(checksum),
+      uint32(dataBytes.length),
+      uint32(dataBytes.length),
+      uint16(nameBytes.length),
+      uint16(0),
+      nameBytes
+    ]);
+    const centralHeader = concatBytes([
+      uint32(0x02014b50),
+      uint16(20),
+      uint16(20),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(checksum),
+      uint32(dataBytes.length),
+      uint32(dataBytes.length),
+      uint16(nameBytes.length),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(0),
+      uint32(offset),
+      nameBytes
+    ]);
+
+    localParts.push(localHeader, dataBytes);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + dataBytes.length;
+  });
+
+  const centralDirectory = concatBytes(centralParts);
+  const localDirectory = concatBytes(localParts);
+  const endRecord = concatBytes([
+    uint32(0x06054b50),
+    uint16(0),
+    uint16(0),
+    uint16(files.length),
+    uint16(files.length),
+    uint32(centralDirectory.length),
+    uint32(localDirectory.length),
+    uint16(0)
+  ]);
+
+  return new Blob([localDirectory, centralDirectory, endRecord], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+}
+
+function tenantRecordsWorkbook(records) {
+  const now = new Date().toISOString();
+  return createZipBlob([
+    {
+      name: "[Content_Types].xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`
+    },
+    {
+      name: "_rels/.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`
+    },
+    {
+      name: "docProps/core.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>Tenant Records</dc:title>
+  <dc:creator>EstateFlow Demo</dc:creator>
+  <cp:lastModifiedBy>EstateFlow Demo</cp:lastModifiedBy>
+  <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+</cp:coreProperties>`
+    },
+    {
+      name: "docProps/app.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <Application>EstateFlow Demo</Application>
+  <DocSecurity>0</DocSecurity>
+  <ScaleCrop>false</ScaleCrop>
+  <HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>
+  <TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>Tenant Records</vt:lpstr></vt:vector></TitlesOfParts>
+</Properties>`
+    },
+    {
+      name: "xl/workbook.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Tenant Records" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`
+    },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`
+    },
+    { name: "xl/styles.xml", content: buildTenantRecordsStyles() },
+    { name: "xl/worksheets/sheet1.xml", content: buildTenantRecordsWorksheet(records) }
+  ]);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportTenantRecordsToExcel() {
+  const records = state.data.manager.tenants.map(normalizeTenantRecord);
+  if (!records.length) {
+    showToast("No tenant records to export.");
+    return;
+  }
+  try {
+    const filename = `tenant-records-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    downloadBlob(tenantRecordsWorkbook(records), filename);
+    showToast("Tenant records exported.");
+  } catch {
+    showToast("Tenant export failed.", { variant: "error" });
+  }
+}
+
+function defaultPropertyRecordValues() {
+  const preset = PROPERTY_LOCATION_PRESETS[0];
+  return {
+    locationPreset: preset.label,
+    propertyName: "",
+    propertyType: "Apartment",
+    city: preset.city,
+    area: preset.area,
+    address: preset.address,
+    latitude: String(preset.latitude),
+    longitude: String(preset.longitude),
+    occupancyStatus: "mixed",
+    unitCount: "",
+    occupiedUnits: "0",
+    vacantUnits: "0",
+    assetValue: "",
+    currentMonthlyRent: "",
+    monthlyRentPotential: "",
+    notes: ""
+  };
+}
+
+function propertyRecordValue(values, name) {
+  return String(values?.[name] ?? defaultPropertyRecordValues()[name] ?? "");
+}
+
+function propertyRecordField({ values, errors, name, label, type = "text", required = false, options = null, textarea = false, step = "", min = "", helper = "" }) {
+  const id = `propertyRecord-${name}`;
+  const value = propertyRecordValue(values, name);
+  const error = errors?.[name] || "";
+  const invalidAttrs = error ? ` aria-invalid="true" aria-describedby="${id}-message"` : helper ? ` aria-describedby="${id}-message"` : "";
+  const requiredAttrs = required ? " required" : "";
+  const stepAttr = step ? ` step="${escapeHtml(step)}"` : "";
+  const minAttr = min !== "" ? ` min="${escapeHtml(min)}"` : "";
+  const fieldClass = `field${error ? " field-error" : ""}`;
+  const labelCopy = `${label}${required ? " *" : ""}`;
+  const message = error || helper;
+
+  if (options) {
+    const actionAttr = name === "locationPreset" ? ' data-action="property-location-preset"' : "";
+    return `
+      <div class="${fieldClass}">
+        <label for="${id}">${escapeHtml(labelCopy)}</label>
+        <select id="${id}" name="${escapeHtml(name)}"${requiredAttrs}${invalidAttrs}${actionAttr}>
+          ${options.map((option) => `<option value="${escapeHtml(option.value)}" ${value === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+        </select>
+        ${message ? `<span id="${id}-message" class="form-message ${error ? "" : "form-helper"}">${escapeHtml(message)}</span>` : ""}
+      </div>
+    `;
+  }
+
+  if (textarea) {
+    return `
+      <div class="${fieldClass}">
+        <label for="${id}">${escapeHtml(labelCopy)}</label>
+        <textarea id="${id}" name="${escapeHtml(name)}"${requiredAttrs}${invalidAttrs}>${escapeHtml(value)}</textarea>
+        ${message ? `<span id="${id}-message" class="form-message ${error ? "" : "form-helper"}">${escapeHtml(message)}</span>` : ""}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="${fieldClass}">
+      <label for="${id}">${escapeHtml(labelCopy)}</label>
+      <input id="${id}" name="${escapeHtml(name)}" value="${escapeHtml(value)}" type="${escapeHtml(type)}"${requiredAttrs}${stepAttr}${minAttr}${invalidAttrs}${name === "propertyName" ? " data-autofocus" : ""} />
+      ${message ? `<span id="${id}-message" class="form-message ${error ? "" : "form-helper"}">${escapeHtml(message)}</span>` : ""}
+    </div>
+  `;
+}
+
+function propertyRecordFormSection(title, description, fields) {
+  return `
+    <section class="section-band">
+      <div class="section-header">
+        <div>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(description)}</p>
+        </div>
+      </div>
+      <div class="detail-grid">${fields.join("")}</div>
+    </section>
+  `;
+}
+
+function propertyRecordModal(values = {}, errors = {}) {
+  const field = (config) => propertyRecordField({ values, errors, ...config });
+  const typeOptions = ["Apartment", "Villa", "Commercial", "Mixed Use"].map((value) => ({ value, label: value }));
+  const statusOptions = [
+    { value: "occupied", label: "Occupied" },
+    { value: "vacant", label: "Vacant" },
+    { value: "mixed", label: "Mixed" }
+  ];
+  const presetOptions = PROPERTY_LOCATION_PRESETS.map((preset) => ({ value: preset.label, label: preset.label }));
+
+  return {
+    large: true,
+    title: "Add Property",
+    subtitle: "Create a persisted portfolio property and map marker.",
+    body: `
+      <form class="form-grid" id="propertyRecordForm" data-form="property-record" novalidate>
+        ${Object.keys(errors || {}).length ? `<div class="confirmation warning">Fix the highlighted fields before saving.</div>` : ""}
+        ${propertyRecordFormSection("Property", "Core identity and location.", [
+          field({ name: "propertyName", label: "Property name", required: true }),
+          field({ name: "propertyType", label: "Property type", required: true, options: typeOptions }),
+          field({ name: "locationPreset", label: "Location preset", options: presetOptions, helper: "Choose a UAE area to autofill city, address, and coordinates." }),
+          field({ name: "city", label: "City", required: true }),
+          field({ name: "area", label: "Area", required: true }),
+          field({ name: "address", label: "Address", required: true })
+        ])}
+        ${propertyRecordFormSection("Map Location", "Coordinates place the marker on the UAE map.", [
+          field({ name: "latitude", label: "Latitude", type: "number", required: true, min: "22", step: "0.0001", helper: "Use a UAE latitude between 22 and 27." }),
+          field({ name: "longitude", label: "Longitude", type: "number", required: true, min: "51", step: "0.0001", helper: "Use a UAE longitude between 51 and 57." })
+        ])}
+        ${propertyRecordFormSection("Portfolio Details", "Unit mix, occupancy, and asset value.", [
+          field({ name: "occupancyStatus", label: "Occupancy status", required: true, options: statusOptions }),
+          field({ name: "unitCount", label: "Unit count", type: "number", required: true, min: "1", step: "1" }),
+          field({ name: "occupiedUnits", label: "Occupied units", type: "number", required: true, min: "0", step: "1" }),
+          field({ name: "vacantUnits", label: "Vacant units", type: "number", required: true, min: "0", step: "1" }),
+          field({ name: "assetValue", label: "Asset value", type: "number", required: true, min: "0", step: "100000" }),
+          field({ name: "currentMonthlyRent", label: "Current monthly rent", type: "number", min: "0", step: "1000" }),
+          field({ name: "monthlyRentPotential", label: "Monthly rent potential", type: "number", min: "0", step: "1000" })
+        ])}
+        <section class="section-band">
+          <div class="section-header">
+            <div>
+              <h3>Notes</h3>
+              <p>Optional management context.</p>
+            </div>
+          </div>
+          ${field({ name: "notes", label: "Notes", textarea: true })}
+        </section>
+      </form>
+    `,
+    actions: `
+      <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+      <button class="button success" type="submit" form="propertyRecordForm">${buttonIcon("building")}Add Property</button>
+    `
+  };
+}
+
+function propertyValuesFromForm(form) {
+  const formData = new FormData(form);
+  const values = defaultPropertyRecordValues();
+  Object.keys(values).forEach((key) => {
+    values[key] = String(formData.get(key) || "").trim();
+  });
+  return values;
+}
+
+function validatePropertyRecord(values) {
+  const errors = {};
+  const unitCount = Number(values.unitCount);
+  const occupiedUnits = Number(values.occupiedUnits);
+  const vacantUnits = Number(values.vacantUnits);
+  const assetValue = Number(values.assetValue);
+  const currentMonthlyRent = values.currentMonthlyRent === "" ? 0 : Number(values.currentMonthlyRent);
+  const monthlyRentPotential = values.monthlyRentPotential === "" ? 0 : Number(values.monthlyRentPotential);
+  const latitude = Number(values.latitude);
+  const longitude = Number(values.longitude);
+
+  if (!values.propertyName) errors.propertyName = "Property name is required.";
+  if (!values.propertyType) errors.propertyType = "Property type is required.";
+  if (!values.city) errors.city = "City is required.";
+  if (!values.area) errors.area = "Area is required.";
+  if (!values.address) errors.address = "Address is required.";
+  if (!Number.isFinite(latitude) || latitude < 22 || latitude > 27) errors.latitude = "Enter a UAE latitude between 22 and 27.";
+  if (!Number.isFinite(longitude) || longitude < 51 || longitude > 57) errors.longitude = "Enter a UAE longitude between 51 and 57.";
+  if (!values.occupancyStatus) errors.occupancyStatus = "Occupancy status is required.";
+  if (!Number.isFinite(unitCount) || unitCount <= 0) errors.unitCount = "Unit count must be greater than zero.";
+  if (!Number.isFinite(occupiedUnits) || occupiedUnits < 0) errors.occupiedUnits = "Occupied units cannot be negative.";
+  if (!Number.isFinite(vacantUnits) || vacantUnits < 0) errors.vacantUnits = "Vacant units cannot be negative.";
+  if (Number.isFinite(unitCount) && Number.isFinite(occupiedUnits) && Number.isFinite(vacantUnits) && occupiedUnits + vacantUnits > unitCount) {
+    errors.vacantUnits = "Occupied and vacant units cannot exceed total units.";
+  }
+  if (!Number.isFinite(assetValue) || assetValue < 0) errors.assetValue = "Asset value cannot be negative.";
+  if (!Number.isFinite(currentMonthlyRent) || currentMonthlyRent < 0) errors.currentMonthlyRent = "Current monthly rent cannot be negative.";
+  if (!Number.isFinite(monthlyRentPotential) || monthlyRentPotential < 0) errors.monthlyRentPotential = "Monthly rent potential cannot be negative.";
+
+  return errors;
+}
+
+function addPropertyRecord(values) {
+  const now = new Date().toISOString();
+  const record = normalizePropertyRecord({
+    ...values,
+    id: nextId("property"),
+    unitCount: Number(values.unitCount),
+    occupiedUnits: Number(values.occupiedUnits),
+    vacantUnits: Number(values.vacantUnits),
+    assetValue: Number(values.assetValue),
+    currentMonthlyRent: values.currentMonthlyRent === "" ? 0 : Number(values.currentMonthlyRent),
+    monthlyRentPotential: values.monthlyRentPotential === "" ? 0 : Number(values.monthlyRentPotential),
+    latitude: Number(values.latitude),
+    longitude: Number(values.longitude),
+    createdAt: now,
+    updatedAt: now
+  }, state.data.manager.properties.length);
+  state.data.manager.properties.unshift(record);
+  return record;
+}
+
+function applyPropertyPresetToForm(label) {
+  const preset = PROPERTY_LOCATION_PRESETS.find((item) => item.label === label);
+  if (!preset) return;
+  const assignments = {
+    city: preset.city,
+    area: preset.area,
+    address: preset.address,
+    latitude: String(preset.latitude),
+    longitude: String(preset.longitude)
+  };
+  Object.entries(assignments).forEach(([name, value]) => {
+    const input = document.querySelector(`#propertyRecord-${name}`);
+    if (input) input.value = value;
+  });
+}
+
+function propertyById(id) {
+  const row = state.data.manager.properties.find((property) => property.id === id);
+  return row ? normalizePropertyRecord(row) : null;
+}
+
+function propertyDetailModal(id) {
+  const property = propertyById(id);
+  if (!property) return modalContent({ type: "fallback" });
+  return {
+    large: true,
+    title: property.name,
+    subtitle: `${property.area}, ${property.city}`,
+    body: `
+      <div class="detail-grid">
+        <div class="detail-item"><span>Type</span><strong>${escapeHtml(property.propertyType)}</strong></div>
+        <div class="detail-item"><span>Status</span><strong>${badge(property.status)}</strong></div>
+        <div class="detail-item"><span>Address</span><strong>${escapeHtml(property.address)}</strong></div>
+        <div class="detail-item"><span>Coordinates</span><strong>${escapeHtml(`${property.latitude.toFixed(4)}, ${property.longitude.toFixed(4)}`)}</strong></div>
+        <div class="detail-item"><span>Total units</span><strong>${escapeHtml(String(property.unitCount))}</strong></div>
+        <div class="detail-item"><span>Occupied / Vacant</span><strong>${escapeHtml(`${property.occupiedUnits} / ${property.vacantUnits}`)}</strong></div>
+        <div class="detail-item"><span>Asset value</span><strong>${escapeHtml(formatAed(property.assetValue, { compact: true }))}</strong></div>
+        <div class="detail-item"><span>Current monthly rent</span><strong>${escapeHtml(formatAed(property.currentMonthlyRent))}</strong></div>
+        <div class="detail-item"><span>Rent potential</span><strong>${escapeHtml(formatAed(property.monthlyRentPotential))}</strong></div>
+        <div class="detail-item"><span>Maintenance</span><strong>${escapeHtml(property.maintenance)}</strong></div>
+      </div>
+      <div class="section-band">
+        <div class="section-header"><div><h3>Property Notes</h3><p>Saved management notes.</p></div></div>
+        <div class="detail-grid">
+          <div class="detail-item"><span>Notes</span><strong>${escapeHtml(property.notes || "No notes")}</strong></div>
+          <div class="detail-item"><span>Amenities</span><strong>${escapeHtml(property.amenities || "No amenities added")}</strong></div>
+          <div class="detail-item"><span>Maintenance notes</span><strong>${escapeHtml(property.maintenanceNotes || "No maintenance notes")}</strong></div>
+          <div class="detail-item"><span>Management remarks</span><strong>${escapeHtml(property.managementRemarks || "No remarks")}</strong></div>
+        </div>
+      </div>
+    `,
+    actions: `
+      <button class="button ghost" type="button" data-action="close-modal">Close</button>
+    `
+  };
+}
+
+function receiptPreviewModal(reference = "") {
+  const summary = tenantRentSummary();
+  const receipt = tenantReceiptForPreview(reference);
+  if (!receipt) {
+    return {
+      title: "Receipt Unavailable",
+      subtitle: "No paid receipt is available for this rent cycle yet.",
+      body: `<div class="confirmation warning">Complete rent payment or wait for approval before viewing a receipt.</div>`,
+      actions: `<button class="button secondary" type="button" data-action="close-modal">Close</button>`
+    };
+  }
+
+  const profile = tenantProfile();
+  const paymentMethod = receipt.source || summary.payment?.type || "Demo payment";
+  const receiptNumber = receipt.receipt || summary.receipt;
+  const receiptMonth = receipt.month || summary.rent.month;
+  const paymentDate = receipt.date || summary.rent.dueDate;
+  const amount = receipt.amount || summary.rent.amount;
+  const recentReceipts = state.data.tenant.receipts.length ? state.data.tenant.receipts.slice(0, 3) : [receipt];
+
+  return {
+    large: true,
+    title: "Receipt Preview",
+    subtitle: `${receiptNumber} · ${receiptMonth}`,
+    body: `
+      <section class="receipt-preview-card" aria-label="Most recent rent receipt">
+        <div class="receipt-preview-top">
+          <div class="receipt-preview-brand">
+            <span class="receipt-kicker">Rent receipt</span>
+            <strong>EstateFlow Property Management</strong>
+            <em>Demo invoice preview</em>
+          </div>
+          <div class="receipt-preview-id">
+            <span>Receipt no.</span>
+            <strong>${escapeHtml(receiptNumber)}</strong>
+            ${badge("Paid")}
+          </div>
+        </div>
+
+        <div class="receipt-preview-parties">
+          <div class="receipt-preview-box">
+            <span>Billed to</span>
+            <strong>${escapeHtml(profile.name)}</strong>
+            <em>Unit ${escapeHtml(profile.unit)} · ${escapeHtml(profile.property)}</em>
+          </div>
+          <div class="receipt-preview-box">
+            <span>Payment details</span>
+            <strong>${escapeHtml(paymentMethod)}</strong>
+            <em>${escapeHtml(paymentDate)}</em>
+          </div>
+        </div>
+
+        <div class="receipt-preview-lines" role="table" aria-label="Receipt line items">
+          <div class="receipt-line" role="row">
+            <span role="cell">
+              <strong>Monthly rent</strong>
+              <em>${escapeHtml(receiptMonth)} rent cycle</em>
+            </span>
+            <strong role="cell">${escapeHtml(amount)}</strong>
+          </div>
+          <div class="receipt-line muted" role="row">
+            <span role="cell">
+              <strong>Service fee</strong>
+              <em>Included in contract rent</em>
+            </span>
+            <strong role="cell">AED 0</strong>
+          </div>
+          <div class="receipt-line total" role="row">
+            <span role="cell">Total paid</span>
+            <strong role="cell">${escapeHtml(amount)}</strong>
+          </div>
+        </div>
+
+        <div class="receipt-note">
+          <span>${icon.check}</span>
+          <p>This demo receipt reflects the latest paid rent record in the tenant portal.</p>
+        </div>
+      </section>
+
+      <section class="receipt-mini-list" aria-label="Recent receipts">
+        <div class="receipt-mini-header">
+          <span>Recent receipts</span>
+          <strong>${recentReceipts.length}</strong>
+        </div>
+        ${recentReceipts
+          .map((item) => `
+            <div class="receipt-mini-row">
+              <span>
+                <strong>${escapeHtml(item.receipt)}</strong>
+                <em>${escapeHtml(item.month)} · ${escapeHtml(item.date || "Payment date")}</em>
+              </span>
+              <strong>${escapeHtml(item.amount)}</strong>
+            </div>
+          `)
+          .join("")}
+      </section>
+    `,
+    actions: `
+      <button class="button ghost" type="button" data-action="view-all-receipts">${buttonIcon("file")}View all receipts</button>
+      <button class="button secondary" type="button" data-action="download-receipt" data-receipt="${escapeHtml(receiptNumber)}">${buttonIcon("download")}Download receipt</button>
+      <button class="button primary" type="button" data-action="close-modal">Done</button>
+    `
+  };
+}
+
+function activityHistoryModal() {
+  const items = tenantDashboardActivities(tenantRentSummary());
+  return {
+    large: true,
+    className: "activity-history-modal",
+    title: "Recent Activity",
+    subtitle: `${items.length} tenant ${items.length === 1 ? "update" : "updates"}`,
+    body: `
+      <section class="activity-history-panel" aria-label="All recent tenant activity">
+        <div class="activity-history-summary">
+          <span>Activity history</span>
+          <strong>${items.length}</strong>
+        </div>
+        ${
+          items.length
+            ? `<ul class="activity-list activity-history-list">${items.map(renderActivityItem).join("")}</ul>`
+            : `<div class="empty-state"><strong>No activity yet</strong><span>Submitted requests and rent updates will appear here.</span></div>`
+        }
+      </section>
+    `,
+    actions: `<button class="button secondary" type="button" data-action="close-modal">Close</button>`
+  };
+}
+
+function rentHistoryModal() {
+  const rows = rentHistoryRows(state.data.tenant.rentHistory);
+  const receiptCount = tenantReceiptDownloadRows().length;
+  return {
+    large: true,
+    className: "activity-history-modal payment-history-modal",
+    title: "Payment History",
+    subtitle: `${state.data.tenant.rentHistory.length} rent ${state.data.tenant.rentHistory.length === 1 ? "cycle" : "cycles"}`,
+    body: `
+      <section class="activity-history-panel payment-history-panel" aria-label="Full rent payment history">
+        <div class="activity-history-summary">
+          <span>Payment history</span>
+          <strong>${state.data.tenant.rentHistory.length}</strong>
+        </div>
+        ${table(["Month", "Amount", "Due Date", "Status", "Receipt"], rows, {
+          hideMeta: true,
+          emptyTitle: "No payment history",
+          emptyBody: "Rent cycles will appear here after they are created."
+        })}
+      </section>
+    `,
+    actions: `
+      <button class="button ghost" type="button" data-action="close-modal">Close</button>
+      <button class="button secondary" type="button" data-action="download-receipts" ${receiptCount ? "" : "disabled"}>${buttonIcon("download")}Download receipts</button>
+    `
+  };
+}
+
+function contractHistoryModal() {
+  const items = tenantContractRequestHistory();
+  const rows = contractRequestHistoryRows(items);
+  return {
+    large: true,
+    className: "activity-history-modal payment-history-modal contract-history-modal",
+    title: "Contract Request History",
+    subtitle: `${items.length} contract ${items.length === 1 ? "request" : "requests"}`,
+    body: `
+      <section class="activity-history-panel payment-history-panel contract-history-panel" aria-label="Full contract request history">
+        <div class="activity-history-summary">
+          <span>Contract requests</span>
+          <strong>${items.length}</strong>
+        </div>
+        ${table(["Request", "Details", "Request made", "Status", "Notes"], rows, {
+          hideMeta: true,
+          emptyTitle: "No contract requests",
+          emptyBody: "Submitted renewal, cancellation, and amendment requests will appear here."
+        })}
+      </section>
+    `,
+    actions: `<button class="button secondary" type="button" data-action="close-modal">Close</button>`
+  };
 }
 
 function modalContent(current) {
@@ -4799,6 +8170,14 @@ function modalContent(current) {
         body: `<div class="confirmation">Tenant and management records are updated.</div>`,
         actions: `<button class="button secondary" type="button" data-action="close-modal">Close</button>`
       };
+    case "receiptPreview":
+      return receiptPreviewModal(current.id);
+    case "activityHistory":
+      return activityHistoryModal();
+    case "rentHistory":
+      return rentHistoryModal();
+    case "contractHistory":
+      return contractHistoryModal();
     case "documentPreview":
       return {
         title: current.docTitle || "Document",
@@ -4828,6 +8207,39 @@ function modalContent(current) {
           <button class="button danger" type="button" data-action="confirm-reset-data">${buttonIcon("refresh")}Reset data</button>
         `
       };
+    case "actionConfirm": {
+      const item = actionItemById(current.id);
+      if (!item) return modalContent({ type: "fallback" });
+      const copy = actionCenterConfirmationCopy(item, current.command);
+      const presentation = actionCardPresentation(item);
+      const metadata = [
+        { label: "Type", value: item.type },
+        { label: "Tenant", value: item.tenant },
+        { label: "Property / Unit", value: [item.property, item.unit ? `Unit ${item.unit}` : ""].filter(Boolean).join(" · ") },
+        { label: "Current status", value: actionStatusLabel(item.status) }
+      ];
+      return {
+        title: copy.title,
+        subtitle: copy.subtitle,
+        body: `
+          <div class="confirmation action-confirmation">
+            <strong>${escapeHtml(presentation.title)}</strong>
+            <span>${escapeHtml(copy.body)}</span>
+          </div>
+          ${renderMetadataGrid(metadata)}
+        `,
+        actions: `
+          <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+          <button class="button ${escapeHtml(copy.variant)}" type="button" data-action="confirm-action-center" data-id="${escapeHtml(item.id)}" data-command="${escapeHtml(current.command)}">${escapeHtml(copy.label)}</button>
+        `
+      };
+    }
+    case "tenantRecord":
+      return tenantRecordModal(current.values || {}, current.errors || {});
+    case "propertyRecord":
+      return propertyRecordModal(current.values || {}, current.errors || {});
+    case "propertyDetail":
+      return propertyDetailModal(current.id);
     case "tenantDetail":
       return tenantDetailModal(current.id);
     case "rentDetail":
@@ -4857,8 +8269,9 @@ function modalContent(current) {
 }
 
 function tenantDetailModal(id) {
-  const tenant = state.data.manager.tenants.find((item) => item.id === id);
-  if (!tenant) return modalContent({ type: "fallback" });
+  const sourceTenant = state.data.manager.tenants.find((item) => item.id === id);
+  if (!sourceTenant) return modalContent({ type: "fallback" });
+  const tenant = normalizeTenantRecord(sourceTenant);
   const rentHistory = state.data.manager.rentRows.filter((row) => row.tenant === tenant.name);
   const maintenance = state.data.manager.maintenanceRequests.filter((row) => row.tenant === tenant.name);
   const docs = state.data.manager.documents.filter((row) => row.tenant === tenant.name);
@@ -4869,11 +8282,15 @@ function tenantDetailModal(id) {
     body: `
       <div class="detail-grid">
         <div class="detail-item"><span>Profile</span><strong>${escapeHtml(tenant.email)}<br>${escapeHtml(tenant.phone)}</strong></div>
+        <div class="detail-item"><span>Identity</span><strong>${escapeHtml([tenant.nationality, tenant.idNumber].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
         <div class="detail-item"><span>Unit</span><strong>Unit ${escapeHtml(tenant.unit)} · ${escapeHtml(tenant.property)}</strong></div>
+        <div class="detail-item"><span>Property address</span><strong>${escapeHtml(tenant.propertyAddress || "Not provided")}</strong></div>
         <div class="detail-item"><span>Contract</span><strong>${escapeHtml(tenant.contract)} · ${badge(tenant.contractStatus)}</strong></div>
-        <div class="detail-item"><span>Cheque</span><strong>${escapeHtml(tenant.cheque)}</strong></div>
-        <div class="detail-item"><span>Emirates ID</span><strong>${badge(tenant.documentStatus)}</strong></div>
+        <div class="detail-item"><span>Renewal</span><strong>${badge(tenant.renewalStatus)}</strong></div>
         <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(tenant.rent)} · ${badge(tenant.rentStatus)}</strong></div>
+        <div class="detail-item"><span>Pending balance</span><strong>${escapeHtml(formatAed(tenant.pendingBalance))}</strong></div>
+        <div class="detail-item"><span>Emergency contact</span><strong>${escapeHtml([tenant.emergencyContactName, tenant.emergencyContactPhone, tenant.emergencyContactRelationship].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
+        <div class="detail-item"><span>Notes</span><strong>${escapeHtml(tenant.notes || "No notes")}</strong></div>
       </div>
       <div class="section-band">
         <div class="section-header"><div><h3>Rent history</h3><p>Latest rent record.</p></div></div>
@@ -5084,21 +8501,40 @@ function suggestionDetailModal(id) {
   };
 }
 
-function showToast(message) {
+function inferToastVariant(message) {
+  const text = String(message || "").toLowerCase();
+  if (text.includes("failed") || text.includes("error") || text.includes("rejected") || text.includes("unavailable")) return "error";
+  if (text.includes("warning") || text.includes("requested") || text.includes("review") || text.includes("pending")) return "warning";
+  if (text.includes("sent") || text.includes("download") || text.includes("mode")) return "info";
+  if (text.includes("success") || text.includes("approved") || text.includes("submitted") || text.includes("resolved") || text.includes("updated")) return "success";
+  return "neutral";
+}
+
+function showToast(message, options = {}) {
   toastCounter += 1;
   const id = `toast-${Date.now()}-${toastCounter}`;
+  const variant = options.variant || inferToastVariant(message);
+  const description = options.description || "";
   const node = document.createElement("div");
-  node.className = "toast";
+  node.className = `toast toast-${variant}`;
   node.id = id;
-  node.setAttribute("role", "status");
-  node.textContent = message;
+  node.dataset.toastVariant = variant;
+  node.setAttribute("role", TOAST_VARIANT_COPY[variant]?.status || "status");
+  node.innerHTML = `
+    <span class="toast-dot" aria-hidden="true"></span>
+    <span class="toast-copy">
+      <strong>${escapeHtml(message)}</strong>
+      ${description ? `<span>${escapeHtml(description)}</span>` : ""}
+    </span>
+    <button class="toast-dismiss" type="button" data-action="dismiss-toast" data-toast-id="${escapeHtml(id)}" aria-label="Dismiss notification">${icon.close}</button>
+  `;
   const root = toastRoot();
   [...root.querySelectorAll(".toast")]
     .filter((toast) => toast.textContent === message)
     .forEach((toast) => toast.remove());
-  root.appendChild(node);
+  root.prepend(node);
   const toasts = [...root.querySelectorAll(".toast")];
-  toasts.slice(0, Math.max(0, toasts.length - 3)).forEach((toast) => toast.remove());
+  toasts.slice(3).forEach((toast) => toast.remove());
   window.setTimeout(() => {
     const toast = document.getElementById(id);
     if (toast) toast.remove();
@@ -5106,6 +8542,7 @@ function showToast(message) {
 }
 
 function openResetDataModal() {
+  lastFocusedElement = document.activeElement;
   state.modal = { type: "resetData" };
   state.notificationPanelOpen = false;
   render();
@@ -5113,12 +8550,13 @@ function openResetDataModal() {
 }
 
 function resetDemoData() {
-  state.data = cloneData();
+  state.data = normalizeData(cloneData());
   state.sequence = 0;
   state.page = "dashboard";
   state.modal = null;
   state.confirmations = {};
   state.filters = defaultFilters();
+  state.notificationClearedIds = [];
   state.notificationPanelOpen = false;
   resetPullToResetState({ update: false });
   ensureActionCenterData();
@@ -5126,6 +8564,115 @@ function resetDemoData() {
   renderAtTop();
   replaceHistoryEntry();
   showToast("Demo data reset.");
+}
+
+function focusAskAIInput() {
+  window.requestAnimationFrame(() => {
+    const input = document.querySelector("[data-ask-ai-input]");
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    input.setSelectionRange?.(input.value.length, input.value.length);
+    const messages = document.querySelector(".ask-ai-messages");
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  });
+}
+
+function focusAskAITrigger() {
+  window.requestAnimationFrame(() => {
+    document.querySelector("#ask-ai-trigger")?.focus({ preventScroll: true });
+  });
+}
+
+function openAskAI() {
+  ensureAskAIMessages();
+  state.askAI.isOpen = true;
+  state.askAI.isExpanded = false;
+  state.askAI.activationState = "open";
+  state.askAI.error = null;
+  state.notificationPanelOpen = false;
+  render();
+  focusAskAIInput();
+}
+
+function closeAskAI() {
+  if (!state.askAI.isOpen) return;
+  persistActiveAskAISession();
+  state.askAI.isOpen = false;
+  state.askAI.isExpanded = false;
+  state.askAI.isTyping = false;
+  state.askAI.error = null;
+  state.askAI.activationState = "idle";
+  render();
+  focusAskAITrigger();
+}
+
+function updateAskAISendState(input) {
+  if (!input) return;
+  const form = input.closest("form");
+  const button = form?.querySelector(".ask-ai-send");
+  if (button) button.disabled = !input.value.trim() || state.askAI.isTyping;
+}
+
+function applyAskAISuggestion(prompt) {
+  state.askAI.inputValue = String(prompt || "").trim();
+  const input = document.querySelector("[data-ask-ai-input]");
+  if (input) {
+    input.value = state.askAI.inputValue;
+    updateAskAISendState(input);
+    input.focus({ preventScroll: true });
+  } else {
+    render();
+    focusAskAIInput();
+  }
+}
+
+async function submitAskAIMessage(form) {
+  if (state.askAI.isTyping) return;
+  const formData = new FormData(form);
+  const message = String(formData.get("message") || state.askAI.inputValue || "").trim();
+  if (!message) {
+    updateAskAISendState(form.querySelector("[data-ask-ai-input]"));
+    return;
+  }
+
+  const userMessage = {
+    id: nextId("ai-user"),
+    role: "user",
+    content: message,
+    createdAt: new Date().toISOString()
+  };
+
+  if (!activeAskAISession()) ensureAskAIMessages();
+  const submittedSessionId = state.askAI.activeSessionId;
+  state.askAI.messages = [...state.askAI.messages, userMessage].slice(-ASK_AI_MESSAGE_LIMIT);
+  state.askAI.inputValue = "";
+  state.askAI.isTyping = true;
+  state.askAI.error = null;
+  persistActiveAskAISession();
+  render();
+  focusAskAIInput();
+
+  try {
+    const response = await askAI(buildAskAIContext(message));
+    const submittedSession = state.askAI.sessions.find((session) => session.id === submittedSessionId);
+    if (submittedSession && state.askAI.activeSessionId !== submittedSessionId) {
+      submittedSession.messages = [...submittedSession.messages, response].slice(-ASK_AI_MESSAGE_LIMIT);
+      submittedSession.title = askAIChatTitle(submittedSession.messages);
+      submittedSession.updatedAt = new Date().toISOString();
+      saveAskAISessions();
+    } else {
+      state.askAI.messages = [...state.askAI.messages, response].slice(-ASK_AI_MESSAGE_LIMIT);
+      saveAskAIMessages();
+    }
+    state.askAI.isTyping = false;
+    render();
+    focusAskAIInput();
+  } catch {
+    state.askAI.isTyping = false;
+    state.askAI.error = "AI response could not be loaded. Try again.";
+    render();
+    focusAskAIInput();
+  }
 }
 
 function pullResetCopy() {
@@ -5227,6 +8774,7 @@ function hasNestedScrollableAncestor(target) {
 function canUsePullToReset(event) {
   const pull = state.pullToReset;
   const now = Date.now();
+  if (isAskAIExpandedOverlayOpen()) return false;
   if (!state.auth || state.modal || state.notificationPanelOpen) return false;
   if (pull.isResetting || now < pull.cooldownUntil) return false;
   if (!isAtPullResetStart()) return false;
@@ -5297,6 +8845,7 @@ function finishPullToReset() {
 }
 
 function handlePullResetTouchStart(event) {
+  if (isAskAIExpandedOverlayOpen()) return;
   if (event.touches.length !== 1) return;
   if (!isAtPullResetStart()) state.pullToReset.lastNonTopScrollTime = Date.now();
   if (!canUsePullToReset(event)) return;
@@ -5305,6 +8854,10 @@ function handlePullResetTouchStart(event) {
 }
 
 function handlePullResetTouchMove(event) {
+  if (isAskAIExpandedOverlayOpen()) {
+    if (state.pullToReset.tracking) cancelPullToReset();
+    return;
+  }
   const pull = state.pullToReset;
   if (!pull.tracking || pull.source !== "touch" || event.touches.length !== 1) return;
   if (!isAtPullResetStart()) {
@@ -5331,6 +8884,7 @@ function handlePullResetTouchEnd() {
 }
 
 function handlePullResetScroll() {
+  if (isAskAIExpandedOverlayOpen()) return;
   if (isAtPullResetStart()) return;
   state.pullToReset.lastNonTopScrollTime = Date.now();
   if (state.pullToReset.tracking) cancelPullToReset();
@@ -5340,6 +8894,11 @@ let pullResetWheelTimer = null;
 let pullResetWheelIdleTimer = null;
 
 function handlePullResetWheel(event) {
+  if (isAskAIExpandedOverlayOpen()) {
+    if (state.pullToReset.tracking) cancelPullToReset();
+    return;
+  }
+
   const pull = state.pullToReset;
   const now = Date.now();
   const atTop = isAtPullResetStart();
@@ -5406,11 +8965,22 @@ function formatDateTimeInput(value) {
 }
 
 document.addEventListener("click", (event) => {
+  const uiKitButton = event.target.closest('[data-action="open-ui-kit"]');
+  if (!uiKitButton) return;
+  event.preventDefault();
+  event.stopPropagation();
+  navigateToPage("uiKit");
+}, true);
+
+document.addEventListener("click", (event) => {
   const notificationShell = event.target.closest(".notifications-menu");
   const roleButton = event.target.closest("[data-role-option]");
   if (roleButton) {
     state.selectedRole = roleButton.dataset.roleOption;
     state.notificationPanelOpen = false;
+    state.askAI.isOpen = false;
+    state.askAI.isExpanded = false;
+    state.askAI.activationState = "idle";
     render();
     replaceHistoryEntry();
     return;
@@ -5424,6 +8994,7 @@ document.addEventListener("click", (event) => {
 
   const modalButton = event.target.closest("[data-modal]");
   if (modalButton) {
+    lastFocusedElement = modalButton;
     state.modal = { type: modalButton.dataset.modal, id: modalButton.dataset.id };
     state.notificationPanelOpen = false;
     render();
@@ -5449,6 +9020,74 @@ document.addEventListener("click", (event) => {
 
   const action = actionButton.dataset.action;
 
+  if (action === "dismiss-toast") {
+    document.getElementById(actionButton.dataset.toastId)?.remove();
+    return;
+  }
+
+  if (action === "toast-example") {
+    const variant = actionButton.dataset.toastVariant || "info";
+    showToast(`${TOAST_VARIANT_COPY[variant]?.title || "Update"} toast`, {
+      variant,
+      description: "This uses the shared dashboard toast component."
+    });
+    return;
+  }
+
+  if (action === "open-ui-kit") {
+    navigateToPage("uiKit");
+    return;
+  }
+
+  if (action === "toggle-ask-ai") {
+    state.askAI.isOpen ? closeAskAI() : openAskAI();
+    return;
+  }
+
+  if (action === "close-ask-ai") {
+    closeAskAI();
+    return;
+  }
+
+  if (action === "toggle-ask-ai-expanded") {
+    persistActiveAskAISession();
+    state.askAI.isExpanded = !state.askAI.isExpanded;
+    render();
+    focusAskAIInput();
+    return;
+  }
+
+  if (action === "ask-ai-new-chat") {
+    startNewAskAIChat();
+    render();
+    focusAskAIInput();
+    return;
+  }
+
+  if (action === "select-ask-ai-session") {
+    selectAskAISession(actionButton.dataset.id);
+    render();
+    focusAskAIInput();
+    return;
+  }
+
+  if (action === "ask-ai-suggestion") {
+    applyAskAISuggestion(actionButton.dataset.prompt);
+    return;
+  }
+
+  if (action === "clear-ask-ai") {
+    state.askAI.messages = [];
+    state.askAI.inputValue = "";
+    state.askAI.error = null;
+    state.askAI.isTyping = false;
+    saveAskAIMessages();
+    showToast("AI chat cleared.");
+    render();
+    focusAskAIInput();
+    return;
+  }
+
   if (action === "reset-data") {
     openResetDataModal();
     return;
@@ -5467,11 +9106,17 @@ document.addEventListener("click", (event) => {
   }
 
   if (action === "logout") {
+    persistActiveAskAISession();
     state.auth = false;
     state.role = null;
     state.page = "dashboard";
     state.modal = null;
     state.notificationPanelOpen = false;
+    state.askAI.isOpen = false;
+    state.askAI.isExpanded = false;
+    state.askAI.isTyping = false;
+    state.askAI.error = null;
+    state.askAI.activationState = "idle";
     renderAtTop();
     replaceHistoryEntry();
     return;
@@ -5492,14 +9137,36 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  if (action === "toggle-rent-history") {
-    state.filters.rentHistoryView = state.filters.rentHistoryView === "All" ? "Recent" : "All";
+  if (action === "clear-notifications") {
+    const ids = notificationItems().map((item) => item.id).filter(Boolean);
+    state.notificationClearedIds = [...new Set([...(state.notificationClearedIds || []), ...ids])];
+    showToast("Notifications cleared.");
     render();
+    return;
+  }
+
+  if (action === "confirm-action-center") {
+    state.modal = null;
+    applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command);
+    replaceHistoryEntry();
     return;
   }
 
   if (action === "action-center") {
     const viewportAnchor = actionButton.dataset.command === "dismiss-card" ? actionCardViewportAnchor(actionButton) : null;
+    if (state.role === "manager" && actionCenterCommandNeedsConfirmation(actionButton.dataset.command)) {
+      const item = actionItemById(actionButton.dataset.id);
+      if (!item || !roleCanActOnItem(item)) {
+        showToast("Action unavailable.");
+        return;
+      }
+      lastFocusedElement = actionButton;
+      state.modal = { type: "actionConfirm", id: item.id, command: actionButton.dataset.command };
+      state.notificationPanelOpen = false;
+      render();
+      pushHistoryEntry();
+      return;
+    }
     applyActionCenterCommand(actionButton.dataset.id, actionButton.dataset.command, { viewportAnchor });
     return;
   }
@@ -5514,6 +9181,10 @@ document.addEventListener("click", (event) => {
   }
 
   if (action === "request-renewal") {
+    if (renewalRequestAlreadySubmitted()) {
+      showDuplicateRequestToast("Renewal request");
+      return;
+    }
     state.confirmations.renewal = true;
     state.data.tenant.profile.renewalStatus = "Submitted";
     const renewal = upsertManagerRenewalRequest();
@@ -5530,6 +9201,10 @@ document.addEventListener("click", (event) => {
   if (action === "request-contract") {
     const profile = tenantProfile();
     const requestType = actionButton.dataset.contractType || "Contract Amendment";
+    if (contractRequestAlreadySubmitted(requestType)) {
+      showDuplicateRequestToast(contractRequestDisplayName(requestType));
+      return;
+    }
     const createdAt = new Date().toISOString();
     const request = {
       id: nextId("contract"),
@@ -5737,6 +9412,7 @@ document.addEventListener("click", (event) => {
   }
 
   if (action === "view-doc") {
+    lastFocusedElement = actionButton;
     state.modal = {
       type: "documentPreview",
       docTitle: actionButton.dataset.docTitle || "Document",
@@ -5747,14 +9423,132 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (action === "download-receipt") {
+    downloadDemoReceipt(actionButton.dataset.receipt);
+    showToast("Receipt download started.");
+    return;
+  }
+
+  if (action === "download-receipts") {
+    if (downloadTenantReceipts()) {
+      showToast("Receipts download started.");
+    } else {
+      showToast("No receipts to download.", { variant: "warning" });
+    }
+    return;
+  }
+
+  if (action === "view-all-receipts") {
+    state.modal = { type: "rentHistory" };
+    render();
+    replaceHistoryEntry();
+    return;
+  }
+
   if (action === "download-doc") {
     downloadDemoDocument(actionButton.dataset.docTitle, actionButton.dataset.docOwner);
     showToast("Download started.");
     return;
   }
 
+  if (action === "open-portfolio-map") {
+    const filter = actionButton.dataset.filter || "All";
+    const focus = actionButton.dataset.focus || "";
+    const requestedId = actionButton.dataset.id || "";
+    state.filters.portfolioView = "summary";
+    state.filters.portfolioMapFilter = filter;
+    state.filters.portfolioCity = "All";
+    const scopedProperties = state.data.manager.properties
+      .map(normalizePropertyRecord)
+      .filter((property) => portfolioFilterMatches(property, filter));
+    const selected = requestedId
+      ? scopedProperties.find((property) => property.id === requestedId)
+      : focus === "assets"
+        ? [...scopedProperties].sort((a, b) => b.assetValue - a.assetValue)[0]
+        : scopedProperties[0];
+    state.filters.portfolioSelectedPropertyId = selected?.id || "";
+    state.page = "portfolio";
+    render();
+    scrollToPortfolioMapCard();
+    pushHistoryEntry();
+    return;
+  }
+
+  if (action === "portfolio-back") {
+    state.filters.portfolioView = "summary";
+    state.filters.portfolioSelectedPropertyId = "";
+    state.filters.portfolioMapFilter = "All";
+    state.filters.portfolioCity = "All";
+    state.filters.portfolioMapZoom = "1";
+    renderAtTop();
+    replaceHistoryEntry();
+    return;
+  }
+
+  if (action === "set-portfolio-map-filter") {
+    state.filters.portfolioView = "summary";
+    state.filters.portfolioMapFilter = actionButton.dataset.filter || "All";
+    state.filters.portfolioSelectedPropertyId = "";
+    render();
+    return;
+  }
+
+  if (action === "select-property") {
+    state.filters.portfolioSelectedPropertyId = actionButton.dataset.id || "";
+    render();
+    return;
+  }
+
+  if (action === "portfolio-map-zoom") {
+    const direction = actionButton.dataset.direction;
+    if (portfolioLeafletMap) {
+      if (direction === "in") portfolioLeafletMap.zoomIn();
+      if (direction === "out") portfolioLeafletMap.zoomOut();
+      return;
+    }
+    initializePortfolioLeafletMap();
+    return;
+  }
+
+  if (action === "portfolio-map-pan") {
+    const direction = actionButton.dataset.direction;
+    const distance = 90;
+    const movement = {
+      left: [-distance, 0],
+      right: [distance, 0],
+      up: [0, -distance],
+      down: [0, distance]
+    }[direction] || [0, 0];
+    portfolioLeafletMap?.panBy(movement, { animate: true });
+    return;
+  }
+
+  if (action === "portfolio-map-reset") {
+    state.filters.portfolioSelectedPropertyId = "";
+    render();
+    return;
+  }
+
+  if (action === "add-property") {
+    lastFocusedElement = actionButton;
+    state.modal = { type: "propertyRecord", values: defaultPropertyRecordValues(), errors: {} };
+    state.notificationPanelOpen = false;
+    render();
+    pushHistoryEntry();
+    return;
+  }
+
+  if (action === "export-tenants") {
+    exportTenantRecordsToExcel();
+    return;
+  }
+
   if (action === "add-tenant") {
-    showToast("Add tenant is demo-only.");
+    lastFocusedElement = actionButton;
+    state.modal = { type: "tenantRecord", values: defaultTenantRecordValues(), errors: {} };
+    state.notificationPanelOpen = false;
+    render();
+    pushHistoryEntry();
     return;
   }
 
@@ -5772,7 +9566,26 @@ document.addEventListener("click", (event) => {
   }
 });
 
-document.addEventListener("submit", (event) => {
+document.addEventListener("input", (event) => {
+  const search = event.target.closest("[data-ask-ai-session-search]");
+  if (search) {
+    state.askAI.search = search.value;
+    renderPreservingControl(search);
+    return;
+  }
+
+  const input = event.target.closest("[data-ask-ai-input]");
+  if (!input) return;
+  state.askAI.inputValue = input.value;
+  const session = activeAskAISession();
+  if (session) {
+    session.inputValue = state.askAI.inputValue;
+    saveAskAISessions();
+  }
+  updateAskAISendState(input);
+});
+
+document.addEventListener("submit", async (event) => {
   const form = event.target.closest("form");
   if (!form) return;
   event.preventDefault();
@@ -5785,9 +9598,27 @@ document.addEventListener("submit", (event) => {
     state.filters = defaultFilters();
     state.modal = null;
     state.notificationPanelOpen = false;
+    state.askAI = {
+      isOpen: false,
+      messages: [],
+      inputValue: "",
+      isTyping: false,
+      error: null,
+      isExpanded: false,
+      activationState: "idle",
+      sessions: [],
+      activeSessionId: "",
+      search: ""
+    };
+    ensureAskAIMessages(state.role);
     ensureActionCenterData({ persist: true });
     renderAtTop();
     pushHistoryEntry();
+    return;
+  }
+
+  if (form.dataset.form === "ask-ai") {
+    await submitAskAIMessage(form);
     return;
   }
 
@@ -5816,6 +9647,10 @@ document.addEventListener("submit", (event) => {
     const formData = new FormData(form);
     const profile = tenantProfile();
     const summary = tenantRentSummary();
+    if (currentTenantCashRequest()) {
+      showDuplicateRequestToast("Cash visit request");
+      return;
+    }
     const request = {
       id: nextId("cash"),
       tenant: profile.name,
@@ -5845,6 +9680,11 @@ document.addEventListener("submit", (event) => {
     const formData = new FormData(form);
     const profile = tenantProfile();
     const category = formData.get("issueCategory");
+    const description = formData.get("description");
+    if (maintenanceRequestAlreadySubmitted(category, description)) {
+      showDuplicateRequestToast("Maintenance request");
+      return;
+    }
     const request = {
       id: nextId("tm"),
       issue: `${category} issue`,
@@ -5852,7 +9692,7 @@ document.addEventListener("submit", (event) => {
       priority: formData.get("priority"),
       date: "12 Jun 2026",
       status: "Submitted",
-      description: formData.get("description"),
+      description,
       photo: "Issue photo placeholder attached"
     };
     state.data.tenant.maintenanceRequests.unshift(request);
@@ -5880,12 +9720,17 @@ document.addEventListener("submit", (event) => {
   if (form.dataset.form === "tenant-complaint") {
     const formData = new FormData(form);
     const profile = tenantProfile();
+    const description = formData.get("description");
+    if (complaintAlreadySubmitted(description)) {
+      showDuplicateRequestToast("Complaint");
+      return;
+    }
     const complaint = {
       id: nextId("complaint"),
       tenant: profile.name,
       unit: profile.unit,
       property: profile.property,
-      description: formData.get("description"),
+      description,
       attachment: "Supporting file placeholder",
       status: "Pending",
       createdAt: new Date().toISOString()
@@ -5904,12 +9749,17 @@ document.addEventListener("submit", (event) => {
   if (form.dataset.form === "tenant-suggestion") {
     const formData = new FormData(form);
     const profile = tenantProfile();
+    const description = formData.get("description");
+    if (suggestionAlreadySubmitted(description)) {
+      showDuplicateRequestToast("Suggestion");
+      return;
+    }
     const suggestion = {
       id: nextId("suggestion"),
       tenant: profile.name,
       unit: profile.unit,
       property: profile.property,
-      description: formData.get("description"),
+      description,
       status: "Pending",
       createdAt: new Date().toISOString()
     };
@@ -5921,6 +9771,58 @@ document.addEventListener("submit", (event) => {
     saveData();
     showToast("Suggestion submitted.");
     render();
+    return;
+  }
+
+  if (form.dataset.form === "tenant-record") {
+    const values = tenantRecordValuesFromForm(form);
+    const errors = validateTenantRecord(values);
+    if (Object.keys(errors).length) {
+      state.modal = { type: "tenantRecord", values, errors };
+      showToast("Fix tenant record fields.", { variant: "warning" });
+      render();
+      return;
+    }
+
+    const record = addTenantRecord(values);
+    state.filters.tenantSearch = "";
+    state.filters.tenantProperty = "All";
+    state.filters.tenantRent = "All";
+    state.page = "tenants";
+    state.modal = null;
+    saveData();
+    showToast("Tenant record added.");
+    render();
+    replaceHistoryEntry();
+    window.requestAnimationFrame(() => {
+      const selectorId = window.CSS?.escape ? CSS.escape(record.id) : String(record.id).replace(/"/g, '\\"');
+      document.querySelector(`[data-modal="tenantDetail"][data-id="${selectorId}"]`)?.focus({ preventScroll: true });
+    });
+    return;
+  }
+
+  if (form.dataset.form === "property-record") {
+    const values = propertyValuesFromForm(form);
+    const errors = validatePropertyRecord(values);
+    if (Object.keys(errors).length) {
+      state.modal = { type: "propertyRecord", values, errors };
+      showToast("Fix property fields.", { variant: "warning" });
+      render();
+      return;
+    }
+
+    const property = addPropertyRecord(values);
+    state.filters.portfolioView = "summary";
+    state.filters.portfolioMapFilter = "All";
+    state.filters.portfolioCity = "All";
+    state.filters.portfolioSelectedPropertyId = property.id;
+    state.page = "portfolio";
+    state.modal = null;
+    saveData();
+    showToast("Property added.");
+    render();
+    scrollToPortfolioMapCard();
+    replaceHistoryEntry();
     return;
   }
 
@@ -5944,9 +9846,19 @@ document.addEventListener("input", (event) => {
 });
 
 document.addEventListener("change", (event) => {
+  const propertyPreset = event.target.closest('[data-action="property-location-preset"]');
+  if (propertyPreset) {
+    applyPropertyPresetToForm(propertyPreset.value);
+    return;
+  }
+
   const filter = event.target.closest("[data-filter]");
   if (filter) {
     state.filters[filter.dataset.filter] = filter.value;
+    if (filter.dataset.filter === "portfolioCity") {
+      state.filters.portfolioView = "summary";
+      state.filters.portfolioSelectedPropertyId = "";
+    }
     renderPreservingControl(filter);
     return;
   }
@@ -5968,6 +9880,23 @@ document.addEventListener("change", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  const askAIInput = event.target.closest?.("[data-ask-ai-input]");
+  if (askAIInput && event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    askAIInput.closest("form")?.requestSubmit();
+    return;
+  }
+
+  if (event.key === "Tab" && state.modal) {
+    trapModalFocus(event);
+    return;
+  }
+
+  if (event.key === "Escape" && state.askAI.isOpen && !state.modal) {
+    closeAskAI();
+    return;
+  }
+
   if (event.key === "Escape" && state.notificationPanelOpen) {
     state.notificationPanelOpen = false;
     render();
@@ -5994,7 +9923,7 @@ window.addEventListener("storage", (event) => {
   if (event.key !== DATA_STORE_KEY) return;
   const snapshot = loadStoredSnapshot();
   if (!snapshot) return;
-  state.data = snapshot.data;
+  state.data = normalizeData(snapshot.data);
   state.sequence = snapshot.sequence;
   render();
 });
