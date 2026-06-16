@@ -2248,8 +2248,9 @@ function getManagementQueueSummary() {
     0,
     attentionItems.length - pendingPayments - openMaintenance - pendingRenewals - complaintFollowups - suggestionFollowups - messageFollowups
   );
+  const otherFollowups = complaintFollowups + suggestionFollowups + messageFollowups + otherActionItems;
 
-  const categories = [
+  const allCategories = [
     {
       type: "payments",
       label: "Payments",
@@ -2312,24 +2313,60 @@ function getManagementQueueSummary() {
     },
     {
       type: "messages",
-      label: "Other updates",
-      singularLabel: "Other update",
-      count: messageFollowups + otherActionItems,
+      label: "Other Follow-ups",
+      singularLabel: "Other Follow-up",
+      count: otherFollowups,
       page: "actionCenter",
       priority: 6,
       title: "Review remaining updates",
       description: "Open in Action Center",
       badgeStatus: "Submitted",
-      badgeLabel: "Queue"
+      badgeLabel: "Follow Up"
     }
   ];
-  const activeCategories = categories
+  const activeCategories = allCategories
     .filter((category) => category.count > 0)
     .sort((a, b) => a.priority - b.priority);
+  const actionMetricCards = [
+    {
+      label: "Payment Reviews",
+      count: pendingPayments,
+      note: "Proofs and cash requests",
+      icon: "wallet",
+      page: "chequeReview",
+      actionLabel: "Review payments"
+    },
+    {
+      label: "Maintenance Reviews",
+      count: openMaintenance,
+      note: "Requests needing updates",
+      icon: "tool",
+      page: "maintenanceMgmt",
+      actionLabel: "Open queue"
+    },
+    {
+      label: "Renewal Reviews",
+      count: pendingRenewals,
+      note: "Contract decisions",
+      icon: "refresh",
+      page: "renewalsMgmt",
+      actionLabel: "Review renewals"
+    },
+    {
+      label: "Other Follow-ups",
+      count: otherFollowups,
+      note: "Complaints and messages",
+      icon: "bell",
+      page: "actionCenter",
+      actionLabel: "View items"
+    }
+  ];
 
   return {
     totalActions: attentionItems.length,
+    allCategories,
     categories: activeCategories,
+    actionMetricCards,
     priorityActions: activeCategories.slice(0, 4),
     primaryAction: { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
     secondaryAction: { label: "Track Rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
@@ -5005,6 +5042,31 @@ function renderActionCenterGroups(items) {
     .join("");
 }
 
+function renderManagerActionCenterMetrics() {
+  const queueSummary = getManagementQueueSummary();
+  return queueSummary.actionMetricCards
+    .map((card) =>
+      metricCard(
+        card.label,
+        String(card.count),
+        card.note,
+        card.icon,
+        card.page,
+        { actionLabel: card.actionLabel }
+      )
+    )
+    .join("");
+}
+
+function renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems }) {
+  return [
+    metricCard("Needs Action", String(actionItems.length), "Available actions", "check"),
+    metricCard("Unread", String(unreadItems.length), "New updates", "bell"),
+    metricCard("Open Items", String(openItems.length), "In progress", "refresh"),
+    metricCard("Total Items", String(allItems.length), "Visible to you", "file")
+  ].join("");
+}
+
 function renderActionCenter() {
   ensureActionCenterData();
   const allItems = visibleActionItems();
@@ -5014,14 +5076,14 @@ function renderActionCenter() {
   const actionItems = allItems.filter((item) => actionButtonsForItem(item).some((action) => action.command && action.command !== "mark-read"));
   const typeOptions = actionFilterOptions("type", allItems);
   const statusOptions = actionFilterOptions("status", allItems);
+  const metricCards = state.role === "manager"
+    ? renderManagerActionCenterMetrics()
+    : renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems });
 
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCard("Needs Action", String(actionItems.length), "Available actions", "check")}
-        ${metricCard("Unread", String(unreadItems.length), "New updates", "bell")}
-        ${metricCard("Open Items", String(openItems.length), "In progress", "refresh")}
-        ${metricCard("Total Items", String(allItems.length), "Visible to you", "file")}
+        ${metricCards}
       </section>
 
       <section class="section-band">
@@ -6134,7 +6196,6 @@ function renderManagerDashboard() {
           <span class="focus-eyebrow">Operations summary</span>
           <h2>${queueSummary.totalActions ? `${actionsLabel} need response` : "You're all caught up"}</h2>
           <p>${queueSummary.totalActions ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now."}</p>
-          ${renderManagementQueueChips(queueSummary)}
           ${renderActionButtons([
             queueSummary.primaryAction,
             queueSummary.secondaryAction

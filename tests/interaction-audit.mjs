@@ -419,9 +419,13 @@ assert.match(styles, /\.portfolio-property-row \{[\s\S]*grid-template-columns: m
 assert.match(styles, /\.portfolio-property-row \.status,[\s\S]*\.portfolio-status-cell \.status \{[\s\S]*grid-template-columns: 7px minmax\(0, 1fr\);/, "Portfolio status tags should use a fixed dot column so dots align.");
 assert.match(app, /rentFollowUps = data\.rentRows\.filter\(\(row\) => row\.status !== "Paid"\)/, "Management rent follow-ups should exclude paid tenants.");
 assert.match(app, /totalActions:\s*attentionItems\.length/, "Management dashboard headline count should come from the Action Center attention queue.");
-assert.match(app, /categories:\s*activeCategories/, "Management dashboard category chips should use the shared queue summary.");
+assert.match(app, /allCategories,\s*[\s\S]*categories:\s*activeCategories,\s*[\s\S]*actionMetricCards,/, "Management queue summary should expose stable category metrics and active priority categories.");
+assert.match(app, /categories:\s*activeCategories/, "Management queue summary should keep active categories for the priority queue.");
 assert.match(app, /priorityActions:\s*activeCategories\.slice\(0, 4\)/, "Management dashboard priority rows should use the same shared category data.");
-assert.match(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should render compact action category chips.");
+assert.match(app, /function renderManagerActionCenterMetrics\(\)/, "Management Action Center should render category-specific action metric cards.");
+assert.match(app, /label:\s*"Payment Reviews"[\s\S]*label:\s*"Maintenance Reviews"[\s\S]*label:\s*"Renewal Reviews"[\s\S]*label:\s*"Other Follow-ups"/, "Management Action Center should replace generic summary cards with action category cards.");
+assert.match(app, /function renderTenantActionCenterMetrics\(\{ actionItems, unreadItems, openItems, allItems \}\)/, "Tenant Action Center should keep the existing personal action summary cards.");
+assert.doesNotMatch(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should not render duplicate category chips under the actions-in-queue headline.");
 assert.match(app, /renderManagementPriorityQueue\(queueSummary\)/, "Management dashboard should render one priority queue from shared data.");
 assert.match(app, /data-page="\$\{escapeHtml\(action\.page\)\}"/, "Management priority rows should navigate to the category page.");
 assert.match(app, /<h3>Actions that need priority<\/h3>/, "Management priority queue heading should use clearer priority-focused copy.");
@@ -620,6 +624,7 @@ assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pul
 assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260615-1/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /styles\.css\?v=dashboard-system-20260617-2/, "Index should load the latest cache-busted stylesheet.");
+assert.match(index, /app\.js\?v=dashboard-system-20260617-3/, "Index should load the latest cache-busted app script.");
 
 console.log("Interaction audit checks passed.");
