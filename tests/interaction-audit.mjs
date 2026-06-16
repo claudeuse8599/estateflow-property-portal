@@ -106,7 +106,7 @@ for (const page of expectedPages) {
 assert.match(app, /const utilityPages = \["uiKit"\];/, "UI Kit should remain available as a utility page.");
 assert.doesNotMatch(app, /group: "System"/, "UI Kit should not appear as a sidebar navigation group.");
 assert.match(app, /function availablePages\(role = state\.role\)/, "Utility pages should be included in the page guard.");
-assert.match(app, /renderSidebarAskAI\(\)[\s\S]*class="sidebar-actions"[\s\S]*data-action="reset-data"[\s\S]*data-action="logout"[\s\S]*data-action="open-ui-kit"/, "Ask AI should sit above Reset data and Logout while preserving the UI Kit utility action.");
+assert.match(app, /<div class="sidebar-footer">[\s\S]*renderSidebarAskAI\(\)[\s\S]*class="sidebar-actions"[\s\S]*data-action="logout"[\s\S]*data-action="reset-data"[\s\S]*data-action="open-ui-kit"[\s\S]*class="sidebar-note"[\s\S]*Demo data[\s\S]*No live records/, "Sidebar footer should order Ask AI, Logout, Reset data, UI Kit, then Demo data.");
 assert.match(app, /button class="button secondary" type="button" data-action="open-ui-kit"/, "UI Kit footer action should use the same secondary button style.");
 assert.match(app, /askAI:\s*\{[\s\S]*isOpen:\s*false[\s\S]*isExpanded:\s*false[\s\S]*activationState:\s*"idle"/, "Ask AI should have its own sidebar state.");
 assert.match(app, /function renderSidebarAskAI\(\)/, "Ask AI sidebar launcher should render from a dedicated helper.");
@@ -628,6 +628,6 @@ assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indica
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
 assert.match(index, /styles\.css\?v=dashboard-system-20260617-2/, "Index should load the latest cache-busted stylesheet.");
-assert.match(index, /app\.js\?v=dashboard-system-20260617-4/, "Index should load the latest cache-busted app script.");
+assert.match(index, /app\.js\?v=dashboard-system-20260617-5/, "Index should load the latest cache-busted app script.");
 
 console.log("Interaction audit checks passed.");
