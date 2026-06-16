@@ -7117,6 +7117,14 @@ td {
   background: var(--surface);
 }
 
+.tenant-rent-overview.metric-status-critical {
+  border-color: var(--apple-red-border);
+}
+
+.tenant-rent-overview.metric-status-critical::after {
+  background: var(--apple-red);
+}
+
 .metric-card .metric-icon,
 .quick-card .metric-icon {
   width: 38px;
