@@ -7117,6 +7117,18 @@ td {
   background: var(--surface);
 }
 
+.metric-grid > .metric-card.metric-status-paid {
+  border-color: var(--apple-green-border);
+}
+
+.metric-grid > .metric-card.metric-status-warning {
+  border-color: var(--apple-orange-border);
+}
+
+.metric-grid > .metric-card.metric-status-critical {
+  border-color: var(--apple-red-border);
+}
+
 .tenant-rent-overview.metric-status-critical {
   border-color: var(--apple-red-border);
 }

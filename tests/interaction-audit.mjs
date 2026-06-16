@@ -577,6 +577,9 @@ assert.match(styles, /--apple-green:\s*#34c759/, "Apple green should be availabl
 assert.match(styles, /\.metric-card\.metric-status-paid\s*\{[\s\S]*border:\s*1px solid var\(--apple-green-border\);[\s\S]*background:\s*var\(--apple-green-soft\)/, "Paid payment metric should use the Apple-green paid treatment.");
 assert.match(styles, /\.metric-card\.metric-status-warning\s*\{[\s\S]*border:\s*1px solid var\(--apple-orange-border\);[\s\S]*background:\s*var\(--apple-orange-soft\)/, "Near-due payment metric should use the Apple-orange warning treatment.");
 assert.match(styles, /\.metric-card\.metric-status-critical\s*\{[\s\S]*border:\s*1px solid var\(--apple-red-border\);[\s\S]*background:\s*var\(--apple-red-soft\)/, "Overdue payment metric should use the Apple-red critical treatment.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-paid\s*\{[\s\S]*border-color:\s*var\(--apple-green-border\)/, "Paid metric cards should keep their green border after final metric-grid polish.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-warning\s*\{[\s\S]*border-color:\s*var\(--apple-orange-border\)/, "Warning metric cards should keep their orange border after final metric-grid polish.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-critical\s*\{[\s\S]*border-color:\s*var\(--apple-red-border\)/, "Critical metric cards should keep their red border after final metric-grid polish.");
 assert.match(styles, /\.tenant-summary-facts button\s*\{[\s\S]*cursor:\s*pointer/, "Tenant summary facts should be clickable chips without changing their visual treatment.");
 assert.match(styles, /\.tenant-summary-facts \.contract-warning/, "Contract health should include the orange warning state.");
 assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract health should include the red critical state.");
