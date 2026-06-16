@@ -587,7 +587,7 @@ const nav = {
   manager: [
     { id: "dashboard", label: "Dashboard", icon: "home", group: "Overview" },
     { id: "actionCenter", label: "Action Center", icon: "bell", group: "Overview" },
-    { id: "tenants", label: "Tenant Records", icon: "users", group: "Operations" },
+    { id: "tenants", label: "Tenant Management", icon: "users", group: "Operations" },
     { id: "rentTracking", label: "Rent Tracking", icon: "wallet", group: "Operations" },
     { id: "chequeReview", label: "Payment Review", icon: "file", group: "Operations" },
     { id: "maintenanceMgmt", label: "Maintenance", icon: "tool", group: "Operations" },
@@ -614,7 +614,7 @@ const pageMeta = {
   manager: {
     dashboard: ["Management Dashboard", "Tenants, rent, renewals, and maintenance."],
     actionCenter: ["Action Center", "Resolve requests, approvals, and tenant updates."],
-    tenants: ["Tenant Records", "Search profiles, leases, payments, and documents."],
+    tenants: ["Tenant Management", "Search profiles, leases, payments, and documents."],
     rentTracking: ["Rent Tracking", "Track paid, pending, and late rent."],
     chequeReview: ["Payment Review", "Approve or reject submitted proof."],
     maintenanceMgmt: ["Maintenance", "Review and update work orders."],
@@ -4312,7 +4312,7 @@ function shortNavLabel(label) {
     "Action Center": "Actions",
     "Maintenance": "Maintain",
     "Renewal": "Renewal",
-    "Tenant Records": "Tenants",
+    "Tenant Management": "Tenants",
     "Rent Tracking": "Rent",
     "Payment Review": "Review",
     "Maintenance": "Maintain",
@@ -4516,8 +4516,8 @@ function pageFocus() {
       actions: [{ label: "Review rent", icon: "wallet", page: "rentTracking", variant: "secondary" }]
     },
     tenants: {
-      eyebrow: "Tenant records",
-      title: "Find tenant records",
+      eyebrow: "Tenant management",
+      title: "Manage tenant records",
       body: "Search by tenant, unit, or property.",
       value: `${data.tenants.length} tenants`,
       meta: [`${data.tenants.length} records`, "Linked documents"],
