@@ -170,7 +170,10 @@ assert.match(app, /case "documentPreview"/, "Document preview modal should be ha
 assert.match(app, /SUPPLEMENTAL_TENANT_RECORDS/, "Tenant records should have a seeded demo dataset beyond the original sample rows.");
 assert.match(app, /function normalizeTenantRecord/, "Tenant records should normalize legacy and full record fields.");
 assert.match(app, /function ensureSeedTenantRecords/, "Tenant records should restore seeded demo records through shared data normalization.");
-assert.match(app, /data-action="add-tenant"/, "Tenant Records should expose an Add Tenant Record action.");
+assert.match(app, /\{ id: "tenants", label: "Tenant Management"/, "Manager navigation should label tenant records as Tenant Management.");
+assert.match(app, /tenants:\s*\["Tenant Management", "Search profiles, leases, payments, and documents\."\]/, "Manager tenant page heading should use Tenant Management.");
+assert.match(app, /eyebrow:\s*"Tenant management"[\s\S]*title:\s*"Manage tenant records"/, "Tenant management focus copy should match the renamed page.");
+assert.match(app, /data-action="add-tenant"/, "Tenant Management should expose an Add Tenant Record action.");
 assert.match(app, /case "tenantRecord"/, "Add Tenant Record should open through the shared modal system.");
 assert.match(app, /data-form="tenant-record"/, "Tenant record modal should submit a real form.");
 assert.match(app, /function validateTenantRecord/, "Tenant record form should validate required fields.");
@@ -178,8 +181,8 @@ assert.match(app, /state\.data\.manager\.tenants\.unshift\(record\)/, "Tenant re
 assert.match(app, /state\.data\.manager\.rentRows\.unshift/, "New tenant records should create connected rent tracking rows.");
 assert.match(app, /state\.data\.manager\.documents\.unshift/, "New tenant records should create connected document records.");
 assert.match(app, /showToast\("Tenant record added\."\)/, "Tenant record creation should finish with a success toast.");
-assert.match(app, /data-action="export-tenants"/, "Tenant Records should expose an Excel export action.");
-assert.match(app, /function exportTenantRecordsToExcel/, "Tenant Records should generate an Excel export.");
+assert.match(app, /data-action="export-tenants"/, "Tenant Management should expose an Excel export action.");
+assert.match(app, /function exportTenantRecordsToExcel/, "Tenant Management should generate an Excel export.");
 assert.match(app, /tenant-records-\$\{new Date\(\)\.toISOString\(\)\.slice\(0, 10\)\}\.xlsx/, "Tenant export should use a dated .xlsx filename.");
 assert.match(app, /sheet name="Tenant Records"/, "Tenant export should include a Tenant Records worksheet.");
 assert.match(app, /<autoFilter ref="A1:/, "Tenant export should include an auto filter.");
@@ -625,6 +628,6 @@ assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indica
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
 assert.match(index, /styles\.css\?v=dashboard-system-20260617-2/, "Index should load the latest cache-busted stylesheet.");
-assert.match(index, /app\.js\?v=dashboard-system-20260617-3/, "Index should load the latest cache-busted app script.");
+assert.match(index, /app\.js\?v=dashboard-system-20260617-4/, "Index should load the latest cache-busted app script.");
 
 console.log("Interaction audit checks passed.");
