@@ -52,21 +52,54 @@ const DATA_STORE_VERSION = 1;
 const ASK_AI_MESSAGE_LIMIT = 24;
 const ASK_AI_SESSION_LIMIT = 12;
 const ASK_AI_TYPING_DELAY = 720;
+const ASK_AI_NUDGE_CONFIG = {
+  initialDelayMs: 12000,
+  minIntervalMs: 35000,
+  maxIntervalMs: 55000,
+  visibleDurationMs: 6000,
+  dismissCooldownMs: 30000,
+  busyRetryMs: 8000
+};
+const ASK_AI_NUDGE_PROMPTS = [
+  "I can handle this faster.",
+  "Want me to do it?",
+  "You could save 5 minutes here.",
+  "Need help with this page?",
+  "Let me summarize this.",
+  "I can find that for you.",
+  "Want a shortcut?",
+  "I can help with the next step."
+];
+const TENANT_ASK_AI_NUDGE_PROMPTS = [
+  "Want help paying rent?",
+  "I can find your receipt.",
+  "Need help with maintenance?",
+  "I can explain your contract.",
+  "Want me to guide you?"
+];
+const MANAGEMENT_ASK_AI_NUDGE_PROMPTS = [
+  "Want today's queue summarized?",
+  "I can find urgent actions.",
+  "Want rent follow-ups first?",
+  "I can summarize maintenance.",
+  "Let me sort the queue."
+];
+
+function defaultAskAINudgeState() {
+  return {
+    isVisible: false,
+    message: "",
+    startedAt: null,
+    durationMs: ASK_AI_NUDGE_CONFIG.visibleDurationMs,
+    dismissedAt: 0,
+    phase: "idle",
+    hasScheduled: false
+  };
+}
+
 const ACTIVITY_FEED_PREVIEW_LIMIT = 6;
 const ACTIVITY_STORE_LIMIT = 40;
 const CONTRACT_REQUEST_PREVIEW_LIMIT = 3;
-const PULL_RESET_TOP_TOLERANCE = 2;
-const PULL_RESET_START_DISTANCE = 80;
-const PULL_RESET_THRESHOLD = 280;
-const PULL_RESET_MAX_DISTANCE = 330;
-const PULL_RESET_COOLDOWN = 1200;
-const PULL_RESET_WHEEL_RELEASE_DELAY = 320;
-const PULL_RESET_WHEEL_IDLE_DELAY = 1200;
-const PULL_RESET_TOP_STABILITY_MS = 1200;
-const PULL_RESET_WHEEL_STEP_MAX = 10;
-const PULL_RESET_WHEEL_RESISTANCE = 0.18;
-const PULL_RESET_TOUCH_RESISTANCE = 0.64;
-const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.42;
 const PORTFOLIO_MAP_CENTER = [24.65, 54.78];
 const PORTFOLIO_MAP_DEFAULT_ZOOM = 7;
 const PORTFOLIO_MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -100,25 +133,8 @@ const state = {
     activationState: "idle",
     sessions: [],
     activeSessionId: "",
-    search: ""
-  },
-  pullToReset: {
-    phase: "idle",
-    tracking: false,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX: 0,
-    startY: 0,
-    gestureStartedAtTop: false,
-    isEligibleForPullReset: false,
-    wheelSessionActive: false,
-    wheelSessionStartedAtTop: false,
-    lastNonTopScrollTime: 0,
-    lastWheelTime: 0,
-    cooldownUntil: 0,
-    source: ""
+    search: "",
+    nudge: defaultAskAINudgeState()
   },
   sequence: 0,
   data: {}
@@ -128,6 +144,11 @@ let lastFocusedElement = null;
 let portfolioLeafletMap = null;
 let portfolioLeafletMarkerLayer = null;
 let askAIScrollLockY = 0;
+let askAINudgeTimer = 0;
+let askAINudgeAutoTimer = 0;
+let askAINudgePromptCursor = 0;
+let askAINudgeLastActivityAt = 0;
+let askAINotchPointer = { x: -1, y: -1 };
 
 const seedData = {
   tenant: {
@@ -587,7 +608,7 @@ const nav = {
   manager: [
     { id: "dashboard", label: "Dashboard", icon: "home", group: "Overview" },
     { id: "actionCenter", label: "Action Center", icon: "bell", group: "Overview" },
-    { id: "tenants", label: "Tenant Management", icon: "users", group: "Operations" },
+    { id: "tenants", label: "Tenant Records", icon: "users", group: "Operations" },
     { id: "rentTracking", label: "Rent Tracking", icon: "wallet", group: "Operations" },
     { id: "chequeReview", label: "Payment Review", icon: "file", group: "Operations" },
     { id: "maintenanceMgmt", label: "Maintenance", icon: "tool", group: "Operations" },
@@ -603,7 +624,7 @@ const utilityPages = ["uiKit"];
 
 const pageMeta = {
   tenant: {
-    dashboard: ["Tenant Dashboard", "Rent, requests, renewals, and documents."],
+    dashboard: ["Tenant Dashboard", "Account overview and next actions."],
     actionCenter: ["Action Center", "Review updates and complete next actions."],
     rent: ["Rent", "Check balance and payment status."],
     maintenance: ["Maintenance", "Report an issue in a few fields."],
@@ -612,9 +633,9 @@ const pageMeta = {
     uiKit: ["UI Kit", "Reusable dashboard tokens, components, and states."]
   },
   manager: {
-    dashboard: ["Management Dashboard", "Tenants, rent, renewals, and maintenance."],
+    dashboard: ["Management Dashboard", "Today's priorities and portfolio health."],
     actionCenter: ["Action Center", "Resolve requests, approvals, and tenant updates."],
-    tenants: ["Tenant Management", "Search profiles, leases, payments, and documents."],
+    tenants: ["Tenant Records", "Search profiles, leases, payments, and documents."],
     rentTracking: ["Rent Tracking", "Track paid, pending, and late rent."],
     chequeReview: ["Payment Review", "Approve or reject submitted proof."],
     maintenanceMgmt: ["Maintenance", "Review and update work orders."],
@@ -2248,9 +2269,8 @@ function getManagementQueueSummary() {
     0,
     attentionItems.length - pendingPayments - openMaintenance - pendingRenewals - complaintFollowups - suggestionFollowups - messageFollowups
   );
-  const otherFollowups = complaintFollowups + suggestionFollowups + messageFollowups + otherActionItems;
 
-  const allCategories = [
+  const categories = [
     {
       type: "payments",
       label: "Payments",
@@ -2313,60 +2333,24 @@ function getManagementQueueSummary() {
     },
     {
       type: "messages",
-      label: "Other Follow-ups",
-      singularLabel: "Other Follow-up",
-      count: otherFollowups,
+      label: "Other updates",
+      singularLabel: "Other update",
+      count: messageFollowups + otherActionItems,
       page: "actionCenter",
       priority: 6,
       title: "Review remaining updates",
       description: "Open in Action Center",
       badgeStatus: "Submitted",
-      badgeLabel: "Follow Up"
+      badgeLabel: "Queue"
     }
   ];
-  const activeCategories = allCategories
+  const activeCategories = categories
     .filter((category) => category.count > 0)
     .sort((a, b) => a.priority - b.priority);
-  const actionMetricCards = [
-    {
-      label: "Payment Reviews",
-      count: pendingPayments,
-      note: "Proofs and cash requests",
-      icon: "wallet",
-      page: "chequeReview",
-      actionLabel: "Review payments"
-    },
-    {
-      label: "Maintenance Reviews",
-      count: openMaintenance,
-      note: "Requests needing updates",
-      icon: "tool",
-      page: "maintenanceMgmt",
-      actionLabel: "Open queue"
-    },
-    {
-      label: "Renewal Reviews",
-      count: pendingRenewals,
-      note: "Contract decisions",
-      icon: "refresh",
-      page: "renewalsMgmt",
-      actionLabel: "Review renewals"
-    },
-    {
-      label: "Other Follow-ups",
-      count: otherFollowups,
-      note: "Complaints and messages",
-      icon: "bell",
-      page: "actionCenter",
-      actionLabel: "View items"
-    }
-  ];
 
   return {
     totalActions: attentionItems.length,
-    allCategories,
     categories: activeCategories,
-    actionMetricCards,
     priorityActions: activeCategories.slice(0, 4),
     primaryAction: { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
     secondaryAction: { label: "Track Rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
@@ -2987,6 +2971,219 @@ function toastRoot() {
   return root;
 }
 
+function askAINotchRoot() {
+  let root = document.querySelector("#ask-ai-notch-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "ask-ai-notch-root";
+    document.body.appendChild(root);
+  }
+  return root;
+}
+
+function ensureAskAINudgeState() {
+  if (!state.askAI.nudge) {
+    state.askAI.nudge = defaultAskAINudgeState();
+  }
+  return state.askAI.nudge;
+}
+
+function prefersReducedAskAIMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+}
+
+function askAINudgeDelay() {
+  const { minIntervalMs, maxIntervalMs } = ASK_AI_NUDGE_CONFIG;
+  return Math.round(minIntervalMs + Math.random() * (maxIntervalMs - minIntervalMs));
+}
+
+function askAINudgePromptPool() {
+  const rolePrompts = state.role === "management" ? MANAGEMENT_ASK_AI_NUDGE_PROMPTS : TENANT_ASK_AI_NUDGE_PROMPTS;
+  const pagePrompts = {
+    rent: ["Want rent details summarized?", "I can check payment status."],
+    rentTracking: ["Want rent follow-ups first?", "I can find late rent."],
+    chequeReview: ["Want payment proof sorted?", "I can review the queue."],
+    maintenance: ["Want help with this request?", "I can summarize maintenance."],
+    maintenanceMgmt: ["I can summarize maintenance.", "Want active requests first?"],
+    renewal: ["Need contract details?", "I can explain renewal steps."],
+    renewalsMgmt: ["Want renewal decisions first?", "I can sort renewals."],
+    actionCenter: ["Want this queue sorted?", "I can find the next action."],
+    tenants: ["Need a tenant summary?", "I can find a tenant faster."],
+    financial: ["Want finance summarized?", "I can explain this snapshot."],
+    portfolio: ["Want portfolio highlights?", "I can compare properties."]
+  };
+  return [...(pagePrompts[state.page] || []), ...rolePrompts, ...ASK_AI_NUDGE_PROMPTS];
+}
+
+function nextAskAINudgeMessage() {
+  const pool = askAINudgePromptPool();
+  const message = pool[askAINudgePromptCursor % pool.length] || "Ask AI can help.";
+  askAINudgePromptCursor += 1;
+  return message;
+}
+
+function clearAskAINudgeTimers() {
+  if (askAINudgeTimer) {
+    window.clearTimeout(askAINudgeTimer);
+    askAINudgeTimer = 0;
+  }
+  if (askAINudgeAutoTimer) {
+    window.clearTimeout(askAINudgeAutoTimer);
+    askAINudgeAutoTimer = 0;
+  }
+}
+
+function clearAskAINudge(options = {}) {
+  const { schedule = true, setCooldown = false } = options;
+  const nudge = ensureAskAINudgeState();
+  clearAskAINudgeTimers();
+  if (setCooldown) nudge.dismissedAt = Date.now();
+  nudge.isVisible = false;
+  nudge.message = "";
+  nudge.startedAt = null;
+  nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "idle";
+  syncAskAINotchLauncher();
+  if (schedule) scheduleAskAINudge(setCooldown ? ASK_AI_NUDGE_CONFIG.dismissCooldownMs : askAINudgeDelay());
+}
+
+function dismissAskAINudge(options = {}) {
+  const { manual = false } = options;
+  const nudge = ensureAskAINudgeState();
+  if (!nudge.isVisible) return;
+  nudge.dismissedAt = Date.now();
+  clearAskAINudge({ schedule: true, setCooldown: manual });
+}
+
+function isUserWorkingInField() {
+  const activeElement = document.activeElement;
+  if (!activeElement || activeElement === document.body) return false;
+  return Boolean(activeElement.closest?.("input, textarea, select, form, [contenteditable='true']"));
+}
+
+function hasBlockingOverlayForAskAINudge() {
+  return Boolean(
+    state.modal ||
+      state.notificationPanelOpen ||
+      document.querySelector(".modal-backdrop, [role='menu'], [data-menu-open='true'], .toast-error, .toast-warning")
+  );
+}
+
+function canShowAskAINudge() {
+  const nudge = ensureAskAINudgeState();
+  const now = Date.now();
+  return Boolean(
+    state.auth &&
+      !state.askAI.isOpen &&
+      !state.askAI.isExpanded &&
+      state.askAI.activationState !== "activating" &&
+      !isUserWorkingInField() &&
+      !hasBlockingOverlayForAskAINudge() &&
+      document.visibilityState === "visible" &&
+      now - nudge.dismissedAt >= ASK_AI_NUDGE_CONFIG.dismissCooldownMs &&
+      now - askAINudgeLastActivityAt >= 1200
+  );
+}
+
+function scheduleAskAINudge(delayMs = askAINudgeDelay()) {
+  clearAskAINudgeTimers();
+  const nudge = ensureAskAINudgeState();
+  if (!state.auth || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  nudge.hasScheduled = true;
+  askAINudgeTimer = window.setTimeout(showAskAINudge, delayMs);
+}
+
+function ensureAskAINudgeScheduler() {
+  const nudge = ensureAskAINudgeState();
+  if (!state.auth) {
+    clearAskAINudgeTimers();
+    nudge.hasScheduled = false;
+    return;
+  }
+  if (nudge.isVisible || askAINudgeTimer || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  scheduleAskAINudge(nudge.hasScheduled ? askAINudgeDelay() : ASK_AI_NUDGE_CONFIG.initialDelayMs);
+}
+
+function showAskAINudge() {
+  askAINudgeTimer = 0;
+  const nudge = ensureAskAINudgeState();
+  if (!canShowAskAINudge()) {
+    scheduleAskAINudge(ASK_AI_NUDGE_CONFIG.busyRetryMs);
+    return;
+  }
+
+  nudge.isVisible = true;
+  nudge.message = nextAskAINudgeMessage();
+  nudge.startedAt = Date.now();
+  nudge.durationMs = prefersReducedAskAIMotion() ? ASK_AI_NUDGE_CONFIG.visibleDurationMs : ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "visible";
+  syncAskAINotchLauncher();
+  askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
+}
+
+function triggerAskAINudge() {
+  if (!state.auth || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  const nudge = ensureAskAINudgeState();
+  clearAskAINudgeTimers();
+  nudge.isVisible = true;
+  nudge.message = nextAskAINudgeMessage();
+  nudge.startedAt = Date.now();
+  nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "visible";
+  nudge.hasScheduled = true;
+  syncAskAINotchLauncher();
+  askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
+}
+
+function markAskAINudgeActivity() {
+  askAINudgeLastActivityAt = Date.now();
+}
+
+function syncAskAINotchHoverState() {
+  const shell = document.querySelector("#ask-ai-notch-shell");
+  if (!shell) return;
+  const target = document.elementFromPoint?.(askAINotchPointer.x, askAINotchPointer.y);
+  shell.dataset.hover = target?.closest?.("#ask-ai-notch-shell") ? "true" : "false";
+}
+
+function syncAskAINotchLauncher() {
+  const root = askAINotchRoot();
+  if (!state.auth) {
+    clearAskAINudgeTimers();
+    root.innerHTML = "";
+    delete document.body.dataset.askAiNotchState;
+    return;
+  }
+
+  let shell = root.querySelector("#ask-ai-notch-shell");
+  let button = root.querySelector("#ask-ai-notch");
+  if (!shell || !button) {
+    root.innerHTML = renderAskAINotchLauncher();
+    shell = root.querySelector("#ask-ai-notch-shell");
+    button = root.querySelector("#ask-ai-notch");
+  }
+
+  const closeButton = root.querySelector("[data-action='dismiss-ask-ai-nudge']");
+  const label = root.querySelector(".ask-ai-notch-launcher__label");
+  const nudge = ensureAskAINudgeState();
+  const isActive = state.askAI.isOpen || state.askAI.activationState === "activating";
+  const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
+  document.body.dataset.askAiNotchState = displayState;
+  if (shell) shell.dataset.state = displayState;
+  button.dataset.state = displayState;
+  button.setAttribute("aria-expanded", state.askAI.isOpen ? "true" : "false");
+  button.setAttribute("aria-label", nudge.isVisible ? `Open Ask AI: ${nudge.message}` : "Open Ask AI");
+  if (label) {
+    label.textContent = nudge.isVisible ? nudge.message : "Ask AI";
+    label.removeAttribute("title");
+  }
+  if (closeButton) {
+    closeButton.hidden = !nudge.isVisible;
+    closeButton.style.setProperty("--ask-ai-nudge-duration", `${nudge.durationMs}ms`);
+  }
+  syncAskAINotchHoverState();
+}
+
 function storedTheme() {
   try {
     return localStorage.getItem("estateflow-theme") === "dark" ? "dark" : "light";
@@ -3377,7 +3574,6 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
     ? askAIState.messages.map(renderAskAIMessage).join("")
     : `
       <section class="ask-ai-workspace-empty">
-        <span class="ask-ai-workspace-orb">${askAIIcon()}</span>
         <h3>Where should we begin?</h3>
         <p>${escapeHtml(helper)}</p>
         <div class="ask-ai-empty-prompts" aria-label="Suggested Ask AI prompts">
@@ -3411,7 +3607,6 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
             <h3>${escapeHtml(title)}</h3>
           </div>
           <div class="ask-ai-panel-actions">
-            <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="Collapse Ask AI" aria-expanded="true">${icon.collapse}</button>
             <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
           </div>
         </header>
@@ -3426,26 +3621,41 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
   `;
 }
 
-function renderSidebarAskAI() {
+function renderAskAINotchLauncher() {
   const askAIState = state.askAI;
+  const isActive = askAIState.isOpen || askAIState.activationState === "activating";
+  const nudge = ensureAskAINudgeState();
+  const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
+  const label = nudge.isVisible ? nudge.message : "Ask AI";
   return `
-    <section class="ask-ai-shell ${askAIState.isOpen ? "open" : ""} ${escapeHtml(askAIState.activationState)}" aria-label="Ask AI assistant">
+    <div id="ask-ai-notch-shell" class="ask-ai-notch-shell" data-state="${displayState}">
       <button
-        id="ask-ai-trigger"
-        class="ask-ai-entry"
+        id="ask-ai-notch"
+        class="ask-ai-notch-launcher"
         type="button"
         data-action="toggle-ask-ai"
+        data-state="${displayState}"
+        aria-label="${nudge.isVisible ? `Open Ask AI: ${escapeHtml(label)}` : "Open Ask AI"}"
         aria-expanded="${askAIState.isOpen ? "true" : "false"}"
         aria-controls="ask-ai-panel"
       >
-        <span class="ask-ai-entry-icon">${askAIIcon()}</span>
-        <span class="ask-ai-entry-copy">
-          <strong>Ask AI</strong>
-          <span>Ask about this dashboard</span>
+        <span class="ask-ai-notch-launcher__glow" aria-hidden="true"></span>
+        <span class="ask-ai-notch-launcher__content">
+          <span class="ask-ai-notch-launcher__icon">${askAIIcon()}</span>
+          <span class="ask-ai-notch-launcher__label" aria-live="polite">${escapeHtml(label)}</span>
         </span>
-        <span class="ask-ai-entry-badge">Demo</span>
       </button>
-    </section>
+      <button
+        class="ask-ai-nudge-close"
+        type="button"
+        data-action="dismiss-ask-ai-nudge"
+        aria-label="Dismiss Ask AI suggestion"
+        style="--ask-ai-nudge-duration: ${nudge.durationMs}ms"
+        ${nudge.isVisible ? "" : "hidden"}
+      >
+        ${icon.close}
+      </button>
+    </div>
   `;
 }
 
@@ -3456,44 +3666,7 @@ function renderAskAIPanel() {
   const { helper, placeholder, suggestions } = askAICopy();
   const hasInput = askAIState.inputValue.trim().length > 0;
   const clearDisabled = askAIState.messages.length === 0 && !askAIState.inputValue.trim();
-  const expanded = askAIState.isExpanded;
-  if (expanded) {
-    return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
-  }
-
-  const messages = askAIState.messages.length
-    ? askAIState.messages.map(renderAskAIMessage).join("")
-    : `<div class="ask-ai-empty"><strong>Ready when you are.</strong><span>Ask about rent, requests, documents, or dashboard actions.</span></div>`;
-
-  return `
-    <aside id="ask-ai-panel" class="ask-ai-panel ${expanded ? "expanded" : ""}" role="dialog" aria-modal="${expanded ? "true" : "false"}" aria-label="${expanded ? "Expanded Ask AI demo panel" : "Ask AI demo panel"}">
-      <div class="ask-ai-panel-head">
-        <div class="ask-ai-title-row">
-          <span class="ask-ai-panel-icon">${askAIIcon()}</span>
-          <div>
-            <span class="ask-ai-mode">Demo mode</span>
-            <h3>Ask AI</h3>
-          </div>
-        </div>
-        <div class="ask-ai-panel-actions">
-          <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="${expanded ? "Collapse Ask AI" : "Expand Ask AI"}" aria-expanded="${expanded ? "true" : "false"}">${expanded ? icon.collapse : icon.expand}</button>
-          <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
-        </div>
-      </div>
-      <div class="ask-ai-intro">
-        <p>${escapeHtml(helper)}</p>
-      </div>
-      <div class="ask-ai-suggestions" aria-label="Suggested Ask AI prompts">
-        ${suggestions.map(renderAskAISuggestionButton).join("")}
-      </div>
-      <div class="ask-ai-messages" aria-live="polite">
-        ${messages}
-        ${askAIState.isTyping ? renderAskAITypingMessage() : ""}
-        ${askAIState.error ? `<div class="ask-ai-error" role="alert">${escapeHtml(askAIState.error)}</div>` : ""}
-      </div>
-      ${renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState })}
-    </aside>
-  `;
+  return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
 }
 
 function classNames(...parts) {
@@ -3798,22 +3971,21 @@ function syncAskAIScrollLock() {
     window.scrollTo({ top: askAIScrollLockY, left: 0 });
     askAIScrollLockY = 0;
   }
-
-  if (locked && state.pullToReset.phase !== "idle") {
-    cancelPullToReset();
-  }
 }
 
 function render() {
   applyTheme();
+  stopPortfolioMapMotion();
 
   if (!state.auth) {
     state.notificationPanelOpen = false;
     state.askAI.isOpen = false;
     state.askAI.isExpanded = false;
+    clearAskAINudge({ schedule: false, setCooldown: false });
     syncAskAIScrollLock();
     app().innerHTML = renderLogin();
     modalRoot().innerHTML = "";
+    syncAskAINotchLauncher();
     cleanupPortfolioLeafletMap();
     return;
   }
@@ -3826,6 +3998,8 @@ function render() {
 
   app().innerHTML = renderPortal();
   renderModal();
+  syncAskAINotchLauncher();
+  ensureAskAINudgeScheduler();
   syncAskAIScrollLock();
   runPostRenderEffects();
 }
@@ -3899,9 +4073,24 @@ function runPostRenderEffects() {
   window.requestAnimationFrame(initializePortfolioLeafletMap);
 }
 
+function stopPortfolioMapMotion() {
+  if (!portfolioLeafletMap) return;
+  try {
+    portfolioLeafletMap.stop?.();
+    portfolioLeafletMap.closePopup?.();
+  } catch (error) {
+    // Leaflet can still be resolving a transition while the demo UI re-renders.
+  }
+}
+
 function cleanupPortfolioLeafletMap() {
   if (!portfolioLeafletMap) return;
-  portfolioLeafletMap.remove();
+  stopPortfolioMapMotion();
+  try {
+    portfolioLeafletMap.remove();
+  } catch (error) {
+    // Treat cleanup as best-effort because the map container may already be gone.
+  }
   portfolioLeafletMap = null;
   portfolioLeafletMarkerLayer = null;
 }
@@ -4001,7 +4190,11 @@ function initializePortfolioLeafletMap() {
     portfolioLeafletMap = window.L.map(container, {
       zoomControl: true,
       attributionControl: true,
-      scrollWheelZoom: false
+      scrollWheelZoom: false,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+      inertia: false
     }).setView(PORTFOLIO_MAP_CENTER, PORTFOLIO_MAP_DEFAULT_ZOOM);
     window.L.tileLayer(PORTFOLIO_MAP_TILE_URL, {
       maxZoom: 19,
@@ -4211,18 +4404,10 @@ function renderNotificationPanel() {
   `;
 }
 
-function renderPullToResetIndicator() {
-  return `
-    <div class="pull-reset-indicator" data-pull-reset aria-hidden="true" aria-live="polite">
-      <span class="pull-reset-icon">${icon.refresh}</span>
-      <span data-pull-reset-label>Pull to reset demo data</span>
-    </div>
-  `;
-}
-
 function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
+  const isDashboardPage = state.page === "dashboard";
   const showScreenFocus = !(
     (state.role === "tenant" && state.page === "dashboard") ||
     (state.role === "manager" && state.page === "dashboard")
@@ -4231,12 +4416,11 @@ function renderPortal() {
     <div class="portal-layout">
       ${renderSidebar(profile)}
       <main class="main-area">
-        ${renderPullToResetIndicator()}
-        <header class="topbar">
+        <header class="topbar ${isDashboardPage ? "dashboard-topbar" : ""}">
           <div class="topbar-copy">
-            <p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>
+            ${isDashboardPage ? "" : `<p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>`}
             <h1>${escapeHtml(meta[0])}</h1>
-            <p>${escapeHtml(meta[1])}</p>
+            ${meta[1] ? `<p>${escapeHtml(meta[1])}</p>` : ""}
           </div>
           <div class="top-actions">
             ${state.page !== "dashboard" ? `<button class="button secondary compact dashboard-return" type="button" data-page="dashboard">${buttonIcon("home")}Dashboard</button>` : ""}
@@ -4260,7 +4444,6 @@ function renderSidebar(profile) {
     <aside class="sidebar">
       <div class="sidebar-top">
         ${brand({ clickable: true })}
-        <div class="sidebar-role">${label}</div>
         <div class="sidebar-profile">
           ${renderAvatar(profile)}
           <div>
@@ -4292,15 +4475,15 @@ function renderSidebar(profile) {
           .join("")}
       </nav>
       <div class="sidebar-footer">
-        ${renderSidebarAskAI()}
-        <div class="sidebar-actions">
-          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
-          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
-          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
-        </div>
         <div class="sidebar-note">
           <strong>Demo data</strong>
           <span>No live records</span>
+        </div>
+        <div class="sidebar-actions">
+          <button class="button secondary" type="button" data-action="trigger-ask-ai-nudge">${buttonIcon("bell")}AI notification trigger</button>
+          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
+          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
+          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
         </div>
       </div>
     </aside>
@@ -4312,7 +4495,7 @@ function shortNavLabel(label) {
     "Action Center": "Actions",
     "Maintenance": "Maintain",
     "Renewal": "Renewal",
-    "Tenant Management": "Tenants",
+    "Tenant Records": "Tenants",
     "Rent Tracking": "Rent",
     "Payment Review": "Review",
     "Maintenance": "Maintain",
@@ -4399,7 +4582,8 @@ function renderActionButtons(actions = [], className = "focus-actions") {
         modal: action.modal,
         action: action.action,
         id: action.id,
-        tenant: action.tenant
+        tenant: action.tenant,
+        ariaLabel: action.ariaLabel || ""
       })).join("")}
     </div>
   `;
@@ -4468,7 +4652,7 @@ function pageFocus() {
         body: "Request renewal when ready.",
         value: contractSummaryStatus,
         meta: ["Current rent AED 8,500", "Unit 1204"],
-        actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary" }]
+        actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary", ariaLabel: "Request renewal from summary" }]
       },
       documents: {
         eyebrow: "Documents",
@@ -4516,8 +4700,8 @@ function pageFocus() {
       actions: [{ label: "Review rent", icon: "wallet", page: "rentTracking", variant: "secondary" }]
     },
     tenants: {
-      eyebrow: "Tenant management",
-      title: "Manage tenant records",
+      eyebrow: "Tenant records",
+      title: "Find tenant records",
       body: "Search by tenant, unit, or property.",
       value: `${data.tenants.length} tenants`,
       meta: [`${data.tenants.length} records`, "Linked documents"],
@@ -5042,31 +5226,6 @@ function renderActionCenterGroups(items) {
     .join("");
 }
 
-function renderManagerActionCenterMetrics() {
-  const queueSummary = getManagementQueueSummary();
-  return queueSummary.actionMetricCards
-    .map((card) =>
-      metricCard(
-        card.label,
-        String(card.count),
-        card.note,
-        card.icon,
-        card.page,
-        { actionLabel: card.actionLabel }
-      )
-    )
-    .join("");
-}
-
-function renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems }) {
-  return [
-    metricCard("Needs Action", String(actionItems.length), "Available actions", "check"),
-    metricCard("Unread", String(unreadItems.length), "New updates", "bell"),
-    metricCard("Open Items", String(openItems.length), "In progress", "refresh"),
-    metricCard("Total Items", String(allItems.length), "Visible to you", "file")
-  ].join("");
-}
-
 function renderActionCenter() {
   ensureActionCenterData();
   const allItems = visibleActionItems();
@@ -5076,14 +5235,14 @@ function renderActionCenter() {
   const actionItems = allItems.filter((item) => actionButtonsForItem(item).some((action) => action.command && action.command !== "mark-read"));
   const typeOptions = actionFilterOptions("type", allItems);
   const statusOptions = actionFilterOptions("status", allItems);
-  const metricCards = state.role === "manager"
-    ? renderManagerActionCenterMetrics()
-    : renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems });
 
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCards}
+        ${metricCard("Needs Action", String(actionItems.length), "Available actions", "check")}
+        ${metricCard("Unread", String(unreadItems.length), "New updates", "bell")}
+        ${metricCard("Open Items", String(openItems.length), "In progress", "refresh")}
+        ${metricCard("Total Items", String(allItems.length), "Visible to you", "file")}
       </section>
 
       <section class="section-band">
@@ -5473,6 +5632,33 @@ function renderDesignSystemShowcase() {
         </div>
       </section>
 
+      <section class="section-band ai-style-showcase">
+        ${renderSectionHeader({ eyebrow: "AI System", title: "Ask AI surfaces", description: "The assistant uses a top notch launcher, roomy nudge state, full chat workspace, and the same neutral dashboard structure." })}
+        <div class="ai-style-grid">
+          <div class="ai-style-card">
+            <span class="ui-kit-ai-notch-preview">
+              ${askAIIcon()}
+              <strong>Ask AI</strong>
+            </span>
+            <span class="ui-kit-ai-nudge-preview">
+              ${askAIIcon()}
+              <strong>I can handle this faster.</strong>
+              <em>6s</em>
+            </span>
+          </div>
+          <div class="ai-style-card ai-style-rules">
+            <span class="chip selected">Top notch</span>
+            <span class="chip">Smart nudge</span>
+            <span class="chip">Full workspace</span>
+            <span class="chip">Reduced motion</span>
+          </div>
+          <div class="ai-style-card ui-kit-ai-chat-preview">
+            <div class="ui-kit-ai-message user">What needs action?</div>
+            <div class="ui-kit-ai-message assistant">12 actions need response. Start with payment proof and renewal decisions.</div>
+          </div>
+        </div>
+      </section>
+
       <section class="metric-grid compact-metrics" aria-label="Stat card examples">
         ${metricCard("Metric Card", "24", "Primary metric with context", "wallet")}
         ${metricCard("Alert Metric", "3", "Requires attention", "tool")}
@@ -5605,7 +5791,7 @@ function renderTenantDashboard() {
       page: "renewal",
       actionLabel: "View renewal",
       className: contractHealth,
-      ariaLabel: "Open contract renewal details"
+      ariaLabel: "Open contract expiry renewal details"
     },
     {
       label: "Maintenance status",
@@ -5628,7 +5814,7 @@ function renderTenantDashboard() {
           </div>
         </div>
         <div class="tenant-summary-facts">
-          <button class="contract-health ${contractHealth}" type="button" data-page="renewal" aria-label="Open contract renewal details">
+          <button class="contract-health ${contractHealth}" type="button" data-page="renewal" aria-label="Open contract renewal summary">
             <strong>Contract</strong>
             <em>Active until ${escapeHtml(profile.contractEnd)}</em>
           </button>
@@ -5990,7 +6176,7 @@ function renderTenantRenewal() {
             <div class="detail-item"><span>${latestRequest ? "Request status" : "Renewal status"}</span><strong>${badge(status)}</strong></div>
           </div>
           <div class="section-actions contract-action-row">
-            <button class="button primary" type="button" data-action="request-renewal">${buttonIcon("refresh")}Request Renewal</button>
+            <button class="button primary" type="button" data-action="request-renewal" aria-label="Request renewal from current contract">${buttonIcon("refresh")}Request Renewal</button>
             <button class="button secondary" type="button" data-action="view-doc" data-doc-title="Tenancy Contract" data-doc-owner="${escapeHtml(profile.name)}">${buttonIcon("file")}View Contract PDF</button>
             <button class="button danger contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Cancellation">Cancel Contract</button>
             <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Amendment">Request Amendment</button>
@@ -6196,6 +6382,7 @@ function renderManagerDashboard() {
           <span class="focus-eyebrow">Operations summary</span>
           <h2>${queueSummary.totalActions ? `${actionsLabel} need response` : "You're all caught up"}</h2>
           <p>${queueSummary.totalActions ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now."}</p>
+          ${renderManagementQueueChips(queueSummary)}
           ${renderActionButtons([
             queueSummary.primaryAction,
             queueSummary.secondaryAction
@@ -6385,7 +6572,7 @@ function renderRentTracking() {
         <td>
           <span class="cell-actions">
             <button class="button secondary compact" type="button" data-modal="rentDetail" data-id="${row.id}">View</button>
-            <button class="button ghost compact" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}">Send reminder</button>
+            <button class="button ghost compact" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}" aria-label="Send reminder to ${escapeHtml(row.tenant)}">Send reminder</button>
           </span>
         </td>
       </tr>
@@ -8388,7 +8575,7 @@ function rentDetailModal(id) {
     `,
     actions: `
       <button class="button ghost" type="button" data-action="close-modal">Close</button>
-      <button class="button secondary" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}">Send reminder</button>
+      <button class="button secondary" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}" aria-label="Send reminder from rent record for ${escapeHtml(row.tenant)}">Send reminder</button>
     `
   };
 }
@@ -8619,7 +8806,6 @@ function resetDemoData() {
   state.filters = defaultFilters();
   state.notificationClearedIds = [];
   state.notificationPanelOpen = false;
-  resetPullToResetState({ update: false });
   ensureActionCenterData();
   saveData();
   renderAtTop();
@@ -8640,15 +8826,16 @@ function focusAskAIInput() {
 
 function focusAskAITrigger() {
   window.requestAnimationFrame(() => {
-    document.querySelector("#ask-ai-trigger")?.focus({ preventScroll: true });
+    document.querySelector("#ask-ai-notch")?.focus({ preventScroll: true });
   });
 }
 
 function openAskAI() {
   ensureAskAIMessages();
+  clearAskAINudge({ schedule: false, setCooldown: false });
   state.askAI.isOpen = true;
-  state.askAI.isExpanded = false;
-  state.askAI.activationState = "open";
+  state.askAI.isExpanded = true;
+  state.askAI.activationState = "activating";
   state.askAI.error = null;
   state.notificationPanelOpen = false;
   render();
@@ -8664,6 +8851,7 @@ function closeAskAI() {
   state.askAI.error = null;
   state.askAI.activationState = "idle";
   render();
+  ensureAskAINudgeScheduler();
   focusAskAITrigger();
 }
 
@@ -8734,282 +8922,6 @@ async function submitAskAIMessage(form) {
     render();
     focusAskAIInput();
   }
-}
-
-function pullResetCopy() {
-  const pull = state.pullToReset;
-  if (pull.phase === "refreshing") return "Resetting demo data...";
-  if (pull.phase === "complete") return "Demo data reset";
-  return pull.thresholdReached ? "Release to reset demo data" : "Pull further to reset demo data";
-}
-
-function updatePullToResetIndicator({ settle = false } = {}) {
-  const pull = state.pullToReset;
-  const main = document.querySelector(".main-area");
-  const indicator = document.querySelector("[data-pull-reset]");
-  if (!main || !indicator) return;
-
-  const visible = pull.phase !== "idle";
-  const offset = visible ? Math.min(PULL_RESET_MAX_DISTANCE, Math.round(pull.distance * 0.52)) : 0;
-  const progress = Math.min(1, pull.distance / PULL_RESET_THRESHOLD);
-
-  main.style.setProperty("--pull-reset-offset", `${offset}px`);
-  main.style.setProperty("--pull-reset-progress", progress.toFixed(2));
-  main.classList.toggle("pull-reset-active", visible);
-  main.classList.toggle("pull-reset-ready", Boolean(pull.thresholdReached));
-  main.classList.toggle("pull-reset-settling", settle || pull.phase === "refreshing" || pull.phase === "complete");
-
-  indicator.classList.toggle("visible", visible);
-  indicator.dataset.state = pull.thresholdReached && pull.phase === "pulling" ? "ready" : pull.phase;
-  indicator.setAttribute("aria-hidden", visible ? "false" : "true");
-  const label = indicator.querySelector("[data-pull-reset-label]");
-  if (label) label.textContent = pullResetCopy();
-}
-
-function resetPullToResetState({ update = true } = {}) {
-  Object.assign(state.pullToReset, {
-    phase: "idle",
-    tracking: false,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX: 0,
-    startY: 0,
-    gestureStartedAtTop: false,
-    isEligibleForPullReset: false,
-    source: ""
-  });
-  if (update) updatePullToResetIndicator({ settle: true });
-}
-
-function pullResetScrollTop() {
-  return Math.max(window.scrollY, document.documentElement.scrollTop || 0, document.body.scrollTop || 0);
-}
-
-function isAtPullResetStart() {
-  return pullResetScrollTop() <= PULL_RESET_TOP_TOLERANCE;
-}
-
-function isPullResetBlockedTarget(target) {
-  return Boolean(
-    target?.closest?.(
-      [
-        "input",
-        "textarea",
-        "select",
-        "option",
-        "button",
-        "a",
-        "form",
-        "table",
-        ".table-wrap",
-        ".modal-backdrop",
-        ".modal-card",
-        ".notifications-menu",
-        ".sidebar",
-        ".mobile-nav",
-        "[data-action]",
-        "[data-page]",
-        "[data-modal]",
-        "[data-filter]",
-        "[data-tab]",
-        "[role='button']",
-        "[contenteditable='true']"
-      ].join(", ")
-    )
-  );
-}
-
-function hasNestedScrollableAncestor(target) {
-  let node = target instanceof Element ? target : null;
-  while (node && node !== document.body && node !== document.documentElement) {
-    const style = window.getComputedStyle(node);
-    const scrollable = /(auto|scroll|overlay)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1;
-    if (scrollable) return true;
-    node = node.parentElement;
-  }
-  return false;
-}
-
-function canUsePullToReset(event) {
-  const pull = state.pullToReset;
-  const now = Date.now();
-  if (isAskAIExpandedOverlayOpen()) return false;
-  if (!state.auth || state.modal || state.notificationPanelOpen) return false;
-  if (pull.isResetting || now < pull.cooldownUntil) return false;
-  if (!isAtPullResetStart()) return false;
-  if (now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) return false;
-  if (pull.wheelSessionActive && !pull.wheelSessionStartedAtTop) return false;
-  if (isPullResetBlockedTarget(event.target)) return false;
-  if (hasNestedScrollableAncestor(event.target)) return false;
-  return true;
-}
-
-function startPullToReset(source, startX, startY) {
-  const gestureStartedAtTop = isAtPullResetStart();
-  Object.assign(state.pullToReset, {
-    phase: "idle",
-    tracking: true,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX,
-    startY,
-    gestureStartedAtTop,
-    isEligibleForPullReset: gestureStartedAtTop,
-    source
-  });
-}
-
-function setPullToResetDistance(distance) {
-  const pull = state.pullToReset;
-  pull.phase = "pulling";
-  pull.distance = Math.min(PULL_RESET_MAX_DISTANCE, Math.max(0, distance));
-  pull.thresholdReached = pull.distance >= PULL_RESET_THRESHOLD;
-  updatePullToResetIndicator();
-}
-
-function cancelPullToReset() {
-  resetPullToResetState();
-}
-
-function triggerPullToReset() {
-  const pull = state.pullToReset;
-  const now = Date.now();
-  if (pull.isResetting || !pull.isEligibleForPullReset) return;
-  if (!isAtPullResetStart() || now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) {
-    cancelPullToReset();
-    return;
-  }
-  Object.assign(state.pullToReset, {
-    phase: "refreshing",
-    tracking: false,
-    thresholdReached: true,
-    isResetting: true,
-    distance: PULL_RESET_THRESHOLD,
-    cooldownUntil: Date.now() + PULL_RESET_COOLDOWN
-  });
-  updatePullToResetIndicator({ settle: true });
-  window.setTimeout(resetDemoData, 180);
-}
-
-function finishPullToReset() {
-  const pull = state.pullToReset;
-  if (!pull.tracking && pull.phase !== "pulling") return;
-  if (pull.isEligibleForPullReset && pull.thresholdReached) {
-    triggerPullToReset();
-  } else {
-    cancelPullToReset();
-  }
-}
-
-function handlePullResetTouchStart(event) {
-  if (isAskAIExpandedOverlayOpen()) return;
-  if (event.touches.length !== 1) return;
-  if (!isAtPullResetStart()) state.pullToReset.lastNonTopScrollTime = Date.now();
-  if (!canUsePullToReset(event)) return;
-  const touch = event.touches[0];
-  startPullToReset("touch", touch.clientX, touch.clientY);
-}
-
-function handlePullResetTouchMove(event) {
-  if (isAskAIExpandedOverlayOpen()) {
-    if (state.pullToReset.tracking) cancelPullToReset();
-    return;
-  }
-  const pull = state.pullToReset;
-  if (!pull.tracking || pull.source !== "touch" || event.touches.length !== 1) return;
-  if (!isAtPullResetStart()) {
-    cancelPullToReset();
-    return;
-  }
-
-  const touch = event.touches[0];
-  const deltaY = touch.clientY - pull.startY;
-  const deltaX = touch.clientX - pull.startX;
-  if (Math.abs(deltaX) > Math.abs(deltaY) * 0.8) {
-    cancelPullToReset();
-    return;
-  }
-
-  if (deltaY <= PULL_RESET_START_DISTANCE) return;
-  event.preventDefault();
-  if (!pull.isEligibleForPullReset) return;
-  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * PULL_RESET_TOUCH_RESISTANCE);
-}
-
-function handlePullResetTouchEnd() {
-  if (state.pullToReset.source === "touch") finishPullToReset();
-}
-
-function handlePullResetScroll() {
-  if (isAskAIExpandedOverlayOpen()) return;
-  if (isAtPullResetStart()) return;
-  state.pullToReset.lastNonTopScrollTime = Date.now();
-  if (state.pullToReset.tracking) cancelPullToReset();
-}
-
-let pullResetWheelTimer = null;
-let pullResetWheelIdleTimer = null;
-
-function handlePullResetWheel(event) {
-  if (isAskAIExpandedOverlayOpen()) {
-    if (state.pullToReset.tracking) cancelPullToReset();
-    return;
-  }
-
-  const pull = state.pullToReset;
-  const now = Date.now();
-  const atTop = isAtPullResetStart();
-
-  if (!atTop) {
-    pull.lastNonTopScrollTime = now;
-  }
-
-  const sessionExpired = !pull.wheelSessionActive || now - pull.lastWheelTime > PULL_RESET_WHEEL_IDLE_DELAY;
-  if (sessionExpired) {
-    pull.wheelSessionActive = true;
-    pull.wheelSessionStartedAtTop = atTop;
-  }
-  pull.lastWheelTime = now;
-
-  window.clearTimeout(pullResetWheelIdleTimer);
-  pullResetWheelIdleTimer = window.setTimeout(() => {
-    state.pullToReset.wheelSessionActive = false;
-    state.pullToReset.wheelSessionStartedAtTop = false;
-  }, PULL_RESET_WHEEL_IDLE_DELAY);
-
-  if (event.deltaY >= 0) {
-    if (pull.source === "wheel") cancelPullToReset();
-    return;
-  }
-  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-
-  if (!pull.wheelSessionStartedAtTop) {
-    if (pull.source === "wheel") cancelPullToReset();
-    return;
-  }
-
-  if (pull.source === "wheel" && !atTop) {
-    cancelPullToReset();
-    return;
-  }
-  if (!pull.tracking && !canUsePullToReset(event)) return;
-
-  if (!pull.tracking) startPullToReset("wheel", event.clientX, event.clientY);
-  event.preventDefault();
-
-  pull.rawDistance += Math.min(PULL_RESET_WHEEL_STEP_MAX, Math.abs(event.deltaY) * PULL_RESET_WHEEL_RESISTANCE);
-  if (pull.rawDistance > PULL_RESET_START_DISTANCE) {
-    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * PULL_RESET_WHEEL_DISTANCE_RESISTANCE);
-  }
-
-  window.clearTimeout(pullResetWheelTimer);
-  pullResetWheelTimer = window.setTimeout(() => {
-    if (state.pullToReset.source === "wheel") finishPullToReset();
-  }, PULL_RESET_WHEEL_RELEASE_DELAY);
 }
 
 function formatDateInput(value) {
@@ -9100,6 +9012,18 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (action === "dismiss-ask-ai-nudge") {
+    event.preventDefault();
+    event.stopPropagation();
+    dismissAskAINudge({ manual: true });
+    return;
+  }
+
+  if (action === "trigger-ask-ai-nudge") {
+    triggerAskAINudge();
+    return;
+  }
+
   if (action === "toggle-ask-ai") {
     state.askAI.isOpen ? closeAskAI() : openAskAI();
     return;
@@ -9107,14 +9031,6 @@ document.addEventListener("click", (event) => {
 
   if (action === "close-ask-ai") {
     closeAskAI();
-    return;
-  }
-
-  if (action === "toggle-ask-ai-expanded") {
-    persistActiveAskAISession();
-    state.askAI.isExpanded = !state.askAI.isExpanded;
-    render();
-    focusAskAIInput();
     return;
   }
 
@@ -9563,8 +9479,12 @@ document.addEventListener("click", (event) => {
   if (action === "portfolio-map-zoom") {
     const direction = actionButton.dataset.direction;
     if (portfolioLeafletMap) {
-      if (direction === "in") portfolioLeafletMap.zoomIn();
-      if (direction === "out") portfolioLeafletMap.zoomOut();
+      stopPortfolioMapMotion();
+      const currentZoom = portfolioLeafletMap.getZoom();
+      const minZoom = portfolioLeafletMap.getMinZoom();
+      const maxZoom = portfolioLeafletMap.getMaxZoom();
+      const nextZoom = direction === "in" ? currentZoom + 1 : currentZoom - 1;
+      portfolioLeafletMap.setZoom(Math.min(maxZoom, Math.max(minZoom, nextZoom)), { animate: false });
       return;
     }
     initializePortfolioLeafletMap();
@@ -9580,7 +9500,8 @@ document.addEventListener("click", (event) => {
       up: [0, -distance],
       down: [0, distance]
     }[direction] || [0, 0];
-    portfolioLeafletMap?.panBy(movement, { animate: true });
+    stopPortfolioMapMotion();
+    portfolioLeafletMap?.panBy(movement, { animate: false });
     return;
   }
 
@@ -9669,7 +9590,8 @@ document.addEventListener("submit", async (event) => {
       activationState: "idle",
       sessions: [],
       activeSessionId: "",
-      search: ""
+      search: "",
+      nudge: defaultAskAINudgeState()
     };
     ensureAskAIMessages(state.role);
     ensureActionCenterData({ persist: true });
@@ -9969,12 +9891,35 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("touchstart", handlePullResetTouchStart, { passive: true });
-window.addEventListener("touchmove", handlePullResetTouchMove, { passive: false });
-window.addEventListener("touchend", handlePullResetTouchEnd, { passive: true });
-window.addEventListener("touchcancel", cancelPullToReset, { passive: true });
-window.addEventListener("scroll", handlePullResetScroll, { passive: true });
-window.addEventListener("wheel", handlePullResetWheel, { passive: false });
+window.addEventListener("scroll", markAskAINudgeActivity, { passive: true });
+window.addEventListener("wheel", markAskAINudgeActivity, { passive: true });
+window.addEventListener("touchmove", markAskAINudgeActivity, { passive: true });
+document.addEventListener("input", markAskAINudgeActivity, true);
+document.addEventListener("focusin", markAskAINudgeActivity, true);
+document.addEventListener(
+  "pointermove",
+  (event) => {
+    askAINotchPointer = { x: event.clientX, y: event.clientY };
+    syncAskAINotchHoverState();
+  },
+  { passive: true }
+);
+document.addEventListener(
+  "pointerleave",
+  () => {
+    askAINotchPointer = { x: -1, y: -1 };
+    syncAskAINotchHoverState();
+  },
+  { passive: true }
+);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    clearAskAINudge({ schedule: false, setCooldown: false });
+    return;
+  }
+  ensureAskAINudgeScheduler();
+});
 
 window.addEventListener("popstate", (event) => {
   restoreFromHistory(event.state);

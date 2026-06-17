@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+const designSystem = readFileSync(new URL("../DESIGN_SYSTEM.md", import.meta.url), "utf8");
 
 function uniqueMatches(pattern, source) {
   return [...new Set([...source.matchAll(pattern)].map((match) => match[1]))].sort();
@@ -50,6 +51,7 @@ const expectedActions = [
   "confirm-action-center",
   "confirm-demo-payment",
   "confirm-reset-data",
+  "dismiss-ask-ai-nudge",
   "dismiss-toast",
   "download-doc",
   "download-receipt",
@@ -83,8 +85,8 @@ const expectedActions = [
   "template-renewal",
   "toast-example",
   "toggle-ask-ai",
-  "toggle-ask-ai-expanded",
   "toggle-theme",
+  "trigger-ask-ai-nudge",
   "view-all-receipts",
   "view-doc"
 ];
@@ -106,14 +108,34 @@ for (const page of expectedPages) {
 assert.match(app, /const utilityPages = \["uiKit"\];/, "UI Kit should remain available as a utility page.");
 assert.doesNotMatch(app, /group: "System"/, "UI Kit should not appear as a sidebar navigation group.");
 assert.match(app, /function availablePages\(role = state\.role\)/, "Utility pages should be included in the page guard.");
-assert.match(app, /<div class="sidebar-footer">[\s\S]*renderSidebarAskAI\(\)[\s\S]*class="sidebar-actions"[\s\S]*data-action="logout"[\s\S]*data-action="reset-data"[\s\S]*data-action="open-ui-kit"[\s\S]*class="sidebar-note"[\s\S]*Demo data[\s\S]*No live records/, "Sidebar footer should order Ask AI, Logout, Reset data, UI Kit, then Demo data.");
+assert.match(app, /dashboard:\s*\["Tenant Dashboard", "Account overview and next actions\."\]/, "Tenant dashboard should use concise, non-list header copy.");
+assert.match(app, /dashboard:\s*\["Management Dashboard", "Today's priorities and portfolio health\."\]/, "Management dashboard should use concise, non-repetitive header copy.");
+assert.match(app, /class="topbar \$\{isDashboardPage \? "dashboard-topbar" : ""\}"/, "Dashboard pages should expose a scoped topbar class for landing-page spacing.");
+assert.match(app, /\$\{isDashboardPage \? "" : `<p class="page-kicker">/, "Dashboard pages should hide the redundant portal role kicker.");
+assert.doesNotMatch(app, /class="sidebar-role"/, "Sidebar should not repeat the user role between the brand and profile card.");
+assert.match(app, /function askAINotchRoot\(\)/, "Ask AI notch should use a persistent root outside the main dashboard render.");
+assert.match(app, /function syncAskAINotchLauncher\(\)[\s\S]*if \(!shell \|\| !button\) \{[\s\S]*root\.innerHTML = renderAskAINotchLauncher\(\)/, "Ask AI notch should be created once and then synced without remounting on page changes.");
+assert.match(app, /app\(\)\.innerHTML = renderPortal\(\);[\s\S]*syncAskAINotchLauncher\(\);/, "Ask AI notch should sync after dashboard renders instead of living inside the portal markup.");
+assert.match(app, /delete document\.body\.dataset\.askAiNotchState/, "Ask AI should clear its layout state after logout.");
+assert.match(app, /document\.body\.dataset\.askAiNotchState = displayState/, "Ask AI notch state should be exposed to the dashboard layout.");
+assert.match(app, /class="sidebar-actions"[\s\S]*data-action="reset-data"[\s\S]*data-action="logout"[\s\S]*data-action="open-ui-kit"/, "Sidebar footer should preserve Reset data, Logout, and the UI Kit utility action.");
 assert.match(app, /button class="button secondary" type="button" data-action="open-ui-kit"/, "UI Kit footer action should use the same secondary button style.");
-assert.match(app, /askAI:\s*\{[\s\S]*isOpen:\s*false[\s\S]*isExpanded:\s*false[\s\S]*activationState:\s*"idle"/, "Ask AI should have its own sidebar state.");
-assert.match(app, /function renderSidebarAskAI\(\)/, "Ask AI sidebar launcher should render from a dedicated helper.");
+assert.match(app, /askAI:\s*\{[\s\S]*isOpen:\s*false[\s\S]*isExpanded:\s*false[\s\S]*activationState:\s*"idle"/, "Ask AI should keep its own launcher and workspace state.");
+assert.doesNotMatch(app, /renderSidebarAskAI/, "Ask AI should no longer render from the sidebar.");
+assert.match(app, /function renderAskAINotchLauncher\(\)/, "Ask AI notch launcher should render from a dedicated helper.");
+assert.match(app, /const ASK_AI_NUDGE_CONFIG = \{[\s\S]*initialDelayMs: 12000[\s\S]*minIntervalMs: 35000[\s\S]*maxIntervalMs: 55000[\s\S]*visibleDurationMs: 6000[\s\S]*dismissCooldownMs: 30000/, "Ask AI notch nudges should use adjustable demo timing with a dismissal cooldown.");
+assert.match(app, /const ASK_AI_NUDGE_PROMPTS = \[[\s\S]*I can handle this faster\.[\s\S]*Want a shortcut\?/, "Ask AI notch should rotate short default nudge prompts.");
+assert.match(app, /function canShowAskAINudge\(\)[\s\S]*!state\.askAI\.isOpen[\s\S]*!isUserWorkingInField\(\)[\s\S]*document\.visibilityState === "visible"/, "Ask AI nudge eligibility should avoid open AI, active forms, and hidden tabs.");
+assert.match(app, /function showAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*nextAskAINudgeMessage\(\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI nudge should show a prompt and auto-dismiss.");
+assert.match(app, /function triggerAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*nextAskAINudgeMessage\(\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI nudge should expose a manual diagnostic trigger using the same countdown flow.");
+assert.match(app, /function dismissAskAINudge\([\s\S]*manual = false[\s\S]*setCooldown: manual/, "Ask AI nudge dismissal should support manual cooldown behavior.");
+assert.match(app, /id="ask-ai-notch"/, "Ask AI notch should expose a stable focus target.");
+assert.match(app, /id="ask-ai-notch-shell"/, "Ask AI notch should use a shell so the dismiss control is not nested in the main button.");
+assert.doesNotMatch(app, /title="Ask AI"/, "Ask AI notch should not show a native browser tooltip over the custom control.");
+assert.match(app, /aria-label="\$\{nudge\.isVisible \? `Open Ask AI: \$\{escapeHtml\(label\)\}` : "Open Ask AI"\}"/, "Ask AI notch should include an accessible label.");
+assert.match(app, /data-action="dismiss-ask-ai-nudge"[\s\S]*aria-label="Dismiss Ask AI suggestion"/, "Ask AI nudge should include an accessible dismiss button.");
 assert.match(app, /function renderAskAIPanel\(\)/, "Ask AI should render the full chat in a dedicated main panel helper.");
 assert.match(app, /renderAskAIPanel\(\)/, "Ask AI panel should be mounted with the portal shell instead of inside the sidebar.");
-const sidebarAskAIBlock = app.slice(app.indexOf("function renderSidebarAskAI()"), app.indexOf("function renderAskAIPanel()"));
-assert.doesNotMatch(sidebarAskAIBlock, /id="ask-ai-panel"/, "Ask AI sidebar should only contain the launcher, not the full chat panel.");
 assert.doesNotMatch(app, /function renderAskAIActivationOverlay\(\)/, "Ask AI should not render a dashboard-level activation overlay.");
 assert.match(app, /function askAIIcon\(\)/, "Ask AI should use an original inline SVG icon.");
 assert.match(app, /function mockAskAIResponse/, "Ask AI demo response should be isolated from UI rendering.");
@@ -121,15 +143,19 @@ assert.match(app, /async function askAI\(\{ message, role, pageContext, dashboar
 assert.doesNotMatch(app, /fetch\(/, "Ask AI UI-only demo should not make network fetch calls.");
 assert.match(app, /data-form="ask-ai"/, "Ask AI should include a submittable assistant form.");
 assert.match(app, /data-ask-ai-input/, "Ask AI should expose a focused question input.");
-assert.match(app, /data-action="toggle-ask-ai"/, "Ask AI sidebar entry should toggle the panel.");
+assert.match(app, /data-action="toggle-ask-ai"/, "Ask AI notch should toggle the workspace.");
+assert.match(app, /data-action="trigger-ask-ai-nudge"[\s\S]*AI notification trigger/, "Sidebar should expose a diagnostic AI notification trigger.");
+assert.match(app, /if \(action === "dismiss-ask-ai-nudge"\)[\s\S]*event\.stopPropagation\(\)[\s\S]*dismissAskAINudge\(\{ manual: true \}\)/, "Ask AI nudge close should not open the workspace.");
+assert.match(app, /if \(action === "trigger-ask-ai-nudge"\)[\s\S]*triggerAskAINudge\(\)/, "AI notification trigger action should manually show the notch nudge.");
 assert.match(app, /data-action="close-ask-ai"/, "Ask AI panel should expose an accessible close action.");
-assert.match(app, /data-action="toggle-ask-ai-expanded"/, "Ask AI panel should expose an expand and collapse action.");
+assert.doesNotMatch(app, /data-action="toggle-ask-ai-expanded"/, "Ask AI expanded workspace should not keep a redundant minimize control beside close.");
 assert.match(app, /data-action="ask-ai-new-chat"/, "Expanded Ask AI should expose a New Chat action.");
 assert.match(app, /data-action="select-ask-ai-session"/, "Expanded Ask AI should allow previous sessions to be selected.");
 assert.match(app, /data-ask-ai-session-search/, "Expanded Ask AI should include local chat search.");
 assert.match(app, /askAISessionsStorageKey\(role = state\.role\)[\s\S]*askAI:\$\{askAIStorageRole\(role\)\}:sessions/, "Ask AI sessions should persist separately for tenant and management roles.");
 assert.match(app, /function renderAskAIWorkspace/, "Ask AI expanded mode should render through a dedicated workspace helper.");
 assert.match(app, /class="ask-ai-panel expanded ask-ai-workspace"/, "Ask AI expanded mode should use a full chat workspace surface.");
+assert.match(app, /state\.askAI\.isOpen = true;[\s\S]*state\.askAI\.isExpanded = true;[\s\S]*state\.askAI\.activationState = "activating"/, "Ask AI notch should open the existing expanded workspace directly.");
 assert.match(app, /function isAskAIExpandedOverlayOpen/, "Ask AI expanded workspace should expose a single overlay-open guard.");
 assert.match(app, /function syncAskAIScrollLock/, "Ask AI expanded workspace should lock page scrolling behind the overlay.");
 assert.match(app, /askAIScrollLockY = window\.scrollY/, "Ask AI scroll lock should preserve the dashboard scroll position.");
@@ -139,14 +165,56 @@ assert.match(app, /function startNewAskAIChat/, "Ask AI should create local new 
 assert.match(app, /function filteredAskAISessions/, "Ask AI should filter chat sessions locally.");
 assert.match(app, /No chats found\./, "Ask AI search should include an empty result state.");
 assert.match(app, /Where should we begin\?/, "Ask AI expanded empty state should use a centered new-chat prompt.");
-assert.match(app, /state\.askAI\.isExpanded = !state\.askAI\.isExpanded/, "Ask AI expand action should toggle expanded state.");
-assert.match(app, /class="ask-ai-panel \$\{expanded \? "expanded" : ""\}"/, "Ask AI panel should apply an expanded class from state.");
+assert.match(app, /function syncAskAINotchHoverState\(\)[\s\S]*document\.elementFromPoint/, "Ask AI notch hover state should be restored after the expanded workspace closes.");
+assert.match(app, /document\.addEventListener\(\s*"pointermove"[\s\S]*syncAskAINotchHoverState\(\)/, "Ask AI notch should track pointer position for reliable hover recovery.");
+assert.doesNotMatch(app, /class="ask-ai-panel \$\{expanded \? "expanded" : ""\}"/, "Ask AI compact side panel should no longer render from the main flow.");
 assert.match(app, /data-action="ask-ai-suggestion"/, "Ask AI prompt chips should be wired.");
 assert.match(app, /data-action="clear-ask-ai"/, "Ask AI panel should expose a focused clear chat action.");
 assert.match(app, /event\.key === "Escape" && state\.askAI\.isOpen/, "Escape should close Ask AI when open.");
 assert.match(app, /event\.key === "Enter" && !event\.shiftKey/, "Ask AI input should submit on Enter while allowing Shift+Enter.");
-assert.match(styles, /\.ask-ai-entry/, "Ask AI sidebar entry should have dedicated styling.");
-assert.match(styles, /\.ask-ai-entry[\s\S]*linear-gradient\(135deg, #6d5dfc 0%, #7c3aed 45%, #2563eb 100%\)/, "Ask AI launcher should use the requested purple-blue gradient treatment.");
+assert.doesNotMatch(styles, /\.ask-ai-entry/, "Ask AI sidebar entry styling should be removed with the old launcher.");
+assert.match(styles, /--ai-gradient: linear-gradient\(115deg, #ec4899 0%, #7c3aed 34%, #2563eb 68%, #06b6d4 100%\);/, "Ask AI gradient should live in the dashboard token system.");
+assert.match(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*--ask-ai-notch-width: var\(--ai-notch-width, 264px\);[\s\S]*--ask-ai-notch-rest-height: var\(--ai-notch-rest-height, 46px\);[\s\S]*width: var\(--ask-ai-notch-width\);[\s\S]*height: var\(--ask-ai-notch-rest-height\)/, "Ask AI notch should be fixed at true dashboard center with tokenized stable dimensions.");
+assert.match(styles, /\.ask-ai-notch-launcher\s*\{[\s\S]*var\(--ai-gradient-highlight[\s\S]*var\(--ai-gradient/, "Ask AI notch should use the requested AI gradient language through shared tokens.");
+assert.match(styles, /\.ask-ai-notch-launcher\s*\{[\s\S]*border-radius: 0 0 16px 16px;/, "Ask AI notch should keep its existing rounded lower corners.");
+assert.match(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*left:\s*50%;[\s\S]*transform: translateX\(-50%\);/, "Ask AI notch should be centered on the full header viewport.");
+assert.doesNotMatch(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*left:\s*calc\(var\(--sidebar\)/, "Ask AI notch should not be offset toward the dashboard canvas.");
+assert.match(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*border-radius:\s*var\(--ai-notch-radius, 0 0 16px 16px\)/, "Ask AI notch shell should share the launcher radius.");
+assert.match(styles, /\.ask-ai-notch-shell::before\s*\{[\s\S]*inset:\s*0;[\s\S]*border:\s*0;[\s\S]*border-radius:\s*var\(--ai-notch-radius, 0 0 16px 16px\);[\s\S]*background:\s*transparent;[\s\S]*box-shadow:\s*none;[\s\S]*backdrop-filter:\s*none/, "Ask AI notch backing should not render a separate grey corner behind the gradient notch.");
+assert.match(styles, /\.sidebar \.brand\s*\{[\s\S]*width:\s*100%;[\s\S]*border:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--surface\);[\s\S]*box-shadow:\s*var\(--shadow-soft\)/, "Sidebar brand should sit on its own clean surface.");
+assert.match(styles, /html\s*\{[\s\S]*overscroll-behavior-y:\s*none;/, "Viewport should prevent top-edge rubber-band bounce.");
+assert.match(styles, /body\s*\{[\s\S]*overscroll-behavior-y:\s*none;/, "Dashboard shell should prevent top-edge rubber-band bounce.");
+assert.match(styles, /\.sidebar\s*\{[\s\S]*padding:\s*20px 18px;[\s\S]*border-right:\s*1px solid var\(--line\);[\s\S]*background:\s*var\(--sidebar-bg\)/, "Sidebar should keep a full-height divider against the main dashboard area.");
+assert.match(styles, /--dashboard-header-shelf:\s*164px;/, "Dashboard shell should use one shared shelf height for the main header and sidebar header.");
+assert.match(styles, /body\[data-ask-ai-notch-state\]::before\s*\{[\s\S]*height:\s*var\(--dashboard-header-shelf\)/, "Main dashboard header shelf should use the shared shelf height.");
+assert.match(styles, /\.sidebar::before\s*\{[\s\S]*height:\s*var\(--dashboard-header-shelf\);[\s\S]*background:\s*var\(--panel-translucent\);[\s\S]*backdrop-filter:\s*blur\(22px\) saturate\(1\.18\)/, "Sidebar top should share the same frosted header shelf height without cutting into navigation.");
+assert.match(styles, /\.sidebar-nav\s*\{[\s\S]*margin-top:\s*36px;/, "Sidebar navigation should begin below the frosted brand/profile shelf with clear separation.");
+assert.match(styles, /\.dashboard-topbar\s*\{[\s\S]*margin-bottom:\s*calc\(var\(--space-16\) \+ var\(--space-5\)\)/, "Dashboard header should leave generous breathing room below the aligned header shelf border.");
+assert.match(styles, /\.ask-ai-notch-shell:hover,\s*\.ask-ai-notch-shell\[data-hover="true"\],\s*\.ask-ai-notch-shell:has\(\.ask-ai-notch-launcher:focus-visible\)\s*\{[\s\S]*height: var\(--ask-ai-notch-hover-height\)/, "Ask AI notch should grow downward on hover, restored pointer hover, and keyboard-visible focus instead of shifting down.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="active"\]\s*\{[\s\S]*height: var\(--ask-ai-notch-open-height\)/, "Ask AI active notch should grow downward into the expanded workspace while keeping the same width.");
+assert.match(styles, /body\[data-ask-ai-notch-state\]\s*\{[\s\S]*--ask-ai-layout-offset:\s*0px/, "Ask AI should not push the dashboard header down in idle, hover, active, or message states.");
+assert.doesNotMatch(styles, /--ask-ai-layout-offset:\s*calc\(var\(--ai-notch-nudge-height/, "Ask AI nudge should avoid creating a taller dashboard header offset.");
+assert.match(styles, /\.main-area\s*\{[\s\S]*padding:\s*calc\(24px \+ var\(--ask-ai-layout-offset, 0px\)\) 34px 54px/, "Main dashboard content should keep its original header position with the zero Ask AI offset.");
+assert.match(styles, /\.topbar\s*\{[\s\S]*top:\s*var\(--ask-ai-layout-offset, 0px\)/, "Sticky topbar should continue using the Ask AI offset variable, now resolved to the original zero position.");
+assert.match(styles, /body\[data-ask-ai-notch-state\]::before\s*\{[\s\S]*left:\s*var\(--sidebar\);[\s\S]*height:\s*var\(--dashboard-header-shelf\);[\s\S]*background:\s*var\(--panel-translucent\);[\s\S]*backdrop-filter:\s*blur\(22px\) saturate\(1\.18\)/, "Authenticated portal header should keep one shared frosted shelf behind the Ask AI notch, title, and top actions.");
+assert.match(styles, /@media \(min-width: 901px\)\s*\{[\s\S]*\.topbar\s*\{[\s\S]*border-bottom:\s*0;[\s\S]*background:\s*transparent/, "Desktop topbar should not add a second divider over the shared frosted shelf.");
+assert.match(styles, /\.topbar-copy\s*\{[\s\S]*background:\s*var\(--panel-translucent\);[\s\S]*backdrop-filter:\s*blur\(18px\) saturate\(1\.16\)/, "Topbar title copy should sit on a frosted surface while scrolling.");
+assert.match(styles, /@media \(min-width: 901px\)\s*\{[\s\S]*\.topbar-copy\s*\{[\s\S]*background:\s*transparent;[\s\S]*box-shadow:\s*none;[\s\S]*backdrop-filter:\s*none/, "Desktop topbar title copy should read as content inside the shared frosted shelf, not a separate floating card.");
+assert.match(styles, /@media \(min-width: 901px\)\s*\{[\s\S]*\.top-actions\s*\{[\s\S]*padding:\s*0;[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;[\s\S]*backdrop-filter:\s*none/, "Desktop top actions should be layout-only so theme and notification are not engulfed in one pill.");
+assert.match(styles, /\.theme-toggle,\s*\.notification-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface\);[\s\S]*box-shadow:\s*var\(--shadow-soft\);[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.12\)/, "Theme and notification toggles should retain independent frosted control surfaces.");
+assert.match(styles, /\.ask-ai-notch-launcher__content\s*\{[\s\S]*gap: 9px;[\s\S]*font-size: 13px/, "Ask AI notch label should be slightly larger for better attention.");
+assert.match(styles, /\.ask-ai-notch-launcher__icon\s*\{[\s\S]*width: 24px;[\s\S]*height: 24px/, "Ask AI notch icon should be slightly larger while staying balanced.");
+assert.match(styles, /\.ask-ai-notch-launcher__label\s*\{[\s\S]*max-width: 68px;[\s\S]*opacity: 1/, "Ask AI notch label should remain visible at rest.");
+assert.match(styles, /@property --ask-ai-nudge-progress/, "Ask AI nudge close should support a smooth radial countdown variable.");
+assert.match(styles, /\.ask-ai-nudge-close\s*\{[\s\S]*conic-gradient[\s\S]*animation: ask-ai-nudge-countdown var\(--ask-ai-nudge-duration, 6000ms\) linear forwards/, "Ask AI nudge dismiss control should show a radial countdown matching the visible duration.");
+assert.match(styles, /--ai-notch-nudge-width:\s*300px;/, "Ask AI message notch should use a compact width that avoids dashboard header text.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\]\s*\{[\s\S]*width: min\(var\(--ask-ai-notch-nudge-width\), calc\(100vw - 32px\)\);[\s\S]*height: var\(--ask-ai-notch-nudge-height\)/, "Ask AI nudge should expand to give notification text space to breathe.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\] \.ask-ai-notch-launcher__content\s*\{[\s\S]*font-size: 13\.5px/, "Ask AI nudge copy should stay compact enough for the restored dashboard header.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\] \.ask-ai-notch-launcher__label\s*\{[\s\S]*max-width: 178px;[\s\S]*overflow: visible;[\s\S]*text-overflow: clip;[\s\S]*white-space: normal/, "Ask AI nudge message should wrap fully inside the compact notch instead of truncating with ellipses.");
+assert.match(styles, /\.ask-ai-panel\.expanded\.ask-ai-workspace::before\s*\{[\s\S]*width: var\(--ai-workspace-groove-width, 292px\);[\s\S]*height: var\(--ai-workspace-groove-height, 58px\);[\s\S]*background: var\(--bg\)/, "Ask AI workspace should carve a neutral groove with enough lower depth for the expanded notch.");
+assert.match(styles, /@keyframes ask-ai-workspace-slide-down/, "Ask AI expanded workspace should slide down subtly with the notch activation.");
+assert.match(styles, /@keyframes ask-ai-notch-shimmer/, "Ask AI notch should include a subtle gradient shimmer.");
+assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.ask-ai-notch-shell,[\s\S]*\.ask-ai-nudge-close[\s\S]*animation: none !important;/, "Ask AI notch should respect reduced motion.");
 assert.match(styles, /\.ask-ai-panel\.expanded[\s\S]*inset: 16px;[\s\S]*width: auto;/, "Ask AI expanded mode should fill the viewport without becoming a dedicated page.");
 assert.match(styles, /\.ask-ai-panel\.expanded\.ask-ai-workspace[\s\S]*grid-template-columns: minmax\(260px, 292px\) minmax\(0, 1fr\)/, "Ask AI expanded workspace should use a chat-sidebar plus main-chat layout.");
 assert.match(styles, /html\.ask-ai-scroll-locked,[\s\S]*body\.ask-ai-scroll-locked[\s\S]*overflow: hidden;/, "Ask AI expanded workspace should prevent background page scrolling.");
@@ -165,15 +233,19 @@ assert.doesNotMatch(styles, /\.ask-ai-activation/, "Ask AI activation overlay st
 assert.doesNotMatch(styles, /@keyframes ask-ai-sweep/, "Ask AI activation sweep animation should be removed.");
 assert.doesNotMatch(styles, /@keyframes ask-ai-sparkle/, "Ask AI activation sparkle animation should be removed.");
 assert.match(styles, /prefers-reduced-motion: reduce[\s\S]*ask-ai/, "Ask AI animation should respect reduced-motion preferences.");
+assert.match(app, /AI System[\s\S]*Ask AI surfaces/, "UI Kit should document the Ask AI design surface.");
+assert.match(styles, /\.ui-kit-ai-notch-preview[\s\S]*var\(--ai-notch-width\)/, "UI Kit should expose the Ask AI notch sample using shared tokens.");
+assert.match(styles, /\.ui-kit-ai-nudge-preview/, "UI Kit should expose the Ask AI nudge sample.");
+assert.match(designSystem, /## Ask AI Surfaces[\s\S]*--ai-\*/, "Design system docs should define the Ask AI design style and tokens.");
+assert.match(styles, /@media \(max-width: 620px\)[\s\S]*\.sidebar-actions\s*\{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/, "Mobile sidebar utility actions should wrap into the viewport instead of overflowing.");
+assert.match(styles, /@media \(max-width: 620px\)[\s\S]*\.route-chips\s*\{[\s\S]*flex-wrap: wrap;[\s\S]*overflow: visible;/, "Mobile route chips should wrap cleanly at phone width.");
+assert.match(styles, /@media \(max-width: 620px\)[\s\S]*\.portfolio-map-header\s*\{[\s\S]*flex-direction: column;[\s\S]*\.portfolio-map-header \.button\s*\{[\s\S]*width: 100%;/, "Portfolio map header actions should stack cleanly on phone width.");
 
 assert.match(app, /case "documentPreview"/, "Document preview modal should be handled.");
 assert.match(app, /SUPPLEMENTAL_TENANT_RECORDS/, "Tenant records should have a seeded demo dataset beyond the original sample rows.");
 assert.match(app, /function normalizeTenantRecord/, "Tenant records should normalize legacy and full record fields.");
 assert.match(app, /function ensureSeedTenantRecords/, "Tenant records should restore seeded demo records through shared data normalization.");
-assert.match(app, /\{ id: "tenants", label: "Tenant Management"/, "Manager navigation should label tenant records as Tenant Management.");
-assert.match(app, /tenants:\s*\["Tenant Management", "Search profiles, leases, payments, and documents\."\]/, "Manager tenant page heading should use Tenant Management.");
-assert.match(app, /eyebrow:\s*"Tenant management"[\s\S]*title:\s*"Manage tenant records"/, "Tenant management focus copy should match the renamed page.");
-assert.match(app, /data-action="add-tenant"/, "Tenant Management should expose an Add Tenant Record action.");
+assert.match(app, /data-action="add-tenant"/, "Tenant Records should expose an Add Tenant Record action.");
 assert.match(app, /case "tenantRecord"/, "Add Tenant Record should open through the shared modal system.");
 assert.match(app, /data-form="tenant-record"/, "Tenant record modal should submit a real form.");
 assert.match(app, /function validateTenantRecord/, "Tenant record form should validate required fields.");
@@ -181,8 +253,8 @@ assert.match(app, /state\.data\.manager\.tenants\.unshift\(record\)/, "Tenant re
 assert.match(app, /state\.data\.manager\.rentRows\.unshift/, "New tenant records should create connected rent tracking rows.");
 assert.match(app, /state\.data\.manager\.documents\.unshift/, "New tenant records should create connected document records.");
 assert.match(app, /showToast\("Tenant record added\."\)/, "Tenant record creation should finish with a success toast.");
-assert.match(app, /data-action="export-tenants"/, "Tenant Management should expose an Excel export action.");
-assert.match(app, /function exportTenantRecordsToExcel/, "Tenant Management should generate an Excel export.");
+assert.match(app, /data-action="export-tenants"/, "Tenant Records should expose an Excel export action.");
+assert.match(app, /function exportTenantRecordsToExcel/, "Tenant Records should generate an Excel export.");
 assert.match(app, /tenant-records-\$\{new Date\(\)\.toISOString\(\)\.slice\(0, 10\)\}\.xlsx/, "Tenant export should use a dated .xlsx filename.");
 assert.match(app, /sheet name="Tenant Records"/, "Tenant export should include a Tenant Records worksheet.");
 assert.match(app, /<autoFilter ref="A1:/, "Tenant export should include an auto filter.");
@@ -281,44 +353,19 @@ assert.match(app, /data-action="reset-data"/, "Demo data reset should be availab
 assert.match(app, /state\.data = normalizeData\(cloneData\(\)\)/, "Demo data reset should restore normalized seed data.");
 assert.match(app, /case "resetData"/, "Data reset should open a confirmation modal.");
 assert.match(app, /data-action="confirm-reset-data"/, "Data reset confirmation should be wired.");
-assert.match(app, /pullToReset:\s*\{/, "Portal should track pull-to-reset gesture state.");
-assert.match(app, /const PULL_RESET_TOP_TOLERANCE = 2;/, "Pull-to-reset should use a tight top tolerance.");
-assert.match(app, /const PULL_RESET_START_DISTANCE = 80;/, "Pull-to-reset should require a deliberate pull before showing progress.");
-assert.match(app, /const PULL_RESET_THRESHOLD = 280;/, "Pull-to-reset should use a stronger release threshold to avoid Mac momentum triggers.");
-assert.match(app, /const PULL_RESET_WHEEL_IDLE_DELAY = 1200;/, "Trackpad pull-to-reset should keep scroll sessions active long enough to reject momentum from lower on the page.");
-assert.match(app, /const PULL_RESET_TOP_STABILITY_MS = 1200;/, "Pull-to-reset should require the page to be stable at the top.");
-assert.match(app, /const PULL_RESET_WHEEL_STEP_MAX = 10;/, "Trackpad pull-to-reset should accumulate cautiously per wheel event.");
-assert.match(app, /const PULL_RESET_WHEEL_RESISTANCE = 0\.18;/, "Trackpad pull-to-reset should apply resistance against momentum scrolling.");
-assert.match(app, /gestureStartedAtTop:\s*false/, "Pull-to-reset should track whether the gesture started at the top.");
-assert.match(app, /isEligibleForPullReset:\s*false/, "Pull-to-reset should track eligibility separately from visual pulling.");
-assert.match(app, /wheelSessionStartedAtTop:\s*false/, "Pull-to-reset should track whether a wheel session began at the top.");
-assert.match(app, /lastNonTopScrollTime:\s*0/, "Pull-to-reset should remember recent non-top scrolling.");
 assert.match(app, /function openResetDataModal\(\)/, "Reset modal opening should remain available for the manual Reset data button.");
 assert.match(app, /function resetDemoData/, "Demo data reset should use one shared reset helper.");
 assert.match(app, /if \(action === "reset-data"\) \{\s+openResetDataModal\(\);/, "Reset Data button should use the shared reset modal helper.");
 assert.match(app, /if \(action === "confirm-reset-data"\) \{\s+resetDemoData\(\);/, "Reset confirmation should use the shared reset helper.");
-assert.match(app, /window\.setTimeout\(resetDemoData, 180\)/, "Pull-to-reset should reset directly after a deliberate pull.");
-assert.doesNotMatch(app, /openResetDataModal\(\{ fromPull: true \}\)/, "Pull-to-reset should not open a confirmation modal.");
-assert.match(app, /function canUsePullToReset/, "Pull-to-reset should guard when the gesture is allowed.");
-assert.match(app, /state\.modal \|\| state\.notificationPanelOpen/, "Pull-to-reset should not start while modal or notification UI is active.");
-assert.match(app, /isAtPullResetStart\(\)/, "Pull-to-reset should only activate at the top of the page.");
-assert.match(app, /now - pull\.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS/, "Pull-to-reset should block momentum immediately after non-top scrolling.");
-assert.match(app, /pull\.wheelSessionActive && !pull\.wheelSessionStartedAtTop/, "Pull-to-reset should reject wheel sessions that started away from the top.");
-assert.match(app, /isPullResetBlockedTarget\(event\.target\)/, "Pull-to-reset should avoid forms, buttons, tables, and nested controls.");
-assert.match(app, /function handlePullResetScroll\(\)[\s\S]*lastNonTopScrollTime = Date\.now\(\)/, "Pull-to-reset should record ordinary scroll movement away from the top.");
-assert.match(app, /!isAtPullResetStart\(\) \|\| now - pull\.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS/, "Pull-to-reset should re-check top eligibility before opening reset confirmation.");
-assert.match(app, /pull\.wheelSessionStartedAtTop = atTop/, "Wheel pull-to-reset should record the starting top state for the full session.");
-assert.match(app, /if \(!pull\.wheelSessionStartedAtTop\)/, "Wheel pull-to-reset should block sessions that did not start at the top.");
-assert.match(app, /state\.pullToReset\.wheelSessionActive = false/, "Wheel pull-to-reset should reset session state after idle.");
-assert.match(app, /window\.addEventListener\("touchstart", handlePullResetTouchStart, \{ passive: true \}\)/, "Pull-to-reset should support touch start.");
-assert.match(app, /window\.addEventListener\("touchmove", handlePullResetTouchMove, \{ passive: false \}\)/, "Pull-to-reset should support cancellable touch movement.");
-assert.match(app, /window\.addEventListener\("scroll", handlePullResetScroll, \{ passive: true \}\)/, "Pull-to-reset should watch real page scroll position.");
-assert.match(app, /window\.addEventListener\("wheel", handlePullResetWheel, \{ passive: false \}\)/, "Pull-to-reset should support cautious trackpad overscroll.");
+assert.doesNotMatch(app, /pullToReset|PullToReset|pullReset|PULL_RESET|pull-reset|data-pull-reset/, "Pull-to-reset feature remnants should be fully removed from app code.");
+assert.doesNotMatch(app, /handlePullReset|canUsePullToReset|window\.setTimeout\(resetDemoData, 180\)/, "Reset should no longer be triggered by pull gesture handlers.");
 assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation and amendment requests should be available.");
 assert.match(app, /class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated button row.");
 assert.match(app, /class="section-actions contract-action-row"[\s\S]*data-action="request-renewal"[\s\S]*data-action="view-doc"/, "Request Renewal should appear before View Contract PDF.");
 assert.match(app, /button class="button danger contract-action-button"[^>]*Contract Cancellation/, "Cancel contract should render as a visible button.");
 assert.match(app, /button class="button secondary contract-action-button"[^>]*Contract Amendment/, "Contract amendment should render as a visible button.");
+assert.match(app, /aria-label="Request renewal from current contract"/, "Current contract renewal action should have a distinct accessible label.");
+assert.match(app, /ariaLabel:\s*"Request renewal from summary"/, "Summary renewal action should have a distinct accessible label.");
 assert.doesNotMatch(app, />Request Change</, "Duplicate Request Change action should be removed from the Renewal page.");
 assert.match(app, /function latestTenantContractRequest/, "Tenant renewal timeline should use the latest request data.");
 assert.match(app, /function tenantContractRequestHistory/, "Tenant renewal should merge renewal, cancellation, and amendment records into one contract request history.");
@@ -401,12 +448,16 @@ assert.match(index, /leaflet@1\.9\.4\/dist\/leaflet\.css/, "Portfolio map should
 assert.match(index, /leaflet@1\.9\.4\/dist\/leaflet\.js/, "Portfolio map should load Leaflet JS.");
 assert.match(app, /const PORTFOLIO_MAP_TILE_URL = "https:\/\/tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png"/, "Portfolio map should use the official OpenStreetMap tile URL.");
 assert.match(app, /function initializePortfolioLeafletMap\(\)/, "Portfolio map should initialize a real Leaflet map after render.");
+assert.match(app, /function stopPortfolioMapMotion\(\)/, "Portfolio map should stop active Leaflet transitions before re-rendering.");
+assert.match(app, /zoomAnimation:\s*false,[\s\S]*fadeAnimation:\s*false,[\s\S]*markerZoomAnimation:\s*false,[\s\S]*inertia:\s*false/, "Portfolio Leaflet map should disable animated transitions to avoid stale-container crashes.");
 assert.match(app, /id="portfolioPropertyMap"/, "Portfolio should render an embedded map container.");
 assert.match(app, /renderPortfolioMapCard\(\)/, "Portfolio should add the map card under the property table.");
 assert.match(app, /data-action="open-portfolio-map"/, "Portfolio summary cards should open the map view.");
 assert.match(app, /data-action="set-portfolio-map-filter"/, "Portfolio map should include working status filters.");
 assert.match(app, /data-action="portfolio-map-zoom"/, "Portfolio map should expose zoom controls.");
 assert.match(app, /data-action="portfolio-map-pan"/, "Portfolio map should expose pan controls.");
+assert.match(app, /portfolioLeafletMap\.setZoom\([\s\S]*\{ animate: false \}\)/, "Portfolio zoom controls should avoid animated map transitions.");
+assert.match(app, /portfolioLeafletMap\?\.panBy\(movement, \{ animate: false \}\)/, "Portfolio pan controls should avoid animated map transitions.");
 assert.match(app, /data-action="select-property"/, "Portfolio markers and rows should select property details.");
 assert.match(app, /data-action="add-property"/, "Portfolio should expose a working Add Property action.");
 assert.match(app, /case "propertyRecord"/, "Add Property should open through the shared modal system.");
@@ -421,14 +472,12 @@ assert.match(styles, /\.portfolio-map-shell \{[\s\S]*isolation: isolate;/, "Port
 assert.match(styles, /\.portfolio-property-row \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 132px;/, "Portfolio property status rows should reserve a fixed status column.");
 assert.match(styles, /\.portfolio-property-row \.status,[\s\S]*\.portfolio-status-cell \.status \{[\s\S]*grid-template-columns: 7px minmax\(0, 1fr\);/, "Portfolio status tags should use a fixed dot column so dots align.");
 assert.match(app, /rentFollowUps = data\.rentRows\.filter\(\(row\) => row\.status !== "Paid"\)/, "Management rent follow-ups should exclude paid tenants.");
+assert.match(app, /aria-label="Send reminder to \$\{escapeHtml\(row\.tenant\)\}"/, "Rent tracking reminders should have tenant-specific accessible labels.");
+assert.match(app, /aria-label="Send reminder from rent record for \$\{escapeHtml\(row\.tenant\)\}"/, "Rent detail modal reminder should have a distinct accessible label.");
 assert.match(app, /totalActions:\s*attentionItems\.length/, "Management dashboard headline count should come from the Action Center attention queue.");
-assert.match(app, /allCategories,\s*[\s\S]*categories:\s*activeCategories,\s*[\s\S]*actionMetricCards,/, "Management queue summary should expose stable category metrics and active priority categories.");
-assert.match(app, /categories:\s*activeCategories/, "Management queue summary should keep active categories for the priority queue.");
+assert.match(app, /categories:\s*activeCategories/, "Management dashboard category chips should use the shared queue summary.");
 assert.match(app, /priorityActions:\s*activeCategories\.slice\(0, 4\)/, "Management dashboard priority rows should use the same shared category data.");
-assert.match(app, /function renderManagerActionCenterMetrics\(\)/, "Management Action Center should render category-specific action metric cards.");
-assert.match(app, /label:\s*"Payment Reviews"[\s\S]*label:\s*"Maintenance Reviews"[\s\S]*label:\s*"Renewal Reviews"[\s\S]*label:\s*"Other Follow-ups"/, "Management Action Center should replace generic summary cards with action category cards.");
-assert.match(app, /function renderTenantActionCenterMetrics\(\{ actionItems, unreadItems, openItems, allItems \}\)/, "Tenant Action Center should keep the existing personal action summary cards.");
-assert.doesNotMatch(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should not render duplicate category chips under the actions-in-queue headline.");
+assert.match(app, /renderManagementQueueChips\(queueSummary\)/, "Management dashboard should render compact action category chips.");
 assert.match(app, /renderManagementPriorityQueue\(queueSummary\)/, "Management dashboard should render one priority queue from shared data.");
 assert.match(app, /data-page="\$\{escapeHtml\(action\.page\)\}"/, "Management priority rows should navigate to the category page.");
 assert.match(app, /<h3>Actions that need priority<\/h3>/, "Management priority queue heading should use clearer priority-focused copy.");
@@ -524,8 +573,6 @@ assert.match(styles, /--rent-orange-card-bg:\s*var\(--surface\)/, "Tenant warnin
 assert.match(styles, /--rent-red-card-bg:\s*var\(--surface\)/, "Tenant overdue rent card should keep a neutral surface while retaining red warning accents.");
 assert.match(styles, /\.tenant-rent-overview\.metric-status-paid\s*\{[\s\S]*--rent-card-accent:\s*var\(--apple-green\);[\s\S]*--rent-card-bg:\s*var\(--rent-green-card-bg\);[\s\S]*--rent-card-border:\s*var\(--apple-green-border\)/, "Tenant paid rent overview should use green rail and border without a green card fill.");
 assert.match(styles, /\.tenant-rent-overview\.metric-status-critical\s*\{[\s\S]*--rent-card-bg:\s*var\(--rent-red-card-bg\)/, "Tenant rent overview should keep refined status-color support for overdue states.");
-assert.match(styles, /\.tenant-rent-overview\.metric-status-critical\s*\{[\s\S]*border-color:\s*var\(--apple-red-border\)/, "Tenant overdue rent overview should keep its red border before hover.");
-assert.match(styles, /\.tenant-rent-overview\.metric-status-critical::after\s*\{[\s\S]*background:\s*var\(--apple-red\)/, "Tenant overdue rent overview should keep its red left rail before hover.");
 assert.match(styles, /\.tenant-rent-overview::after\s*\{[\s\S]*background:\s*var\(--rent-card-accent, transparent\)/, "Tenant rent overview should use a subtle status accent line.");
 assert.match(styles, /\.rent-overview-copy h2\s*\{[\s\S]*color:\s*var\(--text\)/, "Tenant rent overview title should remain primary text instead of status red.");
 assert.match(styles, /\.rent-overview-facts span\s*\{[\s\S]*min-height:\s*54px;[\s\S]*padding:\s*9px 12px/, "Tenant rent overview detail chips should stay compact.");
@@ -569,8 +616,8 @@ assert.match(styles, /\.priority-detail \.status\s*\{[\s\S]*display:\s*grid;[\s\
 assert.match(styles, /\.queue-empty\s*\{[\s\S]*background:\s*var\(--surface-soft\)/, "Management queue should include a compact empty state.");
 assert.match(styles, /\.action-meta-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit, minmax\(170px, 1fr\)\)/, "Action Center metadata should use a responsive compact grid.");
 assert.match(styles, /\.action-center-item\s*\{[\s\S]*gap:\s*var\(--space-4\);[\s\S]*padding:\s*var\(--space-5\)/, "Action Center cards should keep token-based internal spacing.");
-assert.doesNotMatch(styles, /\.ask-ai-entry:hover,\s*\.ask-ai-entry:focus-visible,\s*\.ask-ai-shell\.open \.ask-ai-entry/, "Ask AI open state should not keep the sidebar trigger in its hover treatment.");
-assert.match(styles, /\.ask-ai-shell\.open \.ask-ai-entry\s*\{[\s\S]*transform:\s*none/, "Ask AI open state should return the sidebar trigger to its normal button position.");
+assert.doesNotMatch(styles, /\.ask-ai-shell/, "Old Ask AI sidebar shell styling should not remain after moving to the top notch.");
+assert.match(styles, /\.ask-ai-notch-shell:hover \.ask-ai-notch-launcher__label,[\s\S]*\.ask-ai-notch-shell\[data-hover="true"\] \.ask-ai-notch-launcher__label,[\s\S]*\.ask-ai-notch-shell\[data-state="active"\] \.ask-ai-notch-launcher__label[\s\S]*opacity:\s*1/, "Ask AI active state should keep the notch label visible while opening.");
 assert.match(styles, /Shared dashboard icon scale/, "Dashboard icons should be governed by a shared icon scale.");
 assert.match(styles, /\.metric-card \.metric-icon,\s*\.quick-card \.metric-icon,\s*\.dashboard-snapshot-item \.metric-icon\s*\{[\s\S]*width:\s*42px;[\s\S]*height:\s*42px/, "Dashboard card icons should render at the modern larger scale.");
 assert.match(styles, /\.nav-icon svg,\s*\.button-icon svg,\s*\.metric-icon svg,\s*\.theme-toggle-icon svg,\s*\.notification-button > svg/, "Shared icon SVG sizing should cover dashboard navigation, buttons, metrics, theme, and notifications.");
@@ -584,9 +631,9 @@ assert.match(styles, /--apple-green:\s*#34c759/, "Apple green should be availabl
 assert.match(styles, /\.metric-card\.metric-status-paid\s*\{[\s\S]*border:\s*1px solid var\(--apple-green-border\);[\s\S]*background:\s*var\(--apple-green-soft\)/, "Paid payment metric should use the Apple-green paid treatment.");
 assert.match(styles, /\.metric-card\.metric-status-warning\s*\{[\s\S]*border:\s*1px solid var\(--apple-orange-border\);[\s\S]*background:\s*var\(--apple-orange-soft\)/, "Near-due payment metric should use the Apple-orange warning treatment.");
 assert.match(styles, /\.metric-card\.metric-status-critical\s*\{[\s\S]*border:\s*1px solid var\(--apple-red-border\);[\s\S]*background:\s*var\(--apple-red-soft\)/, "Overdue payment metric should use the Apple-red critical treatment.");
-assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-paid\s*\{[\s\S]*border-color:\s*var\(--apple-green-border\)/, "Paid metric cards should keep their green border after final metric-grid polish.");
-assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-warning\s*\{[\s\S]*border-color:\s*var\(--apple-orange-border\)/, "Warning metric cards should keep their orange border after final metric-grid polish.");
-assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-critical\s*\{[\s\S]*border-color:\s*var\(--apple-red-border\)/, "Critical metric cards should keep their red border after final metric-grid polish.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-paid\s*\{[\s\S]*border:\s*1px solid var\(--apple-green-border\)/, "Unified metric cards should not reset the paid status outline in normal state.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-warning\s*\{[\s\S]*border:\s*1px solid var\(--apple-orange-border\)/, "Unified metric cards should not reset the warning status outline in normal state.");
+assert.match(styles, /\.metric-grid > \.metric-card\.metric-status-critical\s*\{[\s\S]*border:\s*1px solid var\(--apple-red-border\)/, "Unified metric cards should not reset the critical status outline in normal state.");
 assert.match(styles, /\.tenant-summary-facts button\s*\{[\s\S]*cursor:\s*pointer/, "Tenant summary facts should be clickable chips without changing their visual treatment.");
 assert.match(styles, /\.tenant-summary-facts \.contract-warning/, "Contract health should include the orange warning state.");
 assert.match(styles, /\.tenant-summary-facts \.contract-critical/, "Contract health should include the red critical state.");
@@ -623,11 +670,9 @@ assert.match(styles, /\.maintenance-history-section\s*\{[\s\S]*grid-column:\s*1 
 assert.match(styles, /\.maintenance-status-section table\s*\{[\s\S]*min-width:\s*0;[\s\S]*table-layout:\s*fixed/, "Tenant maintenance status tables should fit within narrow status cards.");
 assert.match(styles, /\.complaint-status-section th:nth-child\(4\),\s*\.complaint-status-section td:nth-child\(4\)\s*\{[\s\S]*width:\s*19%/, "Complaint action column should stay inside the status card.");
 assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S]*min-height:\s*72px/, "Tenant maintenance status tables should use shorter empty states.");
-assert.match(styles, /\.pull-reset-indicator\s*\{[\s\S]*position:\s*fixed/, "Pull-to-reset should render a lightweight fixed indicator.");
-assert.match(styles, /\.main-area\.pull-reset-active > :not\(\.pull-reset-indicator\)/, "Pull-to-reset should shift only main content, not the sidebar.");
+assert.doesNotMatch(styles, /pull-reset|pullReset|--pull-reset/, "Pull-to-reset styles should be fully removed.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /styles\.css\?v=dashboard-system-20260617-2/, "Index should load the latest cache-busted stylesheet.");
-assert.match(index, /app\.js\?v=dashboard-system-20260617-5/, "Index should load the latest cache-busted app script.");
+assert.match(index, /dashboard-system-20260618-16/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
