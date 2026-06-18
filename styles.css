@@ -815,7 +815,8 @@ button:focus-visible {
 
 .ask-ai-notch-shell {
   --ask-ai-notch-ease: cubic-bezier(0.18, 0.9, 0.24, 1);
-  --ask-ai-notch-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ask-ai-notch-ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ask-ai-notch-ease-text: cubic-bezier(0.2, 0.72, 0.22, 1);
   --ask-ai-notch-width: var(--ai-notch-width, 264px);
   --ask-ai-notch-rest-height: var(--ai-notch-rest-height, 46px);
   --ask-ai-notch-hover-height: var(--ai-notch-hover-height, 54px);
@@ -838,8 +839,8 @@ button:focus-visible {
   backface-visibility: hidden;
   will-change: width, height;
   transition:
-    width 420ms var(--ask-ai-notch-ease-soft),
-    height 400ms var(--ask-ai-notch-ease-soft);
+    width 560ms var(--ask-ai-notch-ease-soft),
+    height 520ms var(--ask-ai-notch-ease-soft);
 }
 
 .ask-ai-notch-shell::before {
@@ -903,7 +904,7 @@ button:focus-visible {
   transition:
     padding 380ms var(--ask-ai-notch-ease-soft),
     box-shadow 260ms ease;
-  animation: ask-ai-notch-shimmer 8s ease-in-out infinite;
+  animation: ask-ai-notch-shimmer 11s var(--ask-ai-notch-ease-text) infinite;
 }
 
 .ask-ai-notch-shell:hover .ask-ai-notch-launcher,
@@ -956,7 +957,7 @@ button:focus-visible {
     radial-gradient(circle at 72% 42%, rgba(255, 255, 255, 0.22), transparent 20%);
   opacity: 0.42;
   transform: translateX(-18%);
-  animation: ask-ai-notch-glow 5.6s ease-in-out infinite;
+  animation: ask-ai-notch-glow 8.5s var(--ask-ai-notch-ease-text) infinite;
 }
 
 .ask-ai-notch-launcher__content {
@@ -1019,6 +1020,9 @@ button:focus-visible {
   overflow: visible;
   transform: translateZ(0);
   backface-visibility: hidden;
+  transition:
+    width 440ms var(--ask-ai-notch-ease-soft),
+    min-width 300ms var(--ask-ai-notch-ease-soft);
 }
 
 .ask-ai-notch-launcher__label {
@@ -1028,15 +1032,18 @@ button:focus-visible {
   text-overflow: ellipsis;
   transform: translateZ(0);
   backface-visibility: hidden;
+  will-change: opacity, transform, filter;
   transition:
-    opacity 180ms ease,
-    filter 180ms ease;
+    opacity 300ms ease,
+    transform 420ms var(--ask-ai-notch-ease-text),
+    filter 300ms ease;
 }
 
 .ask-ai-notch-launcher__label--rest {
   max-width: 78px;
   opacity: 1;
   text-align: left;
+  transform: translate3d(0, 0, 0);
   white-space: nowrap;
 }
 
@@ -1045,10 +1052,11 @@ button:focus-visible {
   opacity: 0;
   overflow: visible;
   text-overflow: clip;
+  transform: translate3d(0, 5px, 0);
   white-space: normal;
   line-height: 1.12;
   text-align: left;
-  filter: blur(0.1px);
+  filter: blur(1.5px);
 }
 
 .ask-ai-notch-shell:not([data-state="nudge"]) .ask-ai-notch-label-stack {
@@ -1066,13 +1074,20 @@ button:focus-visible {
 
 .ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__label--rest {
   opacity: 0;
-  transition-duration: 90ms;
+  transform: translate3d(0, -4px, 0);
+  transition-duration: 170ms;
 }
 
-.ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__label--message {
+.ask-ai-notch-shell[data-state="nudge"][data-nudge-phase="visible"] .ask-ai-notch-launcher__label--message {
   opacity: 1;
+  transform: translate3d(0, 0, 0);
   filter: blur(0);
-  transition-delay: 120ms;
+}
+
+.ask-ai-notch-shell[data-state="nudge"][data-nudge-phase="entering"] .ask-ai-notch-launcher__label--message {
+  opacity: 0;
+  transform: translate3d(0, 5px, 0);
+  filter: blur(1.5px);
 }
 
 .ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-label-stack {
@@ -1105,6 +1120,11 @@ button:focus-visible {
     transform 220ms var(--ask-ai-notch-ease-soft),
     filter 180ms ease;
   animation: ask-ai-nudge-countdown var(--ask-ai-nudge-duration, 6000ms) linear forwards;
+}
+
+.ask-ai-notch-shell[data-nudge-phase="entering"] .ask-ai-nudge-close {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.92);
 }
 
 .ask-ai-nudge-close::before {
@@ -3596,6 +3616,33 @@ button:focus-visible {
   background: var(--surface);
 }
 
+.renewal-contract-layout .contract-action-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.renewal-contract-layout .contract-action-row .button {
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 38px;
+  min-height: 38px;
+  padding-block: 0;
+  padding-inline: 9px;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.renewal-contract-layout .contract-action-row .button-icon {
+  flex: 0 0 auto;
+}
+
+.renewal-contract-layout .contract-action-row .button-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -4437,6 +4484,43 @@ button.property-card:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.tenant-detail-modal,
+.rent-detail-modal {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-value-line,
+.detail-status-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.detail-value-text {
+  display: inline;
+  color: var(--text);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+  line-height: inherit;
+  text-transform: none;
+}
+
+.detail-item .detail-value-line .status,
+.detail-item .detail-status-only .status {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: auto;
+  max-width: max-content;
+  min-width: max-content;
+  padding-inline: 10px;
+}
+
 .modal-actions {
   display: flex;
   flex-wrap: wrap;
@@ -4825,6 +4909,10 @@ button.property-card:focus-visible {
 
   .tenant-summary-facts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .renewal-contract-layout .contract-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rent-overview-main {

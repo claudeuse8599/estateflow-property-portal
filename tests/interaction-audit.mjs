@@ -133,8 +133,10 @@ assert.match(app, /function getAskAIContext\(options = \{\}\)/, "Ask AI notch sh
 assert.match(app, /function getAskAINotchMessage\(context = getAskAIContext\(\)\)/, "Ask AI notch should select context-aware messages from the local context.");
 assert.match(app, /recentlyShownIds = \[message\.id,[\s\S]*slice\(0, 3\)/, "Ask AI nudge selection should track recent messages to avoid immediate repetition.");
 assert.match(app, /function canShowAskAINudge\(\)[\s\S]*!state\.askAI\.isOpen[\s\S]*!isUserWorkingInField\(\)[\s\S]*document\.visibilityState === "visible"/, "Ask AI nudge eligibility should avoid open AI, active forms, and hidden tabs.");
-assert.match(app, /function showAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*applyAskAINudgeMessage\(nudge, getAskAINotchMessage\(getAskAIContext\(\)\)\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI nudge should show a context-aware prompt and auto-dismiss.");
-assert.match(app, /function triggerAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*applyAskAINudgeMessage\(nudge, getAskAINotchMessage\(getAskAIContext\(\)\)\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI manual diagnostic trigger should use the same context-aware nudge flow.");
+assert.match(app, /let askAINudgeRevealTimer = 0;/, "Ask AI nudge should keep a dedicated reveal timer so text can enter after the notch begins expanding.");
+assert.match(app, /function beginAskAINudgeReveal\(\)[\s\S]*nudge\.phase = prefersReducedAskAIMotion\(\) \? "visible" : "entering"[\s\S]*window\.setTimeout\(\(\) => \{[\s\S]*currentNudge\.phase = "visible"[\s\S]*\}, 180\)/, "Ask AI nudge copy should use an entering phase before revealing the message text.");
+assert.match(app, /function showAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*applyAskAINudgeMessage\(nudge, getAskAINotchMessage\(getAskAIContext\(\)\)\)[\s\S]*beginAskAINudgeReveal\(\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI nudge should show a context-aware prompt through the smooth reveal sequence and auto-dismiss.");
+assert.match(app, /function triggerAskAINudge\(\)[\s\S]*nudge\.isVisible = true[\s\S]*applyAskAINudgeMessage\(nudge, getAskAINotchMessage\(getAskAIContext\(\)\)\)[\s\S]*beginAskAINudgeReveal\(\)[\s\S]*setTimeout\(\(\) => dismissAskAINudge/, "Ask AI manual diagnostic trigger should use the same smooth context-aware nudge flow.");
 assert.match(app, /function dismissAskAINudge\([\s\S]*manual = false[\s\S]*setCooldown: manual/, "Ask AI nudge dismissal should support manual cooldown behavior.");
 assert.match(app, /id="ask-ai-notch"/, "Ask AI notch should expose a stable focus target.");
 assert.match(app, /id="ask-ai-notch-shell"/, "Ask AI notch should use a shell so the dismiss control is not nested in the main button.");
@@ -213,7 +215,7 @@ assert.match(styles, /\.topbar-copy\s*\{[\s\S]*background:\s*var\(--panel-transl
 assert.match(styles, /@media \(min-width: 901px\)\s*\{[\s\S]*\.topbar-copy\s*\{[\s\S]*background:\s*transparent;[\s\S]*box-shadow:\s*none;[\s\S]*backdrop-filter:\s*none/, "Desktop topbar title copy should read as content inside the shared frosted shelf, not a separate floating card.");
 assert.match(styles, /@media \(min-width: 901px\)\s*\{[\s\S]*\.top-actions\s*\{[\s\S]*padding:\s*0;[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;[\s\S]*backdrop-filter:\s*none/, "Desktop top actions should be layout-only so theme and notification are not engulfed in one pill.");
 assert.match(styles, /\.theme-toggle,\s*\.notification-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface\);[\s\S]*box-shadow:\s*var\(--shadow-soft\);[\s\S]*backdrop-filter:\s*blur\(14px\) saturate\(1\.12\)/, "Theme and notification toggles should retain independent frosted control surfaces.");
-assert.match(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*transform: translate3d\(-50%, 0, 0\);[\s\S]*transition:[\s\S]*width 420ms var\(--ask-ai-notch-ease-soft\),[\s\S]*height 400ms var\(--ask-ai-notch-ease-soft\)/, "Ask AI notch should use GPU-friendly positioning and a smoother width/height transition.");
+assert.match(styles, /\.ask-ai-notch-shell\s*\{[\s\S]*--ask-ai-notch-ease-text: cubic-bezier\(0\.2, 0\.72, 0\.22, 1\);[\s\S]*transform: translate3d\(-50%, 0, 0\);[\s\S]*transition:[\s\S]*width 560ms var\(--ask-ai-notch-ease-soft\),[\s\S]*height 520ms var\(--ask-ai-notch-ease-soft\)/, "Ask AI notch should use GPU-friendly positioning and a slower smoother width/height transition.");
 assert.match(styles, /\.ask-ai-notch-launcher__content\s*\{[\s\S]*display: grid;[\s\S]*grid-template-columns: auto auto;[\s\S]*justify-content: center;[\s\S]*gap: 10px;[\s\S]*font-size: 13px/, "Ask AI notch icon and label should be visually centered as one pair.");
 assert.match(styles, /\.ask-ai-notch-shell:not\(\[data-state="nudge"\]\) \.ask-ai-notch-launcher__content\s*\{[\s\S]*grid-template-columns: auto auto;[\s\S]*justify-content: center;[\s\S]*gap: 10px/, "Ask AI resting state should center the icon and label together.");
 assert.match(styles, /\.ask-ai-notch-launcher__icon\s*\{[\s\S]*width: 28px;[\s\S]*height: 28px/, "Ask AI notch icon should be slightly larger while staying balanced.");
@@ -228,7 +230,11 @@ assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\]\s*\{[\s\S]*widt
 assert.match(styles, /--ai-notch-nudge-height:\s*80px;/, "Ask AI message notch should be tall enough for wrapped context-aware copy.");
 assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\] \.ask-ai-notch-launcher__content\s*\{[\s\S]*grid-template-columns: 24px minmax\(0, 1fr\);[\s\S]*font-size: 14px/, "Ask AI nudge copy should use the same grid system and stay readable inside the larger message state.");
 assert.match(styles, /\.ask-ai-notch-launcher__label--message\s*\{[\s\S]*max-width: min\(262px, calc\(100vw - 142px\)\);[\s\S]*overflow: visible;[\s\S]*text-overflow: clip;[\s\S]*white-space: normal/, "Ask AI nudge message should wrap fully inside the wider notch instead of truncating with ellipses.");
-assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\] \.ask-ai-notch-launcher__label--message\s*\{[\s\S]*opacity: 1;[\s\S]*transition-delay: 120ms/, "Ask AI nudge message should fade in after the notch starts expanding to avoid text jitter.");
+assert.match(app, /data-nudge-phase="\$\{nudge\.phase \|\| "idle"\}"/, "Ask AI notch should expose the nudge reveal phase to CSS.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\]\[data-nudge-phase="visible"\] \.ask-ai-notch-launcher__label--message\s*\{[\s\S]*opacity: 1;[\s\S]*transform: translate3d\(0, 0, 0\);[\s\S]*filter: blur\(0\)/, "Ask AI nudge message should fade and slide in only after the entering phase.");
+assert.match(styles, /\.ask-ai-notch-shell\[data-state="nudge"\]\[data-nudge-phase="entering"\] \.ask-ai-notch-launcher__label--message\s*\{[\s\S]*opacity: 0;[\s\S]*transform: translate3d\(0, 5px, 0\);[\s\S]*filter: blur\(1\.5px\)/, "Ask AI nudge entering phase should keep message text preloaded but invisible.");
+assert.match(styles, /animation: ask-ai-notch-shimmer 11s var\(--ask-ai-notch-ease-text\) infinite/, "Ask AI notch shimmer should move slowly enough to be visible without feeling jumpy.");
+assert.match(styles, /animation: ask-ai-notch-glow 8\.5s var\(--ask-ai-notch-ease-text\) infinite/, "Ask AI glow should use a slower smoother side-to-side motion.");
 assert.doesNotMatch(styles, /@keyframes ask-ai-nudge-copy-in/, "Ask AI nudge text should not use a separate positional keyframe animation.");
 assert.match(styles, /\.ask-ai-panel\.expanded\.ask-ai-workspace::before\s*\{[\s\S]*width: var\(--ai-workspace-groove-width, 292px\);[\s\S]*height: var\(--ai-workspace-groove-height, 58px\);[\s\S]*background: var\(--bg\)/, "Ask AI workspace should carve a neutral groove with enough lower depth for the expanded notch.");
 assert.match(styles, /@keyframes ask-ai-workspace-slide-down/, "Ask AI expanded workspace should slide down subtly with the notch activation.");
@@ -379,7 +385,7 @@ assert.match(app, /if \(action === "confirm-reset-data"\) \{\s+resetDemoData\(\)
 assert.doesNotMatch(app, /pullToReset|PullToReset|pullReset|PULL_RESET|pull-reset|data-pull-reset/, "Pull-to-reset feature remnants should be fully removed from app code.");
 assert.doesNotMatch(app, /handlePullReset|canUsePullToReset|window\.setTimeout\(resetDemoData, 180\)/, "Reset should no longer be triggered by pull gesture handlers.");
 assert.match(app, /data-action="request-contract"/, "Tenant contract cancellation and amendment requests should be available.");
-assert.match(app, /class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated button row.");
+assert.match(app, /class="layout-two renewal-contract-layout"[\s\S]*class="section-actions contract-action-row"/, "Tenant renewal contract actions should use a dedicated compact renewal layout.");
 assert.match(app, /class="section-actions contract-action-row"[\s\S]*data-action="request-renewal"[\s\S]*data-action="view-doc"/, "Request Renewal should appear before View Contract PDF.");
 assert.match(app, /button class="button danger contract-action-button"[^>]*Contract Cancellation/, "Cancel contract should render as a visible button.");
 assert.match(app, /button class="button secondary contract-action-button"[^>]*Contract Amendment/, "Contract amendment should render as a visible button.");
@@ -662,6 +668,20 @@ assert.match(styles, /\.tenant-status-card\.contract-critical/, "Contract health
 assert.match(styles, /--space-4:\s*16px/, "Shared spacing tokens should be defined.");
 assert.match(styles, /\.modal-header h2/, "Modal headers should use the shared typography scale.");
 assert.match(styles, /\.notification-panel\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/, "Notification panel should use the shared radius.");
+assert.match(app, /function detailBadge\(status, label\)\s*\{[\s\S]*class="detail-status-only"/, "Detail badges should use a shared compact helper.");
+assert.match(app, /class="tenant-detail-modal"[\s\S]*class="detail-value-line"[\s\S]*class="detail-status-only"/, "Tenant detail modal should wrap mixed text/status fields for compact status alignment.");
+assert.match(app, /class="rent-detail-modal"[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Rent detail modal should wrap its status field for compact status alignment.");
+assert.match(app, /function chequeReviewModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Payment review modal should use compact status badges.");
+assert.match(app, /function maintenanceDetailModal[\s\S]*<span>Priority<\/span>\$\{detailBadge\(row\.priority\)\}[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Maintenance request modal should use compact priority and status badges.");
+assert.match(app, /function renewalDetailModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Renewal request modal should use compact status badges.");
+assert.match(app, /function cashReviewModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Cash payment modal should use compact status badges.");
+assert.match(app, /function contractRequestModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Contract request modal should use compact status badges.");
+assert.match(app, /function complaintDetailModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Complaint review modal should use compact status badges.");
+assert.match(app, /function suggestionDetailModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(row\.status\)\}/, "Suggestion review modal should use compact status badges.");
+assert.match(app, /function propertyDetailModal[\s\S]*<span>Status<\/span>\$\{detailBadge\(property\.status\)\}/, "Property detail modal should use compact status badges.");
+assert.match(styles, /\.detail-value-line,\s*\.detail-status-only\s*\{[\s\S]*display:\s*flex;[\s\S]*width:\s*fit-content/, "Detail status lines should size to content instead of stretching across cards.");
+assert.match(styles, /\.detail-value-text\s*\{[\s\S]*text-transform:\s*none/, "Detail value text should not inherit uppercase label styling.");
+assert.match(styles, /\.detail-item \.detail-value-line \.status,\s*\.detail-item \.detail-status-only \.status\s*\{[\s\S]*width:\s*auto;[\s\S]*max-width:\s*max-content/, "Detail status pills should stay compact.");
 assert.match(app, /class="empty-table-row"/, "Empty table rows should use a dedicated row class.");
 assert.match(app, /class="empty-table-cell"/, "Empty table cells should remove default table padding.");
 assert.match(styles, /\.table-empty-state\s*\{[\s\S]*min-height:\s*86px;[\s\S]*background:\s*var\(--surface\)/, "Empty table states should be compact and visually integrated with the table.");
@@ -694,7 +714,9 @@ assert.match(styles, /\.complaint-status-section th:nth-child\(4\),\s*\.complain
 assert.match(styles, /\.maintenance-status-section \.table-empty-state\s*\{[\s\S]*min-height:\s*72px/, "Tenant maintenance status tables should use shorter empty states.");
 assert.doesNotMatch(styles, /pull-reset|pullReset|--pull-reset/, "Pull-to-reset styles should be fully removed.");
 assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*border-color:\s*var\(--line\);[\s\S]*background:\s*var\(--surface-soft\)/, "Renewal contract actions should have a visible button surface.");
+assert.match(styles, /\.renewal-contract-layout \.contract-action-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[\s\S]*gap:\s*8px/, "Renewal contract action row should fit four actions on one line at desktop width.");
+assert.match(styles, /\.renewal-contract-layout \.contract-action-row \.button\s*\{[\s\S]*height:\s*38px;[\s\S]*min-height:\s*38px;[\s\S]*padding-inline:\s*9px;[\s\S]*font-size:\s*12px/, "Renewal contract buttons should use compact dashboard sizing.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260618-32/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /dashboard-system-20260619-3/g, "Index should load the latest cache-busted assets.");
 
 console.log("Interaction audit checks passed.");
