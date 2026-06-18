@@ -52,21 +52,129 @@ const DATA_STORE_VERSION = 1;
 const ASK_AI_MESSAGE_LIMIT = 24;
 const ASK_AI_SESSION_LIMIT = 12;
 const ASK_AI_TYPING_DELAY = 720;
+const ASK_AI_NUDGE_CONFIG = {
+  initialDelayMs: 12000,
+  minIntervalMs: 35000,
+  maxIntervalMs: 55000,
+  visibleDurationMs: 6000,
+  dismissCooldownMs: 30000,
+  busyRetryMs: 8000
+};
+const ASK_AI_NUDGE_PROMPTS = [
+  "I can handle this faster.",
+  "Want me to do it?",
+  "You could save 5 minutes here.",
+  "Need help with this page?",
+  "Let me summarize this.",
+  "I can find that for you.",
+  "Want a shortcut?",
+  "I can help with the next step."
+];
+const ASK_AI_GENERAL_NUDGE_MESSAGES = [
+  { id: "general_shortcut", text: "Want a shortcut?", intent: "general_help", suggestedPrompt: "Help me with this page." },
+  { id: "general_save_time", text: "I can save you a few clicks.", intent: "general_help", suggestedPrompt: "What can you help me with here?" },
+  { id: "general_next_step", text: "Need the next step?", intent: "general_help", suggestedPrompt: "What should I do next?" },
+  { id: "general_find_faster", text: "Let me find that faster.", intent: "general_help", suggestedPrompt: "Help me find what I need." }
+];
+const ASK_AI_NUDGE_MESSAGES = {
+  tenant: {
+    general: [
+      { id: "tenant_general_guide", text: "Want me to guide you?", intent: "tenant_help", suggestedPrompt: "Guide me through this page." },
+      { id: "tenant_general_receipt", text: "Need your latest receipt?", intent: "tenant_receipt_help", suggestedPrompt: "Help me find my latest receipt." }
+    ],
+    dashboard: [
+      { id: "tenant_dashboard_rent_overdue", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "overdue", text: "Your rent is overdue. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Help me pay my overdue rent.", actionTarget: "rent" },
+      { id: "tenant_dashboard_rent_due", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "dueSoon", text: "Rent is due soon. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Explain my rent payment options.", actionTarget: "rent" },
+      { id: "tenant_dashboard_renewal", condition: (ctx) => ctx.contract?.renewalSoon, text: "Renewal coming up. Want help?", intent: "tenant_contract_renewal", suggestedPrompt: "Help me review my renewal.", actionTarget: "renewal" },
+      { id: "tenant_dashboard_actions", condition: (ctx) => ctx.actions?.count > 0, text: "Pending actions waiting. Sort them?", intent: "tenant_action_summary", suggestedPrompt: "Summarize my pending actions.", actionTarget: "actionCenter" },
+      { id: "tenant_dashboard_general", text: "Want help with this dashboard?", intent: "tenant_dashboard_help", suggestedPrompt: "What should I check first?" }
+    ],
+    rent: [
+      { id: "tenant_rent_overdue", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "overdue", text: "Your rent is overdue. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Help me pay my overdue rent.", actionTarget: "rent" },
+      { id: "tenant_rent_help", text: "Want help with rent payment?", intent: "tenant_rent_help", suggestedPrompt: "Explain my rent payment options.", actionTarget: "rent" }
+    ],
+    maintenance: [
+      { id: "tenant_maintenance_pending", condition: (ctx) => ctx.maintenance?.openCount > 0, text: "Maintenance is open. Need an update?", intent: "tenant_maintenance_update", suggestedPrompt: "Summarize my maintenance request.", actionTarget: "maintenance" },
+      { id: "tenant_maintenance_report", text: "Want help reporting an issue?", intent: "tenant_report_maintenance", suggestedPrompt: "Help me submit a maintenance request.", actionTarget: "maintenance" }
+    ],
+    complaints: [
+      { id: "tenant_complaint_help", text: "Want help writing this clearly?", intent: "tenant_file_complaint", suggestedPrompt: "Help me write a complaint.", actionTarget: "maintenance" }
+    ],
+    contracts: [
+      { id: "tenant_contract_renewal", condition: (ctx) => ctx.contract?.renewalSoon || ctx.contract?.hasRequest, text: "Want help with your contract?", intent: "tenant_contract_help", suggestedPrompt: "Help me review my contract request.", actionTarget: "renewal" }
+    ],
+    documents: [
+      { id: "tenant_documents_receipt", text: "Need a document or receipt?", intent: "tenant_document_help", suggestedPrompt: "Help me find a tenant document.", actionTarget: "documents" }
+    ],
+    "action-center": [
+      { id: "tenant_actions_sort", condition: (ctx) => ctx.actions?.count > 0, text: "Pending actions waiting. Sort them?", intent: "tenant_action_summary", suggestedPrompt: "Summarize my pending actions.", actionTarget: "actionCenter" },
+      { id: "tenant_actions_clear", text: "You are caught up. Need anything?", intent: "tenant_action_help", suggestedPrompt: "What can you help me with?" }
+    ]
+  },
+  manager: {
+    general: [
+      { id: "manager_general_ops", text: "Want a quick ops summary?", intent: "management_ops_summary", suggestedPrompt: "Summarize the management dashboard." },
+      { id: "manager_general_prioritize", text: "Want urgent follow-ups first?", intent: "management_prioritize", suggestedPrompt: "Show urgent follow-ups first." }
+    ],
+    dashboard: [
+      { id: "manager_dashboard_queue", priority: "urgent", condition: (ctx) => ctx.queue?.totalActions > 0, text: "{count} actions waiting. Summarize?", count: (ctx) => ctx.queue.totalActions, intent: "management_action_summary", suggestedPrompt: "Summarize today's action queue.", actionTarget: "actionCenter" },
+      { id: "manager_dashboard_ops", text: "Want a quick ops summary?", intent: "management_ops_summary", suggestedPrompt: "Summarize the management dashboard." }
+    ],
+    "tenant-management": [
+      { id: "manager_tenants_followup", text: "Want tenant follow-ups first?", intent: "management_tenant_followups", suggestedPrompt: "Show tenant follow-ups.", actionTarget: "tenants" }
+    ],
+    rent: [
+      { id: "manager_rent_followups", priority: "urgent", condition: (ctx) => ctx.rent?.pendingFollowUps > 0, text: "{count} rent follow-ups waiting.", count: (ctx) => ctx.rent.pendingFollowUps, intent: "management_rent_followups", suggestedPrompt: "Summarize rent follow-ups.", actionTarget: "rentTracking" },
+      { id: "manager_rent_review", text: "Want overdue rent first?", intent: "management_rent_review", suggestedPrompt: "Show overdue rent first.", actionTarget: "rentTracking" }
+    ],
+    "payment-review": [
+      { id: "manager_payment_review", priority: "urgent", condition: (ctx) => ctx.payments?.pendingCount > 0, text: "{count} payments need review.", count: (ctx) => ctx.payments.pendingCount, intent: "management_payment_review", suggestedPrompt: "Summarize payment reviews.", actionTarget: "chequeReview" }
+    ],
+    maintenance: [
+      { id: "manager_maintenance_open", priority: "urgent", condition: (ctx) => ctx.maintenance?.openCount > 0, text: "{count} maintenance requests open.", count: (ctx) => ctx.maintenance.openCount, intent: "management_maintenance_summary", suggestedPrompt: "Summarize open maintenance requests.", actionTarget: "maintenanceMgmt" },
+      { id: "manager_maintenance_review", text: "Want urgent requests first?", intent: "management_maintenance_review", suggestedPrompt: "Show urgent maintenance requests.", actionTarget: "maintenanceMgmt" }
+    ],
+    contracts: [
+      { id: "manager_renewals_pending", priority: "urgent", condition: (ctx) => ctx.renewals?.pendingCount > 0, text: "{count} renewals need decision.", count: (ctx) => ctx.renewals.pendingCount, intent: "management_renewal_review", suggestedPrompt: "Summarize pending renewals.", actionTarget: "renewalsMgmt" }
+    ],
+    documents: [
+      { id: "manager_documents_review", condition: (ctx) => ctx.documents?.pendingReviews > 0, text: "{count} documents need review.", count: (ctx) => ctx.documents.pendingReviews, intent: "management_document_review", suggestedPrompt: "Summarize document reviews.", actionTarget: "docsMgmt" }
+    ],
+    finance: [
+      { id: "manager_finance_summary", text: "Want finance summarized?", intent: "management_finance_summary", suggestedPrompt: "Summarize the financial overview.", actionTarget: "financial" }
+    ],
+    portfolio: [
+      { id: "manager_portfolio_summary", text: "Want portfolio highlights?", intent: "management_portfolio_summary", suggestedPrompt: "Summarize portfolio health.", actionTarget: "portfolio" }
+    ],
+    "action-center": [
+      { id: "manager_action_queue", condition: (ctx) => ctx.queue?.totalActions > 0, text: "{count} actions in queue. Sort them?", count: (ctx) => ctx.queue.totalActions, intent: "management_action_summary", suggestedPrompt: "Summarize today's action queue.", actionTarget: "actionCenter" },
+      { id: "manager_action_clear", text: "Queue is clear. Need anything?", intent: "management_action_help", suggestedPrompt: "What can you help me with?" }
+    ]
+  }
+};
+
+function defaultAskAINudgeState() {
+  return {
+    isVisible: false,
+    id: "",
+    message: "",
+    intent: "",
+    suggestedPrompt: "",
+    actionTarget: "",
+    context: null,
+    recentlyShownIds: [],
+    lastShownAt: null,
+    startedAt: null,
+    durationMs: ASK_AI_NUDGE_CONFIG.visibleDurationMs,
+    dismissedAt: 0,
+    phase: "idle",
+    hasScheduled: false
+  };
+}
+
 const ACTIVITY_FEED_PREVIEW_LIMIT = 6;
 const ACTIVITY_STORE_LIMIT = 40;
 const CONTRACT_REQUEST_PREVIEW_LIMIT = 3;
-const PULL_RESET_TOP_TOLERANCE = 2;
-const PULL_RESET_START_DISTANCE = 80;
-const PULL_RESET_THRESHOLD = 280;
-const PULL_RESET_MAX_DISTANCE = 330;
-const PULL_RESET_COOLDOWN = 1200;
-const PULL_RESET_WHEEL_RELEASE_DELAY = 320;
-const PULL_RESET_WHEEL_IDLE_DELAY = 1200;
-const PULL_RESET_TOP_STABILITY_MS = 1200;
-const PULL_RESET_WHEEL_STEP_MAX = 10;
-const PULL_RESET_WHEEL_RESISTANCE = 0.18;
-const PULL_RESET_TOUCH_RESISTANCE = 0.64;
-const PULL_RESET_WHEEL_DISTANCE_RESISTANCE = 0.42;
 const PORTFOLIO_MAP_CENTER = [24.65, 54.78];
 const PORTFOLIO_MAP_DEFAULT_ZOOM = 7;
 const PORTFOLIO_MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -100,25 +208,10 @@ const state = {
     activationState: "idle",
     sessions: [],
     activeSessionId: "",
-    search: ""
-  },
-  pullToReset: {
-    phase: "idle",
-    tracking: false,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX: 0,
-    startY: 0,
-    gestureStartedAtTop: false,
-    isEligibleForPullReset: false,
-    wheelSessionActive: false,
-    wheelSessionStartedAtTop: false,
-    lastNonTopScrollTime: 0,
-    lastWheelTime: 0,
-    cooldownUntil: 0,
-    source: ""
+    search: "",
+    contextPrompt: "",
+    nudgeContext: null,
+    nudge: defaultAskAINudgeState()
   },
   sequence: 0,
   data: {}
@@ -128,6 +221,11 @@ let lastFocusedElement = null;
 let portfolioLeafletMap = null;
 let portfolioLeafletMarkerLayer = null;
 let askAIScrollLockY = 0;
+let askAINudgeTimer = 0;
+let askAINudgeAutoTimer = 0;
+let askAINudgePromptCursor = 0;
+let askAINudgeLastActivityAt = 0;
+let askAINotchPointer = { x: -1, y: -1 };
 
 const seedData = {
   tenant: {
@@ -603,7 +701,7 @@ const utilityPages = ["uiKit"];
 
 const pageMeta = {
   tenant: {
-    dashboard: ["Tenant Dashboard", "Rent, requests, renewals, and documents."],
+    dashboard: ["Tenant Dashboard", "Account overview and next actions."],
     actionCenter: ["Action Center", "Review updates and complete next actions."],
     rent: ["Rent", "Check balance and payment status."],
     maintenance: ["Maintenance", "Report an issue in a few fields."],
@@ -612,7 +710,7 @@ const pageMeta = {
     uiKit: ["UI Kit", "Reusable dashboard tokens, components, and states."]
   },
   manager: {
-    dashboard: ["Management Dashboard", "Tenants, rent, renewals, and maintenance."],
+    dashboard: ["Management Dashboard", "Today's priorities and portfolio health."],
     actionCenter: ["Action Center", "Resolve requests, approvals, and tenant updates."],
     tenants: ["Tenant Management", "Search profiles, leases, payments, and documents."],
     rentTracking: ["Rent Tracking", "Track paid, pending, and late rent."],
@@ -1172,6 +1270,8 @@ function startNewAskAIChat() {
   state.askAI.error = null;
   state.askAI.isTyping = false;
   state.askAI.search = "";
+  state.askAI.contextPrompt = "";
+  state.askAI.nudgeContext = null;
   saveAskAISessions();
 }
 
@@ -1210,6 +1310,8 @@ function buildAskAIContext(message) {
       management: role === "manager" ? getManagementDashboardSummary() : null,
       actionCount: actionCenterCountForRole(role)
     },
+    askAIContext: state.askAI.nudgeContext,
+    suggestedPrompt: state.askAI.contextPrompt,
     history: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
     conversationHistory: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
     chatId: state.askAI.activeSessionId
@@ -1310,7 +1412,15 @@ function tenantProfile() {
 }
 
 function amountNumber(value) {
-  return Number(String(value || "").replace(/[^\d.]/g, "")) || 0;
+  const text = String(value || "").trim();
+  const normalized = text.replace(/,/g, "");
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  const amount = match ? Number(match[0]) : 0;
+  const suffix = normalized.match(/\b\d+(?:\.\d+)?\s*([kKmM])\b/);
+  if (!Number.isFinite(amount)) return 0;
+  if (suffix?.[1]?.toLowerCase() === "m") return amount * 1000000;
+  if (suffix?.[1]?.toLowerCase() === "k") return amount * 1000;
+  return amount;
 }
 
 function formatAed(amount, { compact = false } = {}) {
@@ -1653,6 +1763,126 @@ function managerRentStats() {
     pendingAmount: sum(pendingRows),
     lateAmount: sum(lateRows),
     expectedAmount: sum(rows)
+  };
+}
+
+function countStatus(rows, statuses) {
+  const wanted = Array.isArray(statuses) ? statuses : [statuses];
+  return rows.filter((row) => wanted.includes(row.status)).length;
+}
+
+function tenantDocumentStats() {
+  const documents = state.data.tenant.documents || [];
+  return {
+    total: documents.length,
+    approved: countStatus(documents, "Approved"),
+    inReview: countStatus(documents, "In Review"),
+    uploaded: countStatus(documents, "Uploaded")
+  };
+}
+
+function managerPaymentReviewStats() {
+  const activeStatuses = ["Pending", "Submitted", "In Review", "Info Requested"];
+  const chequeRows = state.data.manager.chequeReviews || [];
+  const cashRows = state.data.manager.cashRequests || [];
+  return {
+    pendingCount: countStatus(chequeRows, activeStatuses) + countStatus(cashRows, activeStatuses),
+    approvedCount: countStatus(chequeRows, "Approved") + countStatus(cashRows, "Approved"),
+    rejectedCount: countStatus(chequeRows, "Rejected") + countStatus(cashRows, "Rejected"),
+    total: chequeRows.length + cashRows.length
+  };
+}
+
+function managerMaintenanceStats(requests = state.data.manager.maintenanceRequests) {
+  const rows = requests || [];
+  const newCount = countStatus(rows, ["New", "Submitted"]);
+  const scheduledCount = countStatus(rows, "Scheduled");
+  const completedCount = countStatus(rows, ["Completed", "Canceled", "Cancelled", "Rejected"]);
+  const inProgressCount = rows.filter((row) =>
+    !["New", "Submitted", "Scheduled", "Completed", "Canceled", "Cancelled", "Rejected"].includes(row.status)
+  ).length;
+
+  return {
+    newCount,
+    inProgressCount,
+    scheduledCount,
+    completedCount,
+    openCount: rows.length - completedCount,
+    total: rows.length,
+    byStatus: {
+      New: newCount,
+      "In Progress": inProgressCount,
+      Scheduled: scheduledCount,
+      Completed: completedCount
+    }
+  };
+}
+
+function managerRenewalStats(renewals = state.data.manager.renewals) {
+  const rows = renewals || [];
+  const activeStatuses = ["Pending", "Submitted", "In Review", "Info Requested"];
+  const expiringSoonCount = rows.filter((row) => {
+    if (!activeStatuses.includes(row.status)) return false;
+    const daysRemaining = daysUntilDate(row.endDate);
+    return daysRemaining >= 0 && daysRemaining <= 90;
+  }).length;
+
+  return {
+    pendingCount: countStatus(rows, activeStatuses),
+    approvedCount: countStatus(rows, "Approved"),
+    rejectedCount: countStatus(rows, "Rejected"),
+    expiringSoonCount,
+    total: rows.length
+  };
+}
+
+function managerDocumentStats(documents = state.data.manager.documents) {
+  const rows = documents || [];
+  return {
+    total: rows.length,
+    pendingReviews: countStatus(rows, "In Review"),
+    approvedCount: countStatus(rows, "Approved"),
+    uploadedCount: countStatus(rows, "Uploaded"),
+    rejectedCount: countStatus(rows, "Rejected")
+  };
+}
+
+function managerNotificationStats(notifications = state.data.manager.notifications) {
+  const rows = notifications || [];
+  return {
+    total: rows.length,
+    sentCount: countStatus(rows, "Sent")
+  };
+}
+
+function managerFinanceStats() {
+  const portfolio = getPortfolioSummary();
+  const rent = managerRentStats();
+  const financial = state.data.manager.financial || {};
+  const rentalIncome = portfolio.currentMonthlyRent || amountNumber(financial.income);
+  const rentalPotential = Math.max(portfolio.monthlyRentPotential || 0, rentalIncome);
+  const vacancyGap = Math.max(0, rentalPotential - rentalIncome);
+  const pendingReceivables = rent.pendingAmount + rent.lateAmount;
+  const expenses = amountNumber(financial.expenses);
+  const operationalCosts = amountNumber(financial.operational);
+  const netIncome = Math.max(0, rentalIncome - expenses - operationalCosts);
+  const rentalIncomePercent = rentalPotential ? Math.round((rentalIncome / rentalPotential) * 100) : 0;
+  const vacancyGapPercent = Math.max(0, 100 - rentalIncomePercent);
+  const paidTrackerPercent = rent.expectedAmount ? Math.round((rent.paidAmount / rent.expectedAmount) * 100) : 0;
+
+  return {
+    rentalIncome,
+    rentalPotential,
+    vacancyGap,
+    pendingReceivables,
+    expenses,
+    operationalCosts,
+    netIncome,
+    rentalIncomePercent,
+    vacancyGapPercent,
+    paidTrackerPercent,
+    pendingTrackerPercent: Math.max(0, 100 - paidTrackerPercent),
+    timeframe: "This month"
   };
 }
 
@@ -2248,9 +2478,8 @@ function getManagementQueueSummary() {
     0,
     attentionItems.length - pendingPayments - openMaintenance - pendingRenewals - complaintFollowups - suggestionFollowups - messageFollowups
   );
-  const otherFollowups = complaintFollowups + suggestionFollowups + messageFollowups + otherActionItems;
 
-  const allCategories = [
+  const categories = [
     {
       type: "payments",
       label: "Payments",
@@ -2313,61 +2542,24 @@ function getManagementQueueSummary() {
     },
     {
       type: "messages",
-      label: "Other Follow-ups",
-      singularLabel: "Other Follow-up",
-      count: otherFollowups,
+      label: "Other updates",
+      singularLabel: "Other update",
+      count: messageFollowups + otherActionItems,
       page: "actionCenter",
       priority: 6,
       title: "Review remaining updates",
       description: "Open in Action Center",
       badgeStatus: "Submitted",
-      badgeLabel: "Follow Up"
+      badgeLabel: "Queue"
     }
   ];
-  const activeCategories = allCategories
+  const activeCategories = categories
     .filter((category) => category.count > 0)
     .sort((a, b) => a.priority - b.priority);
-  const actionMetricCards = [
-    {
-      label: "Payment Reviews",
-      count: pendingPayments,
-      note: "Proofs and cash requests",
-      icon: "wallet",
-      page: "chequeReview",
-      actionLabel: "Review payments"
-    },
-    {
-      label: "Maintenance Reviews",
-      count: openMaintenance,
-      note: "Requests needing updates",
-      icon: "tool",
-      page: "maintenanceMgmt",
-      actionLabel: "Open queue"
-    },
-    {
-      label: "Renewal Reviews",
-      count: pendingRenewals,
-      note: "Contract decisions",
-      icon: "refresh",
-      page: "renewalsMgmt",
-      actionLabel: "Review renewals"
-    },
-    {
-      label: "Other Follow-ups",
-      count: otherFollowups,
-      note: "Complaints and messages",
-      icon: "bell",
-      page: "actionCenter",
-      actionLabel: "View items"
-    }
-  ];
 
   return {
     totalActions: attentionItems.length,
-    allCategories,
     categories: activeCategories,
-    actionMetricCards,
-    priorityActions: activeCategories.slice(0, 4),
     primaryAction: { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
     secondaryAction: { label: "Track Rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
   };
@@ -2382,27 +2574,18 @@ function getManagementDashboardSummary() {
   const rent = managerRentStats();
   const properties = data.properties || [];
   const portfolioSummary = getPortfolioSummary(properties);
-  const totalUnits = properties.reduce((total, property) => total + (Number(property.units) || 0), 0);
-  const occupiedUnits = properties.reduce((total, property) => {
-    const units = Number(property.units) || 0;
-    return total + Math.round(units * (percentValue(property.occupancy) / 100));
-  }, 0);
-  const vacantUnits = Math.max(totalUnits - occupiedUnits, 0);
-  const activeMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed");
-  const maintenanceByStatus = {
-    New: data.maintenanceRequests.filter((row) => row.status === "New").length,
-    "In Progress": data.maintenanceRequests.filter((row) => row.status === "In Progress").length,
-    Scheduled: data.maintenanceRequests.filter((row) => row.status === "Scheduled").length,
-    Completed: data.maintenanceRequests.filter((row) => row.status === "Completed").length
-  };
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending");
-  const pendingDocuments = data.documents.filter((row) => row.status === "In Review");
+  const maintenance = managerMaintenanceStats(data.maintenanceRequests);
+  const renewals = managerRenewalStats(data.renewals);
+  const documents = managerDocumentStats(data.documents);
+  const finance = managerFinanceStats();
   const rentFollowUps = data.rentRows.filter((row) => row.status !== "Paid");
+  const activeTenantCount = Math.max(portfolioSummary.occupiedUnits, data.tenants.length);
 
   return {
     tenants: {
-      total: data.tenants.length,
-      label: "Active lease records"
+      total: activeTenantCount,
+      records: data.tenants.length,
+      label: "From occupied units"
     },
     rent: {
       collectedAmount: rent.paidAmount,
@@ -2412,29 +2595,23 @@ function getManagementDashboardSummary() {
       cycleLabel: "This cycle"
     },
     maintenance: {
-      openCount: activeMaintenance.length,
-      byStatus: maintenanceByStatus
+      openCount: maintenance.openCount,
+      byStatus: maintenance.byStatus
     },
     renewals: {
-      pendingCount: pendingRenewals.length
+      pendingCount: renewals.pendingCount
     },
     portfolio: {
       totalProperties: portfolioSummary.totalProperties,
-      totalUnits: portfolioSummary.totalUnits || totalUnits,
-      occupiedUnits: portfolioSummary.occupiedUnits || occupiedUnits,
-      vacantUnits: portfolioSummary.vacantUnits || vacantUnits,
+      totalUnits: portfolioSummary.totalUnits,
+      occupiedUnits: portfolioSummary.occupiedUnits,
+      vacantUnits: portfolioSummary.vacantUnits,
       totalAssetValue: portfolioSummary.totalAssetValue
     },
     documents: {
-      pendingReviews: pendingDocuments.length
+      pendingReviews: documents.pendingReviews
     },
-    finance: {
-      rentalIncome: data.financial.income,
-      expenses: data.financial.expenses,
-      netIncome: data.financial.net,
-      operationalCosts: data.financial.operational,
-      timeframe: "This month"
-    },
+    finance,
     updates: managerActivityItems()
   };
 }
@@ -2987,6 +3164,379 @@ function toastRoot() {
   return root;
 }
 
+function askAINotchRoot() {
+  let root = document.querySelector("#ask-ai-notch-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "ask-ai-notch-root";
+    document.body.appendChild(root);
+  }
+  return root;
+}
+
+function ensureAskAINudgeState() {
+  if (!state.askAI.nudge) {
+    state.askAI.nudge = defaultAskAINudgeState();
+  }
+  return state.askAI.nudge;
+}
+
+function prefersReducedAskAIMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+}
+
+function askAINudgeDelay() {
+  const { minIntervalMs, maxIntervalMs } = ASK_AI_NUDGE_CONFIG;
+  return Math.round(minIntervalMs + Math.random() * (maxIntervalMs - minIntervalMs));
+}
+
+function getAskAIPageType(route = state.page) {
+  const value = String(route || "").toLowerCase();
+  if (value.includes("action")) return "action-center";
+  if (value === "rent" || value.includes("renttracking")) return "rent";
+  if (value.includes("cheque") || value.includes("payment")) return "payment-review";
+  if (value.includes("maintenance")) return "maintenance";
+  if (value.includes("complaint")) return "complaints";
+  if (value.includes("renewal") || value.includes("contract")) return "contracts";
+  if (value.includes("tenant")) return "tenant-management";
+  if (value.includes("financial") || value.includes("finance")) return "finance";
+  if (value.includes("portfolio")) return "portfolio";
+  if (value.includes("document") || value.includes("docs")) return "documents";
+  if (value.includes("dashboard")) return "dashboard";
+  return "general";
+}
+
+function getAskAIContext(options = {}) {
+  const role = options.role || state.role || state.selectedRole || "tenant";
+  const route = options.route || state.page || "dashboard";
+  const pageType = getAskAIPageType(route);
+  const pageMetaCopy = pageMeta[role]?.[route] || ["Dashboard", ""];
+  const context = {
+    role,
+    route,
+    pageType,
+    pageTitle: options.pageTitle || pageMetaCopy[0],
+    relevantCounts: {},
+    urgentItems: [],
+    suggestedCapabilities: [],
+    primaryAction: null
+  };
+
+  if (!state.auth) return context;
+
+  if (role === "tenant" && state.data.tenant) {
+    const profile = tenantProfile();
+    const rent = tenantRentSummary();
+    const maintenanceOpenCount = state.data.tenant.maintenanceRequests.filter(isActiveRepeatableRequest).length;
+    const contractDaysRemaining = daysUntilDate(profile.contractEnd);
+    const latestContractRequest = latestTenantContractRequest(profile);
+    const actionCount = actionCenterCountForRole("tenant");
+    context.rent = {
+      urgency: rent.dashboardState?.urgency || "healthy",
+      daysUntilDue: rent.dashboardState?.daysUntilDue,
+      status: rent.status,
+      isPaid: rent.isPaid
+    };
+    context.contract = {
+      daysRemaining: contractDaysRemaining,
+      renewalSoon: contractDaysRemaining >= 0 && contractDaysRemaining <= 60,
+      hasRequest: Boolean(latestContractRequest),
+      status: latestContractRequest?.status || profile.renewalStatus
+    };
+    context.maintenance = {
+      openCount: maintenanceOpenCount,
+      status: activeTenantMaintenance()?.status || "Completed"
+    };
+    context.actions = { count: actionCount };
+    context.relevantCounts = {
+      actions: actionCount,
+      maintenance: maintenanceOpenCount
+    };
+    if (context.rent.urgency === "overdue") context.urgentItems.push("rent-overdue");
+    if (context.rent.urgency === "dueSoon") context.urgentItems.push("rent-due-soon");
+    if (actionCount > 0) context.urgentItems.push("tenant-actions");
+    return context;
+  }
+
+  if (role === "manager" && state.data.manager) {
+    const queue = getManagementQueueSummary();
+    const rent = managerRentStats();
+    const payments = managerPaymentReviewStats();
+    const maintenance = managerMaintenanceStats();
+    const renewals = managerRenewalStats();
+    const documents = managerDocumentStats();
+    context.queue = queue;
+    context.rent = {
+      pendingFollowUps: rent.pendingRows.length + rent.lateRows.length,
+      lateCount: rent.lateRows.length,
+      pendingCount: rent.pendingRows.length
+    };
+    context.payments = { pendingCount: payments.pendingCount };
+    context.maintenance = { openCount: maintenance.openCount };
+    context.renewals = { pendingCount: renewals.pendingCount };
+    context.documents = { pendingReviews: documents.pendingReviews };
+    context.relevantCounts = {
+      actions: queue.totalActions,
+      rent: context.rent.pendingFollowUps,
+      payments: payments.pendingCount,
+      maintenance: maintenance.openCount,
+      renewals: renewals.pendingCount,
+      documents: documents.pendingReviews
+    };
+    if (queue.totalActions > 0) context.urgentItems.push("management-actions");
+  }
+
+  return context;
+}
+
+function askAINudgeMessageApplies(message, context) {
+  if (!message?.condition) return true;
+  try {
+    return Boolean(message.condition(context));
+  } catch {
+    return false;
+  }
+}
+
+function askAINudgeMessageCount(message, context) {
+  if (typeof message.count !== "function") return context.relevantCounts?.actions || 0;
+  const count = Number(message.count(context));
+  return Number.isFinite(count) ? count : 0;
+}
+
+function hydrateAskAINudgeMessage(message, context) {
+  const count = askAINudgeMessageCount(message, context);
+  const text = String(message.text || "Ask AI can help.").replace(/\{count\}/g, String(count)).trim();
+  return {
+    id: message.id || `ask-ai-nudge-${askAINudgePromptCursor}`,
+    text,
+    intent: message.intent || "general_help",
+    actionLabel: message.actionLabel || "",
+    actionTarget: message.actionTarget || "",
+    suggestedPrompt: message.suggestedPrompt || "Help me with this page.",
+    priority: message.priority || "normal",
+    context
+  };
+}
+
+function askAINudgeRoleMessages(context) {
+  return ASK_AI_NUDGE_MESSAGES[context.role] || ASK_AI_NUDGE_MESSAGES.tenant;
+}
+
+function askAINudgeCandidates(context) {
+  const roleMessages = askAINudgeRoleMessages(context);
+  const roleGroups = Object.entries(roleMessages).filter(([group]) => group !== "general");
+  const urgent = roleGroups
+    .flatMap(([, messages]) => messages)
+    .filter((message) => message.priority === "urgent" && askAINudgeMessageApplies(message, context));
+  const pageSpecific = [
+    ...(roleMessages[context.pageType] || []),
+    ...(context.pageType !== "dashboard" && context.route === "dashboard" ? roleMessages.dashboard || [] : [])
+  ].filter((message) => askAINudgeMessageApplies(message, context));
+  const roleGeneral = (roleMessages.general || []).filter((message) => askAINudgeMessageApplies(message, context));
+  const general = ASK_AI_GENERAL_NUDGE_MESSAGES.filter((message) => askAINudgeMessageApplies(message, context));
+
+  if (urgent.length) return urgent.map((message) => hydrateAskAINudgeMessage(message, context));
+  if (Math.random() < 0.3 && general.length) return general.map((message) => hydrateAskAINudgeMessage(message, context));
+  const contextual = [...pageSpecific, ...roleGeneral];
+  return (contextual.length ? contextual : general).map((message) => hydrateAskAINudgeMessage(message, context));
+}
+
+function selectAskAINudgeMessage(candidates, nudge = ensureAskAINudgeState()) {
+  const pool = candidates.length
+    ? candidates
+    : [{ id: "general_fallback", text: "Want help with this page?", intent: "general_help", suggestedPrompt: "Help me with this page.", context: getAskAIContext() }];
+  const recentIds = nudge.recentlyShownIds || [];
+  const freshPool = pool.filter((message) => !recentIds.includes(message.id));
+  const usablePool = freshPool.length ? freshPool : pool.filter((message) => message.id !== recentIds[0]);
+  const finalPool = usablePool.length ? usablePool : pool;
+  const message = finalPool[askAINudgePromptCursor % finalPool.length] || finalPool[0];
+  askAINudgePromptCursor += 1;
+  return message;
+}
+
+function getAskAINotchMessage(context = getAskAIContext()) {
+  return selectAskAINudgeMessage(askAINudgeCandidates(context));
+}
+
+function applyAskAINudgeMessage(nudge, message) {
+  nudge.id = message.id;
+  nudge.message = message.text;
+  nudge.intent = message.intent;
+  nudge.suggestedPrompt = message.suggestedPrompt;
+  nudge.actionTarget = message.actionTarget;
+  nudge.context = message.context;
+  nudge.lastShownAt = Date.now();
+  nudge.recentlyShownIds = [message.id, ...(nudge.recentlyShownIds || []).filter((id) => id !== message.id)].slice(0, 3);
+}
+
+function clearAskAINudgeTimers() {
+  if (askAINudgeTimer) {
+    window.clearTimeout(askAINudgeTimer);
+    askAINudgeTimer = 0;
+  }
+  if (askAINudgeAutoTimer) {
+    window.clearTimeout(askAINudgeAutoTimer);
+    askAINudgeAutoTimer = 0;
+  }
+}
+
+function clearAskAINudge(options = {}) {
+  const { schedule = true, setCooldown = false } = options;
+  const nudge = ensureAskAINudgeState();
+  clearAskAINudgeTimers();
+  if (setCooldown) nudge.dismissedAt = Date.now();
+  nudge.isVisible = false;
+  nudge.id = "";
+  nudge.message = "";
+  nudge.intent = "";
+  nudge.suggestedPrompt = "";
+  nudge.actionTarget = "";
+  nudge.context = null;
+  nudge.startedAt = null;
+  nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "idle";
+  syncAskAINotchLauncher();
+  if (schedule) scheduleAskAINudge(setCooldown ? ASK_AI_NUDGE_CONFIG.dismissCooldownMs : askAINudgeDelay());
+}
+
+function dismissAskAINudge(options = {}) {
+  const { manual = false } = options;
+  const nudge = ensureAskAINudgeState();
+  if (!nudge.isVisible) return;
+  nudge.dismissedAt = Date.now();
+  clearAskAINudge({ schedule: true, setCooldown: manual });
+}
+
+function isUserWorkingInField() {
+  const activeElement = document.activeElement;
+  if (!activeElement || activeElement === document.body) return false;
+  return Boolean(activeElement.closest?.("input, textarea, select, form, [contenteditable='true']"));
+}
+
+function hasBlockingOverlayForAskAINudge() {
+  return Boolean(
+    state.modal ||
+      state.notificationPanelOpen ||
+      document.querySelector(".modal-backdrop, [role='menu'], [data-menu-open='true'], .toast-error, .toast-warning")
+  );
+}
+
+function canShowAskAINudge() {
+  const nudge = ensureAskAINudgeState();
+  const now = Date.now();
+  return Boolean(
+    state.auth &&
+      !state.askAI.isOpen &&
+      !state.askAI.isExpanded &&
+      state.askAI.activationState !== "activating" &&
+      !isUserWorkingInField() &&
+      !hasBlockingOverlayForAskAINudge() &&
+      document.visibilityState === "visible" &&
+      now - nudge.dismissedAt >= ASK_AI_NUDGE_CONFIG.dismissCooldownMs &&
+      now - askAINudgeLastActivityAt >= 1200
+  );
+}
+
+function scheduleAskAINudge(delayMs = askAINudgeDelay()) {
+  clearAskAINudgeTimers();
+  const nudge = ensureAskAINudgeState();
+  if (!state.auth || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  nudge.hasScheduled = true;
+  askAINudgeTimer = window.setTimeout(showAskAINudge, delayMs);
+}
+
+function ensureAskAINudgeScheduler() {
+  const nudge = ensureAskAINudgeState();
+  if (!state.auth) {
+    clearAskAINudgeTimers();
+    nudge.hasScheduled = false;
+    return;
+  }
+  if (nudge.isVisible || askAINudgeTimer || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  scheduleAskAINudge(nudge.hasScheduled ? askAINudgeDelay() : ASK_AI_NUDGE_CONFIG.initialDelayMs);
+}
+
+function showAskAINudge() {
+  askAINudgeTimer = 0;
+  const nudge = ensureAskAINudgeState();
+  if (!canShowAskAINudge()) {
+    scheduleAskAINudge(ASK_AI_NUDGE_CONFIG.busyRetryMs);
+    return;
+  }
+
+  nudge.isVisible = true;
+  applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
+  nudge.startedAt = Date.now();
+  nudge.durationMs = prefersReducedAskAIMotion() ? ASK_AI_NUDGE_CONFIG.visibleDurationMs : ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "visible";
+  syncAskAINotchLauncher();
+  askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
+}
+
+function triggerAskAINudge() {
+  if (!state.auth || state.askAI.isOpen || state.askAI.activationState === "activating") return;
+  const nudge = ensureAskAINudgeState();
+  clearAskAINudgeTimers();
+  nudge.isVisible = true;
+  applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
+  nudge.startedAt = Date.now();
+  nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
+  nudge.phase = "visible";
+  nudge.hasScheduled = true;
+  syncAskAINotchLauncher();
+  askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
+}
+
+function markAskAINudgeActivity() {
+  askAINudgeLastActivityAt = Date.now();
+}
+
+function syncAskAINotchHoverState() {
+  const shell = document.querySelector("#ask-ai-notch-shell");
+  if (!shell) return;
+  const target = document.elementFromPoint?.(askAINotchPointer.x, askAINotchPointer.y);
+  shell.dataset.hover = target?.closest?.("#ask-ai-notch-shell") ? "true" : "false";
+}
+
+function syncAskAINotchLauncher() {
+  const root = askAINotchRoot();
+  if (!state.auth) {
+    clearAskAINudgeTimers();
+    root.innerHTML = "";
+    delete document.body.dataset.askAiNotchState;
+    return;
+  }
+
+  let shell = root.querySelector("#ask-ai-notch-shell");
+  let button = root.querySelector("#ask-ai-notch");
+  if (!shell || !button) {
+    root.innerHTML = renderAskAINotchLauncher();
+    shell = root.querySelector("#ask-ai-notch-shell");
+    button = root.querySelector("#ask-ai-notch");
+  }
+
+  const closeButton = root.querySelector("[data-action='dismiss-ask-ai-nudge']");
+  const messageLabel = root.querySelector(".ask-ai-notch-launcher__label--message");
+  const nudge = ensureAskAINudgeState();
+  const isActive = state.askAI.isOpen || state.askAI.activationState === "activating";
+  const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
+  document.body.dataset.askAiNotchState = displayState;
+  if (shell) shell.dataset.state = displayState;
+  button.dataset.state = displayState;
+  button.setAttribute("aria-expanded", state.askAI.isOpen ? "true" : "false");
+  button.setAttribute("aria-label", nudge.isVisible ? `Open Ask AI: ${nudge.message}` : "Open Ask AI");
+  if (messageLabel) {
+    messageLabel.textContent = nudge.message || "";
+    messageLabel.removeAttribute("title");
+  }
+  if (closeButton) {
+    closeButton.hidden = !nudge.isVisible;
+    closeButton.style.setProperty("--ask-ai-nudge-duration", `${nudge.durationMs}ms`);
+  }
+  syncAskAINotchHoverState();
+}
+
 function storedTheme() {
   try {
     return localStorage.getItem("estateflow-theme") === "dark" ? "dark" : "light";
@@ -3296,18 +3846,21 @@ function askAIIcon() {
 }
 
 function askAICopy() {
+  const contextPrompt = state.askAI.contextPrompt;
   if (state.role === "manager") {
+    const suggestions = ["What needs action today?", "Show rent follow-ups.", "Which maintenance requests are open?", "What renewals need review?", "Summarize portfolio status."];
     return {
       helper: "Ask about actions, rent, tenants, maintenance, renewals, documents, or portfolio status.",
       placeholder: "Ask AI about today's operations...",
-      suggestions: ["What needs action today?", "Show rent follow-ups.", "Which maintenance requests are open?", "What renewals need review?", "Summarize portfolio status."]
+      suggestions: contextPrompt ? [contextPrompt, ...suggestions.filter((prompt) => prompt !== contextPrompt)] : suggestions
     };
   }
 
+  const suggestions = ["How do I pay rent?", "Where is my receipt?", "How do I request maintenance?", "How do I view my contract?", "What needs my attention?"];
   return {
     helper: "Ask about rent, receipts, contracts, maintenance, requests, or documents.",
     placeholder: "Ask AI about your rent or requests...",
-    suggestions: ["How do I pay rent?", "Where is my receipt?", "How do I request maintenance?", "How do I view my contract?", "What needs my attention?"]
+    suggestions: contextPrompt ? [contextPrompt, ...suggestions.filter((prompt) => prompt !== contextPrompt)] : suggestions
   };
 }
 
@@ -3377,7 +3930,6 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
     ? askAIState.messages.map(renderAskAIMessage).join("")
     : `
       <section class="ask-ai-workspace-empty">
-        <span class="ask-ai-workspace-orb">${askAIIcon()}</span>
         <h3>Where should we begin?</h3>
         <p>${escapeHtml(helper)}</p>
         <div class="ask-ai-empty-prompts" aria-label="Suggested Ask AI prompts">
@@ -3411,7 +3963,6 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
             <h3>${escapeHtml(title)}</h3>
           </div>
           <div class="ask-ai-panel-actions">
-            <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="Collapse Ask AI" aria-expanded="true">${icon.collapse}</button>
             <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
           </div>
         </header>
@@ -3426,26 +3977,44 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
   `;
 }
 
-function renderSidebarAskAI() {
+function renderAskAINotchLauncher() {
   const askAIState = state.askAI;
+  const isActive = askAIState.isOpen || askAIState.activationState === "activating";
+  const nudge = ensureAskAINudgeState();
+  const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
+  const messageLabel = nudge.message || "";
   return `
-    <section class="ask-ai-shell ${askAIState.isOpen ? "open" : ""} ${escapeHtml(askAIState.activationState)}" aria-label="Ask AI assistant">
+    <div id="ask-ai-notch-shell" class="ask-ai-notch-shell" data-state="${displayState}">
       <button
-        id="ask-ai-trigger"
-        class="ask-ai-entry"
+        id="ask-ai-notch"
+        class="ask-ai-notch-launcher"
         type="button"
         data-action="toggle-ask-ai"
+        data-state="${displayState}"
+        aria-label="${nudge.isVisible ? `Open Ask AI: ${escapeHtml(messageLabel)}` : "Open Ask AI"}"
         aria-expanded="${askAIState.isOpen ? "true" : "false"}"
         aria-controls="ask-ai-panel"
       >
-        <span class="ask-ai-entry-icon">${askAIIcon()}</span>
-        <span class="ask-ai-entry-copy">
-          <strong>Ask AI</strong>
-          <span>Ask about this dashboard</span>
+        <span class="ask-ai-notch-launcher__glow" aria-hidden="true"></span>
+        <span class="ask-ai-notch-launcher__content">
+          <span class="ask-ai-notch-launcher__icon">${askAIIcon()}</span>
+          <span class="ask-ai-notch-label-stack">
+            <span class="ask-ai-notch-launcher__label ask-ai-notch-launcher__label--rest" aria-hidden="${nudge.isVisible ? "true" : "false"}">Ask AI</span>
+            <span class="ask-ai-notch-launcher__label ask-ai-notch-launcher__label--message" aria-live="polite">${escapeHtml(messageLabel)}</span>
+          </span>
         </span>
-        <span class="ask-ai-entry-badge">Demo</span>
       </button>
-    </section>
+      <button
+        class="ask-ai-nudge-close"
+        type="button"
+        data-action="dismiss-ask-ai-nudge"
+        aria-label="Dismiss Ask AI suggestion"
+        style="--ask-ai-nudge-duration: ${nudge.durationMs}ms"
+        ${nudge.isVisible ? "" : "hidden"}
+      >
+        ${icon.close}
+      </button>
+    </div>
   `;
 }
 
@@ -3456,44 +4025,7 @@ function renderAskAIPanel() {
   const { helper, placeholder, suggestions } = askAICopy();
   const hasInput = askAIState.inputValue.trim().length > 0;
   const clearDisabled = askAIState.messages.length === 0 && !askAIState.inputValue.trim();
-  const expanded = askAIState.isExpanded;
-  if (expanded) {
-    return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
-  }
-
-  const messages = askAIState.messages.length
-    ? askAIState.messages.map(renderAskAIMessage).join("")
-    : `<div class="ask-ai-empty"><strong>Ready when you are.</strong><span>Ask about rent, requests, documents, or dashboard actions.</span></div>`;
-
-  return `
-    <aside id="ask-ai-panel" class="ask-ai-panel ${expanded ? "expanded" : ""}" role="dialog" aria-modal="${expanded ? "true" : "false"}" aria-label="${expanded ? "Expanded Ask AI demo panel" : "Ask AI demo panel"}">
-      <div class="ask-ai-panel-head">
-        <div class="ask-ai-title-row">
-          <span class="ask-ai-panel-icon">${askAIIcon()}</span>
-          <div>
-            <span class="ask-ai-mode">Demo mode</span>
-            <h3>Ask AI</h3>
-          </div>
-        </div>
-        <div class="ask-ai-panel-actions">
-          <button class="ask-ai-control" type="button" data-action="toggle-ask-ai-expanded" aria-label="${expanded ? "Collapse Ask AI" : "Expand Ask AI"}" aria-expanded="${expanded ? "true" : "false"}">${expanded ? icon.collapse : icon.expand}</button>
-          <button class="ask-ai-control ask-ai-close" type="button" data-action="close-ask-ai" aria-label="Close Ask AI">${icon.close}</button>
-        </div>
-      </div>
-      <div class="ask-ai-intro">
-        <p>${escapeHtml(helper)}</p>
-      </div>
-      <div class="ask-ai-suggestions" aria-label="Suggested Ask AI prompts">
-        ${suggestions.map(renderAskAISuggestionButton).join("")}
-      </div>
-      <div class="ask-ai-messages" aria-live="polite">
-        ${messages}
-        ${askAIState.isTyping ? renderAskAITypingMessage() : ""}
-        ${askAIState.error ? `<div class="ask-ai-error" role="alert">${escapeHtml(askAIState.error)}</div>` : ""}
-      </div>
-      ${renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState })}
-    </aside>
-  `;
+  return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
 }
 
 function classNames(...parts) {
@@ -3798,22 +4330,21 @@ function syncAskAIScrollLock() {
     window.scrollTo({ top: askAIScrollLockY, left: 0 });
     askAIScrollLockY = 0;
   }
-
-  if (locked && state.pullToReset.phase !== "idle") {
-    cancelPullToReset();
-  }
 }
 
 function render() {
   applyTheme();
+  stopPortfolioMapMotion();
 
   if (!state.auth) {
     state.notificationPanelOpen = false;
     state.askAI.isOpen = false;
     state.askAI.isExpanded = false;
+    clearAskAINudge({ schedule: false, setCooldown: false });
     syncAskAIScrollLock();
     app().innerHTML = renderLogin();
     modalRoot().innerHTML = "";
+    syncAskAINotchLauncher();
     cleanupPortfolioLeafletMap();
     return;
   }
@@ -3826,6 +4357,8 @@ function render() {
 
   app().innerHTML = renderPortal();
   renderModal();
+  syncAskAINotchLauncher();
+  ensureAskAINudgeScheduler();
   syncAskAIScrollLock();
   runPostRenderEffects();
 }
@@ -3899,9 +4432,24 @@ function runPostRenderEffects() {
   window.requestAnimationFrame(initializePortfolioLeafletMap);
 }
 
+function stopPortfolioMapMotion() {
+  if (!portfolioLeafletMap) return;
+  try {
+    portfolioLeafletMap.stop?.();
+    portfolioLeafletMap.closePopup?.();
+  } catch (error) {
+    // Leaflet can still be resolving a transition while the demo UI re-renders.
+  }
+}
+
 function cleanupPortfolioLeafletMap() {
   if (!portfolioLeafletMap) return;
-  portfolioLeafletMap.remove();
+  stopPortfolioMapMotion();
+  try {
+    portfolioLeafletMap.remove();
+  } catch (error) {
+    // Treat cleanup as best-effort because the map container may already be gone.
+  }
   portfolioLeafletMap = null;
   portfolioLeafletMarkerLayer = null;
 }
@@ -4001,7 +4549,11 @@ function initializePortfolioLeafletMap() {
     portfolioLeafletMap = window.L.map(container, {
       zoomControl: true,
       attributionControl: true,
-      scrollWheelZoom: false
+      scrollWheelZoom: false,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+      inertia: false
     }).setView(PORTFOLIO_MAP_CENTER, PORTFOLIO_MAP_DEFAULT_ZOOM);
     window.L.tileLayer(PORTFOLIO_MAP_TILE_URL, {
       maxZoom: 19,
@@ -4211,32 +4763,19 @@ function renderNotificationPanel() {
   `;
 }
 
-function renderPullToResetIndicator() {
-  return `
-    <div class="pull-reset-indicator" data-pull-reset aria-hidden="true" aria-live="polite">
-      <span class="pull-reset-icon">${icon.refresh}</span>
-      <span data-pull-reset-label>Pull to reset demo data</span>
-    </div>
-  `;
-}
-
 function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
-  const showScreenFocus = !(
-    (state.role === "tenant" && state.page === "dashboard") ||
-    (state.role === "manager" && state.page === "dashboard")
-  );
+  const isDashboardPage = state.page === "dashboard";
   return `
     <div class="portal-layout">
       ${renderSidebar(profile)}
-      <main class="main-area">
-        ${renderPullToResetIndicator()}
+      <main class="main-area standard-main-area">
         <header class="topbar">
           <div class="topbar-copy">
             <p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>
             <h1>${escapeHtml(meta[0])}</h1>
-            <p>${escapeHtml(meta[1])}</p>
+            ${meta[1] ? `<p>${escapeHtml(meta[1])}</p>` : ""}
           </div>
           <div class="top-actions">
             ${state.page !== "dashboard" ? `<button class="button secondary compact dashboard-return" type="button" data-page="dashboard">${buttonIcon("home")}Dashboard</button>` : ""}
@@ -4244,7 +4783,7 @@ function renderPortal() {
             ${renderNotificationPanel()}
           </div>
         </header>
-        ${showScreenFocus ? renderScreenFocus() : ""}
+        ${renderScreenFocus()}
         ${renderRouteChips()}
         ${state.role === "tenant" ? renderTenantPage() : renderManagerPage()}
       </main>
@@ -4260,7 +4799,6 @@ function renderSidebar(profile) {
     <aside class="sidebar">
       <div class="sidebar-top">
         ${brand({ clickable: true })}
-        <div class="sidebar-role">${label}</div>
         <div class="sidebar-profile">
           ${renderAvatar(profile)}
           <div>
@@ -4292,15 +4830,15 @@ function renderSidebar(profile) {
           .join("")}
       </nav>
       <div class="sidebar-footer">
-        ${renderSidebarAskAI()}
-        <div class="sidebar-actions">
-          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
-          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
-          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
-        </div>
         <div class="sidebar-note">
           <strong>Demo data</strong>
           <span>No live records</span>
+        </div>
+        <div class="sidebar-actions">
+          <button class="button secondary" type="button" data-action="trigger-ask-ai-nudge">${buttonIcon("bell")}AI notification trigger</button>
+          <button class="button secondary" type="button" data-action="reset-data">${buttonIcon("refresh")}Reset data</button>
+          <button class="button secondary" type="button" data-action="logout">${buttonIcon("close")}Logout</button>
+          <button class="button secondary" type="button" data-action="open-ui-kit">${buttonIcon("file")}UI Kit</button>
         </div>
       </div>
     </aside>
@@ -4312,7 +4850,7 @@ function shortNavLabel(label) {
     "Action Center": "Actions",
     "Maintenance": "Maintain",
     "Renewal": "Renewal",
-    "Tenant Management": "Tenants",
+    "Tenant Records": "Tenants",
     "Rent Tracking": "Rent",
     "Payment Review": "Review",
     "Maintenance": "Maintain",
@@ -4399,7 +4937,8 @@ function renderActionButtons(actions = [], className = "focus-actions") {
         modal: action.modal,
         action: action.action,
         id: action.id,
-        tenant: action.tenant
+        tenant: action.tenant,
+        ariaLabel: action.ariaLabel || ""
       })).join("")}
     </div>
   `;
@@ -4420,6 +4959,8 @@ function pageFocus() {
     const profile = state.data.tenant.profile;
     const summary = tenantRentSummary();
     const maintenance = activeTenantMaintenance();
+    const activeMaintenanceCount = state.data.tenant.maintenanceRequests.filter(isActiveRepeatableRequest).length;
+    const documentStats = tenantDocumentStats();
     const actionCount = actionCenterCountForRole("tenant");
     const latestContractRequest = latestTenantContractRequest(profile);
     const contractSummaryStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
@@ -4458,24 +4999,24 @@ function pageFocus() {
         eyebrow: "Maintenance",
         title: "Report the issue",
         body: "Add the category, priority, and a short note.",
-        value: "1 active",
-        meta: ["AC request in progress", "Average response 1 day"],
+        value: `${activeMaintenanceCount} ${activeMaintenanceCount === 1 ? "active" : "active"}`,
+        meta: [maintenance ? `${maintenance.category || maintenance.issue} request ${String(maintenance.status || "").toLowerCase()}` : "No open requests", `${state.data.tenant.maintenanceRequests.length} total requests`],
         actions: []
       },
       renewal: {
         eyebrow: "Contract renewal",
-        title: "Contract ends 31 Dec 2026",
+        title: `Contract ends ${profile.contractEnd}`,
         body: "Request renewal when ready.",
         value: contractSummaryStatus,
-        meta: ["Current rent AED 8,500", "Unit 1204"],
-        actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary" }]
+        meta: [`Current rent ${profile.rent}`, `Unit ${profile.unit}`],
+        actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary", ariaLabel: "Request renewal from summary" }]
       },
       documents: {
         eyebrow: "Documents",
         title: "Tenancy files",
         body: "View contracts, ID, cheques, and receipts.",
-        value: "4 files",
-        meta: ["2 approved", "1 in review"],
+        value: `${documentStats.total} ${documentStats.total === 1 ? "file" : "files"}`,
+        meta: [`${documentStats.approved} approved`, `${documentStats.inReview} in review`],
         actions: []
       },
       uiKit: {
@@ -4493,10 +5034,17 @@ function pageFocus() {
 
   const data = state.data.manager;
   const rentStats = managerRentStats();
+  const paymentStats = managerPaymentReviewStats();
+  const maintenanceStats = managerMaintenanceStats();
+  const renewalStats = managerRenewalStats();
+  const documentStats = managerDocumentStats();
+  const notificationStats = managerNotificationStats();
+  const financeStats = managerFinanceStats();
+  const portfolioStats = getPortfolioSummary();
   const queueSummary = getManagementQueueSummary();
-  const pendingPayments = queueSummary.categories.find((category) => category.type === "payments")?.count || 0;
-  const openMaintenance = queueSummary.categories.find((category) => category.type === "maintenance")?.count || 0;
-  const pendingRenewals = queueSummary.categories.find((category) => category.type === "renewals")?.count || 0;
+  const pendingPayments = paymentStats.pendingCount;
+  const openMaintenance = maintenanceStats.openCount;
+  const pendingRenewals = renewalStats.pendingCount;
   const managerActionCount = queueSummary.totalActions;
   const map = {
     dashboard: {
@@ -4517,9 +5065,9 @@ function pageFocus() {
     },
     tenants: {
       eyebrow: "Tenant management",
-      title: "Manage tenant records",
+      title: "Manage Tenants",
       body: "Search by tenant, unit, or property.",
-      value: `${data.tenants.length} tenants`,
+      value: `${data.tenants.length} records`,
       meta: [`${data.tenants.length} records`, "Linked documents"],
       actions: [{ label: "Add tenant", icon: "users", action: "add-tenant", variant: "primary" }]
     },
@@ -4544,7 +5092,7 @@ function pageFocus() {
       title: `${openMaintenance} requests open`,
       body: "Open a request and update the status.",
       value: `${openMaintenance} open`,
-      meta: ["New", "In progress", "Scheduled"],
+      meta: [`${maintenanceStats.newCount} new`, `${maintenanceStats.inProgressCount} in progress`, `${maintenanceStats.scheduledCount} scheduled`],
       actions: []
     },
     renewalsMgmt: {
@@ -4552,39 +5100,39 @@ function pageFocus() {
       title: `${pendingRenewals} renewals pending`,
       body: "Check lease dates before deciding.",
       value: `${pendingRenewals} pending`,
-      meta: ["Expiring soon", "Decision needed"],
+      meta: [`${renewalStats.expiringSoonCount} expiring soon`, `${renewalStats.approvedCount} approved`],
       actions: []
     },
     docsMgmt: {
       eyebrow: "Documents",
       title: "Find tenant documents",
       body: "Filter by tenant, type, or status.",
-      value: "5 records",
-      meta: ["Cheque copies", "Contracts", "IDs"],
+      value: `${documentStats.total} records`,
+      meta: [`${documentStats.pendingReviews} in review`, `${documentStats.approvedCount} approved`],
       actions: []
     },
     notifications: {
       eyebrow: "Reminders",
       title: "Send tenant updates",
       body: "Use a template or write a short message.",
-      value: "2 sent",
-      meta: ["Late payment", "Maintenance", "Renewal"],
+      value: `${notificationStats.sentCount} sent`,
+      meta: [`${notificationStats.total} total`, "Tenant messages"],
       actions: []
     },
     financial: {
       eyebrow: "Finance",
       title: "Income is on track",
       body: "Follow up on pending rent.",
-      value: data.financial.net,
+      value: formatAed(financeStats.netIncome),
       meta: [formatAed(rentStats.paidAmount), `${formatAed(rentStats.pendingAmount + rentStats.lateAmount)} pending`],
       actions: [{ label: "Track rent", icon: "wallet", page: "rentTracking", variant: "primary" }]
     },
     portfolio: {
       eyebrow: "Portfolio",
-      title: `${getPortfolioSummary().totalProperties} Properties`,
+      title: `${portfolioStats.totalProperties} Properties`,
       body: "Open the map, inspect assets, and add properties.",
-      value: formatAed(getPortfolioSummary().totalAssetValue, { compact: true }),
-      meta: [`${getPortfolioSummary().occupiedUnits} occupied`, `${getPortfolioSummary().vacantUnits} vacant`],
+      value: formatAed(portfolioStats.totalAssetValue, { compact: true }),
+      meta: [`${portfolioStats.occupiedUnits} occupied`, `${portfolioStats.vacantUnits} vacant`],
       actions: [{ label: "Open map", icon: "building", action: "open-portfolio-map", variant: "primary" }]
     },
     uiKit: {
@@ -5042,31 +5590,6 @@ function renderActionCenterGroups(items) {
     .join("");
 }
 
-function renderManagerActionCenterMetrics() {
-  const queueSummary = getManagementQueueSummary();
-  return queueSummary.actionMetricCards
-    .map((card) =>
-      metricCard(
-        card.label,
-        String(card.count),
-        card.note,
-        card.icon,
-        card.page,
-        { actionLabel: card.actionLabel }
-      )
-    )
-    .join("");
-}
-
-function renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems }) {
-  return [
-    metricCard("Needs Action", String(actionItems.length), "Available actions", "check"),
-    metricCard("Unread", String(unreadItems.length), "New updates", "bell"),
-    metricCard("Open Items", String(openItems.length), "In progress", "refresh"),
-    metricCard("Total Items", String(allItems.length), "Visible to you", "file")
-  ].join("");
-}
-
 function renderActionCenter() {
   ensureActionCenterData();
   const allItems = visibleActionItems();
@@ -5076,14 +5599,14 @@ function renderActionCenter() {
   const actionItems = allItems.filter((item) => actionButtonsForItem(item).some((action) => action.command && action.command !== "mark-read"));
   const typeOptions = actionFilterOptions("type", allItems);
   const statusOptions = actionFilterOptions("status", allItems);
-  const metricCards = state.role === "manager"
-    ? renderManagerActionCenterMetrics()
-    : renderTenantActionCenterMetrics({ actionItems, unreadItems, openItems, allItems });
 
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCards}
+        ${metricCard("Needs Action", String(actionItems.length), "Available actions", "check")}
+        ${metricCard("Unread", String(unreadItems.length), "New updates", "bell")}
+        ${metricCard("Open Items", String(openItems.length), "In progress", "refresh")}
+        ${metricCard("Total Items", String(allItems.length), "Visible to you", "file")}
       </section>
 
       <section class="section-band">
@@ -5473,6 +5996,33 @@ function renderDesignSystemShowcase() {
         </div>
       </section>
 
+      <section class="section-band ai-style-showcase">
+        ${renderSectionHeader({ eyebrow: "AI System", title: "Ask AI surfaces", description: "The assistant uses a top notch launcher, roomy nudge state, full chat workspace, and the same neutral dashboard structure." })}
+        <div class="ai-style-grid">
+          <div class="ai-style-card">
+            <span class="ui-kit-ai-notch-preview">
+              ${askAIIcon()}
+              <strong>Ask AI</strong>
+            </span>
+            <span class="ui-kit-ai-nudge-preview">
+              ${askAIIcon()}
+              <strong>I can handle this faster.</strong>
+              <em>6s</em>
+            </span>
+          </div>
+          <div class="ai-style-card ai-style-rules">
+            <span class="chip selected">Top notch</span>
+            <span class="chip">Smart nudge</span>
+            <span class="chip">Full workspace</span>
+            <span class="chip">Reduced motion</span>
+          </div>
+          <div class="ai-style-card ui-kit-ai-chat-preview">
+            <div class="ui-kit-ai-message user">What needs action?</div>
+            <div class="ui-kit-ai-message assistant">12 actions need response. Start with payment proof and renewal decisions.</div>
+          </div>
+        </div>
+      </section>
+
       <section class="metric-grid compact-metrics" aria-label="Stat card examples">
         ${metricCard("Metric Card", "24", "Primary metric with context", "wallet")}
         ${metricCard("Alert Metric", "3", "Requires attention", "tool")}
@@ -5589,7 +6139,6 @@ function renderTenantDashboard() {
   const tenant = state.data.tenant;
   const profile = tenant.profile;
   const summary = tenantRentSummary();
-  const rentState = summary.dashboardState;
   const quickActions = tenantDashboardQuickActions(summary);
   const activityItems = tenantDashboardActivities(summary);
   const visibleActivityItems = activityItems.slice(0, ACTIVITY_FEED_PREVIEW_LIMIT);
@@ -5605,7 +6154,7 @@ function renderTenantDashboard() {
       page: "renewal",
       actionLabel: "View renewal",
       className: contractHealth,
-      ariaLabel: "Open contract renewal details"
+      ariaLabel: "Open contract expiry renewal details"
     },
     {
       label: "Maintenance status",
@@ -5619,30 +6168,6 @@ function renderTenantDashboard() {
   ];
   return `
     <div class="content-stack">
-      <section class="tenant-summary-strip" aria-label="Tenant overview">
-        <div class="tenant-summary-profile">
-          ${renderAvatar(profile, "hero-avatar")}
-          <div>
-            <h2>${escapeHtml(profile.name)}</h2>
-            <p>Unit ${escapeHtml(profile.unit)} · ${escapeHtml(profile.property)}</p>
-          </div>
-        </div>
-        <div class="tenant-summary-facts">
-          <button class="contract-health ${contractHealth}" type="button" data-page="renewal" aria-label="Open contract renewal details">
-            <strong>Contract</strong>
-            <em>Active until ${escapeHtml(profile.contractEnd)}</em>
-          </button>
-          <button type="button" data-page="rent" aria-label="Open rent details">
-            <strong>Rent cycle</strong>
-            <em>${escapeHtml(summary.rent.month)} · ${escapeHtml(rentState.urgencyLabel)}</em>
-          </button>
-          <button type="button" data-page="maintenance" aria-label="Open maintenance details">
-            <strong>Maintenance</strong>
-            <em>${escapeHtml(summary.maintenanceStatus)}</em>
-          </button>
-        </div>
-      </section>
-
       <section class="tenant-dashboard-flow" aria-label="Tenant dashboard status">
         ${renderTenantRentOverview(summary)}
         <div class="tenant-secondary-status-grid">
@@ -5990,7 +6515,7 @@ function renderTenantRenewal() {
             <div class="detail-item"><span>${latestRequest ? "Request status" : "Renewal status"}</span><strong>${badge(status)}</strong></div>
           </div>
           <div class="section-actions contract-action-row">
-            <button class="button primary" type="button" data-action="request-renewal">${buttonIcon("refresh")}Request Renewal</button>
+            <button class="button primary" type="button" data-action="request-renewal" aria-label="Request renewal from current contract">${buttonIcon("refresh")}Request Renewal</button>
             <button class="button secondary" type="button" data-action="view-doc" data-doc-title="Tenancy Contract" data-doc-owner="${escapeHtml(profile.name)}">${buttonIcon("file")}View Contract PDF</button>
             <button class="button danger contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Cancellation">Cancel Contract</button>
             <button class="button secondary contract-action-button" type="button" data-action="request-contract" data-contract-type="Contract Amendment">Request Amendment</button>
@@ -6092,59 +6617,6 @@ function renderManagerPage() {
   }
 }
 
-function renderManagementQueueChips(summary) {
-  if (!summary.categories.length) {
-    return `<div class="queue-empty compact">No pending categories.</div>`;
-  }
-
-  return `
-    <div class="operations-chip-row" aria-label="Management action categories">
-      ${summary.categories
-        .map(
-          (category) => `
-            <button class="operations-chip" type="button" data-page="${escapeHtml(category.page)}">
-              <strong>${category.count}</strong>
-              <span>${escapeHtml(category.count === 1 ? category.singularLabel || category.label : category.label)}</span>
-            </button>
-          `
-        )
-        .join("")}
-    </div>
-  `;
-}
-
-function renderManagementPriorityQueue(summary) {
-  if (!summary.priorityActions.length) {
-    return `
-      <div class="queue-empty">
-        <strong>You're all caught up.</strong>
-        <span>No payments, maintenance, or renewal decisions need a response.</span>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="priority-list management-priority-list">
-      ${summary.priorityActions
-        .map(
-          (action) => `
-            <button class="priority-item management-priority-item" type="button" data-page="${escapeHtml(action.page)}">
-              <span class="priority-copy">
-                <strong>${escapeHtml(action.title)}</strong>
-                <em>${escapeHtml(action.description)}</em>
-              </span>
-              <span class="priority-detail">
-                <strong>${action.count}</strong>
-                ${badgeSlot(action.badgeStatus, action.badgeLabel)}
-              </span>
-            </button>
-          `
-        )
-        .join("")}
-    </div>
-  `;
-}
-
 function renderDashboardGroupHeader(label, copy, actions = []) {
   return `
     <div class="dashboard-group-header">
@@ -6183,38 +6655,14 @@ function renderDashboardSnapshotCard(label, copy, items, className = "") {
 }
 
 function renderManagerDashboard() {
-  const queueSummary = getManagementQueueSummary();
   const summary = getManagementDashboardSummary();
   const maintenanceCounts = summary.maintenance.byStatus;
   const maintenanceTotal = Math.max(Object.values(maintenanceCounts).reduce((total, count) => total + count, 0), 1);
   const maintenancePercent = (count) => Math.max(8, Math.round((count / maintenanceTotal) * 100));
-  const actionsLabel = `${queueSummary.totalActions} ${queueSummary.totalActions === 1 ? "action" : "actions"}`;
   return `
     <div class="content-stack">
-      <section class="home-grid manager-home manager-command-grid">
-        <article class="focus-block primary-block operations-summary-card">
-          <span class="focus-eyebrow">Operations summary</span>
-          <h2>${queueSummary.totalActions ? `${actionsLabel} need response` : "You're all caught up"}</h2>
-          <p>${queueSummary.totalActions ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now."}</p>
-          ${renderActionButtons([
-            queueSummary.primaryAction,
-            queueSummary.secondaryAction
-          ], "inline-actions operations-summary-actions")}
-        </article>
-        <article class="focus-block queue-block priority-queue-card">
-          <div class="section-header">
-            <div>
-              <span class="focus-eyebrow">Priority queue</span>
-              <h3>Actions that need priority</h3>
-              <p>Use the oldest or most urgent category first.</p>
-            </div>
-          </div>
-          ${renderManagementPriorityQueue(queueSummary)}
-        </article>
-      </section>
-
       ${renderDashboardSnapshotCard("Operations Snapshot", "Key portfolio, rent, and request numbers for today.", [
-        { label: "Total Tenants", value: summary.tenants.total, note: summary.tenants.label, icon: "users", page: "tenants", actionLabel: "View tenants" },
+        { label: "Active Tenants", value: summary.tenants.total, note: summary.tenants.label, icon: "users", page: "tenants", actionLabel: "Manage tenants" },
         { label: "Rent Collected", value: formatAed(summary.rent.collectedAmount), note: `${summary.rent.cycleLabel} · ${summary.rent.collectedCount} ${summary.rent.collectedCount === 1 ? "payment" : "payments"}`, icon: "wallet", page: "financial", actionLabel: "Open finance" },
         { label: "Pending Rent", value: formatAed(summary.rent.pendingAmount), note: "Requires follow-up", icon: "refresh", page: "rentTracking", actionLabel: "Track rent" },
         { label: "Open Maintenance", value: summary.maintenance.openCount, note: "Active requests", icon: "tool", page: "maintenanceMgmt", actionLabel: "Open queue" },
@@ -6283,10 +6731,10 @@ function renderManagerDashboard() {
           </div>
         </div>
         <div class="metric-grid compact-metrics">
-          ${metricCard("Rental income", summary.finance.rentalIncome, `${summary.finance.timeframe} · collected and due`, "chart", "financial", { hideActionLabel: true })}
-          ${metricCard("Expenses", summary.finance.expenses, "Service costs", "wallet", "financial", { hideActionLabel: true })}
-          ${metricCard("Net income", summary.finance.netIncome, "After costs", "chart", "financial", { hideActionLabel: true })}
-          ${metricCard("Operational costs", summary.finance.operationalCosts, "Ops spend", "tool", "financial", { hideActionLabel: true })}
+          ${metricCard("Rental income", formatAed(summary.finance.rentalIncome), `${summary.finance.timeframe} · occupied units`, "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Expenses", formatAed(summary.finance.expenses), "Service costs", "wallet", "financial", { hideActionLabel: true })}
+          ${metricCard("Net income", formatAed(summary.finance.netIncome), "Income after costs", "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Operational costs", formatAed(summary.finance.operationalCosts), "Ops spend", "tool", "financial", { hideActionLabel: true })}
         </div>
       </section>
     </div>
@@ -6385,7 +6833,7 @@ function renderRentTracking() {
         <td>
           <span class="cell-actions">
             <button class="button secondary compact" type="button" data-modal="rentDetail" data-id="${row.id}">View</button>
-            <button class="button ghost compact" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}">Send reminder</button>
+            <button class="button ghost compact" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}" aria-label="Send reminder to ${escapeHtml(row.tenant)}">Send reminder</button>
           </span>
         </td>
       </tr>
@@ -6474,6 +6922,7 @@ function renderChequeReview() {
 }
 
 function renderMaintenanceManagement() {
+  const stats = managerMaintenanceStats();
   const rows = state.data.manager.maintenanceRequests.map(
     (row) => `
       <tr>
@@ -6491,10 +6940,10 @@ function renderMaintenanceManagement() {
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCard("New Requests", "1", "Triage", "tool")}
-        ${metricCard("In Progress", "1", "Technician assigned", "refresh")}
-        ${metricCard("Scheduled", "1", "Visit booked", "file")}
-        ${metricCard("Completed", "1", "Closed", "check")}
+        ${metricCard("New Requests", String(stats.newCount), "Triage", "tool")}
+        ${metricCard("In Progress", String(stats.inProgressCount), "Active work", "refresh")}
+        ${metricCard("Scheduled", String(stats.scheduledCount), "Visit booked", "file")}
+        ${metricCard("Completed", String(stats.completedCount), "Closed", "check")}
       </section>
       <section class="section-band">
         <div class="section-header">
@@ -6510,6 +6959,7 @@ function renderMaintenanceManagement() {
 }
 
 function renderRenewalsManagement() {
+  const stats = managerRenewalStats();
   const rows = state.data.manager.renewals.map(
     (row) => `
       <tr>
@@ -6539,10 +6989,10 @@ function renderRenewalsManagement() {
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCard("Pending Renewals", "2", "Need decision", "refresh")}
-        ${metricCard("Approved Renewals", "1", "Approved", "check")}
-        ${metricCard("Rejected Renewals", "1", "Rejected", "close")}
-        ${metricCard("Expiring Soon", "2", "Within 90 days", "file")}
+        ${metricCard("Pending Renewals", String(stats.pendingCount), "Need decision", "refresh")}
+        ${metricCard("Approved Renewals", String(stats.approvedCount), "Approved", "check")}
+        ${metricCard("Rejected Renewals", String(stats.rejectedCount), "Rejected", "close")}
+        ${metricCard("Expiring Soon", String(stats.expiringSoonCount), "Within 90 days", "file")}
       </section>
       <section class="section-band">
         <div class="section-header">
@@ -6746,24 +7196,24 @@ function renderNotifications() {
 }
 
 function renderFinancial() {
-  const financial = state.data.manager.financial;
+  const finance = managerFinanceStats();
   const stats = managerRentStats();
-  const pendingReceivables = stats.pendingAmount + stats.lateAmount;
-  const collectedPercent = stats.expectedAmount ? Math.round((stats.paidAmount / stats.expectedAmount) * 100) : 0;
-  const pendingPercent = Math.max(0, 100 - collectedPercent);
+  const expenseBreakdown = [["Maintenance", 38, "AED 119K"], ["Utilities", 24, "AED 75K"], ["Vendors", 20, "AED 62K"], ["Other", 18, "AED 56K"]];
+  const operationalBreakdown = [["Admin", 34, "AED 40K"], ["Security", 28, "AED 33K"], ["Cleaning", 22, "AED 26K"], ["Transport", 16, "AED 19K"]];
   return `
     <div class="content-stack">
       <section class="metric-grid five">
-        ${metricCard("Total Rental Income", formatAed(stats.paidAmount), "Recorded paid", "chart")}
-        ${metricCard("Pending Rent", formatAed(pendingReceivables), "Receivables", "wallet")}
-        ${metricCard("Monthly Expenses", financial.expenses, "Service spend", "file")}
-        ${metricCard("Operational Costs", financial.operational, "Ops costs", "tool")}
-        ${metricCard("Net Income", financial.net, "Estimate", "chart")}
+        ${metricCard("Total Rental Income", formatAed(finance.rentalIncome), "Current occupied rent", "chart")}
+        ${metricCard("Pending Rent", formatAed(finance.pendingReceivables), `${stats.pendingRows.length + stats.lateRows.length} tracked follow-ups`, "wallet")}
+        ${metricCard("Monthly Expenses", formatAed(finance.expenses), "Service spend", "file")}
+        ${metricCard("Operational Costs", formatAed(finance.operationalCosts), "Ops costs", "tool")}
+        ${metricCard("Net Income", formatAed(finance.netIncome), "Income after costs", "chart")}
       </section>
       <section class="visual-grid">
-        ${visualCard("Rental income", [["Collected", collectedPercent, formatAed(stats.paidAmount)], ["Pending", pendingPercent, formatAed(pendingReceivables)]])}
-        ${visualCard("Expenses", [["Maintenance", 38, "AED 119K"], ["Utilities", 24, "AED 75K"], ["Vendors", 20, "AED 62K"]])}
-        ${visualCard("Operational costs", [["Admin", 34, "AED 40K"], ["Security", 28, "AED 33K"], ["Cleaning", 22, "AED 26K"]])}
+        ${visualCard("Rental income", [["Current rent", finance.rentalIncomePercent, formatAed(finance.rentalIncome)], ["Vacancy gap", finance.vacancyGapPercent, formatAed(finance.vacancyGap)]])}
+        ${visualCard("Rent tracker", [["Paid", finance.paidTrackerPercent, formatAed(stats.paidAmount)], ["Pending / Late", finance.pendingTrackerPercent, formatAed(finance.pendingReceivables)]])}
+        ${visualCard("Expenses", expenseBreakdown)}
+        ${visualCard("Operational costs", operationalBreakdown)}
         ${visualCard("Mortgage", [["Serviced", 72, "AED 410K"], ["Remaining", 28, "AED 160K"]])}
         ${visualCard("Insurance", [["Annual allocation", 48, "AED 92K"], ["Paid to date", 34, "AED 64K"]])}
         ${visualCard("Tax payments", [["Provisioned", 60, "AED 76K"], ["Filed", 30, "AED 38K"]])}
@@ -6793,7 +7243,7 @@ function portfolioMapTitle(filter = state.filters.portfolioMapFilter) {
   const titles = {
     All: "All Properties",
     Occupied: "Occupied Properties",
-    Vacant: "Vacant Properties",
+    Vacant: "Properties With Vacancy",
     Mixed: "Mixed Properties"
   };
   return titles[filter] || "All Properties";
@@ -7001,7 +7451,7 @@ function renderPortfolio() {
       <section class="metric-grid five">
         ${portfolioSummaryCard("Total Properties", String(summary.totalProperties), "Properties", "building", "All")}
         ${portfolioSummaryCard("Occupied Properties", String(summary.occupiedProperties), `${summary.occupiedUnits} occupied units`, "users", "Occupied")}
-        ${portfolioSummaryCard("Vacant Properties", String(summary.vacantProperties), `${summary.vacantUnits} vacant units`, "file", "Vacant")}
+        ${portfolioSummaryCard("Properties With Vacancy", String(summary.vacantProperties), `${summary.vacantUnits} vacant units`, "file", "Vacant")}
         ${portfolioSummaryCard("Total Units", String(summary.totalUnits), "Managed units", "home", "All")}
         ${portfolioSummaryCard("Total Assets", formatAed(summary.totalAssetValue, { compact: true }), "Portfolio value", "chart", "All", { focus: "assets" })}
       </section>
@@ -8388,7 +8838,7 @@ function rentDetailModal(id) {
     `,
     actions: `
       <button class="button ghost" type="button" data-action="close-modal">Close</button>
-      <button class="button secondary" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}">Send reminder</button>
+      <button class="button secondary" type="button" data-action="send-reminder" data-tenant="${escapeHtml(row.tenant)}" aria-label="Send reminder from rent record for ${escapeHtml(row.tenant)}">Send reminder</button>
     `
   };
 }
@@ -8619,7 +9069,6 @@ function resetDemoData() {
   state.filters = defaultFilters();
   state.notificationClearedIds = [];
   state.notificationPanelOpen = false;
-  resetPullToResetState({ update: false });
   ensureActionCenterData();
   saveData();
   renderAtTop();
@@ -8640,15 +9089,24 @@ function focusAskAIInput() {
 
 function focusAskAITrigger() {
   window.requestAnimationFrame(() => {
-    document.querySelector("#ask-ai-trigger")?.focus({ preventScroll: true });
+    document.querySelector("#ask-ai-notch")?.focus({ preventScroll: true });
   });
 }
 
 function openAskAI() {
+  const nudge = ensureAskAINudgeState();
+  const nudgeSuggestedPrompt = nudge.isVisible ? nudge.suggestedPrompt : "";
+  const nudgeContext = nudge.isVisible ? nudge.context : null;
   ensureAskAIMessages();
+  clearAskAINudge({ schedule: false, setCooldown: false });
+  if (nudgeSuggestedPrompt && !state.askAI.inputValue.trim()) {
+    state.askAI.inputValue = nudgeSuggestedPrompt;
+  }
+  state.askAI.contextPrompt = nudgeSuggestedPrompt || "";
+  state.askAI.nudgeContext = nudgeContext;
   state.askAI.isOpen = true;
-  state.askAI.isExpanded = false;
-  state.askAI.activationState = "open";
+  state.askAI.isExpanded = true;
+  state.askAI.activationState = "activating";
   state.askAI.error = null;
   state.notificationPanelOpen = false;
   render();
@@ -8662,8 +9120,11 @@ function closeAskAI() {
   state.askAI.isExpanded = false;
   state.askAI.isTyping = false;
   state.askAI.error = null;
+  state.askAI.contextPrompt = "";
+  state.askAI.nudgeContext = null;
   state.askAI.activationState = "idle";
   render();
+  ensureAskAINudgeScheduler();
   focusAskAITrigger();
 }
 
@@ -8736,282 +9197,6 @@ async function submitAskAIMessage(form) {
   }
 }
 
-function pullResetCopy() {
-  const pull = state.pullToReset;
-  if (pull.phase === "refreshing") return "Resetting demo data...";
-  if (pull.phase === "complete") return "Demo data reset";
-  return pull.thresholdReached ? "Release to reset demo data" : "Pull further to reset demo data";
-}
-
-function updatePullToResetIndicator({ settle = false } = {}) {
-  const pull = state.pullToReset;
-  const main = document.querySelector(".main-area");
-  const indicator = document.querySelector("[data-pull-reset]");
-  if (!main || !indicator) return;
-
-  const visible = pull.phase !== "idle";
-  const offset = visible ? Math.min(PULL_RESET_MAX_DISTANCE, Math.round(pull.distance * 0.52)) : 0;
-  const progress = Math.min(1, pull.distance / PULL_RESET_THRESHOLD);
-
-  main.style.setProperty("--pull-reset-offset", `${offset}px`);
-  main.style.setProperty("--pull-reset-progress", progress.toFixed(2));
-  main.classList.toggle("pull-reset-active", visible);
-  main.classList.toggle("pull-reset-ready", Boolean(pull.thresholdReached));
-  main.classList.toggle("pull-reset-settling", settle || pull.phase === "refreshing" || pull.phase === "complete");
-
-  indicator.classList.toggle("visible", visible);
-  indicator.dataset.state = pull.thresholdReached && pull.phase === "pulling" ? "ready" : pull.phase;
-  indicator.setAttribute("aria-hidden", visible ? "false" : "true");
-  const label = indicator.querySelector("[data-pull-reset-label]");
-  if (label) label.textContent = pullResetCopy();
-}
-
-function resetPullToResetState({ update = true } = {}) {
-  Object.assign(state.pullToReset, {
-    phase: "idle",
-    tracking: false,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX: 0,
-    startY: 0,
-    gestureStartedAtTop: false,
-    isEligibleForPullReset: false,
-    source: ""
-  });
-  if (update) updatePullToResetIndicator({ settle: true });
-}
-
-function pullResetScrollTop() {
-  return Math.max(window.scrollY, document.documentElement.scrollTop || 0, document.body.scrollTop || 0);
-}
-
-function isAtPullResetStart() {
-  return pullResetScrollTop() <= PULL_RESET_TOP_TOLERANCE;
-}
-
-function isPullResetBlockedTarget(target) {
-  return Boolean(
-    target?.closest?.(
-      [
-        "input",
-        "textarea",
-        "select",
-        "option",
-        "button",
-        "a",
-        "form",
-        "table",
-        ".table-wrap",
-        ".modal-backdrop",
-        ".modal-card",
-        ".notifications-menu",
-        ".sidebar",
-        ".mobile-nav",
-        "[data-action]",
-        "[data-page]",
-        "[data-modal]",
-        "[data-filter]",
-        "[data-tab]",
-        "[role='button']",
-        "[contenteditable='true']"
-      ].join(", ")
-    )
-  );
-}
-
-function hasNestedScrollableAncestor(target) {
-  let node = target instanceof Element ? target : null;
-  while (node && node !== document.body && node !== document.documentElement) {
-    const style = window.getComputedStyle(node);
-    const scrollable = /(auto|scroll|overlay)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1;
-    if (scrollable) return true;
-    node = node.parentElement;
-  }
-  return false;
-}
-
-function canUsePullToReset(event) {
-  const pull = state.pullToReset;
-  const now = Date.now();
-  if (isAskAIExpandedOverlayOpen()) return false;
-  if (!state.auth || state.modal || state.notificationPanelOpen) return false;
-  if (pull.isResetting || now < pull.cooldownUntil) return false;
-  if (!isAtPullResetStart()) return false;
-  if (now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) return false;
-  if (pull.wheelSessionActive && !pull.wheelSessionStartedAtTop) return false;
-  if (isPullResetBlockedTarget(event.target)) return false;
-  if (hasNestedScrollableAncestor(event.target)) return false;
-  return true;
-}
-
-function startPullToReset(source, startX, startY) {
-  const gestureStartedAtTop = isAtPullResetStart();
-  Object.assign(state.pullToReset, {
-    phase: "idle",
-    tracking: true,
-    thresholdReached: false,
-    isResetting: false,
-    distance: 0,
-    rawDistance: 0,
-    startX,
-    startY,
-    gestureStartedAtTop,
-    isEligibleForPullReset: gestureStartedAtTop,
-    source
-  });
-}
-
-function setPullToResetDistance(distance) {
-  const pull = state.pullToReset;
-  pull.phase = "pulling";
-  pull.distance = Math.min(PULL_RESET_MAX_DISTANCE, Math.max(0, distance));
-  pull.thresholdReached = pull.distance >= PULL_RESET_THRESHOLD;
-  updatePullToResetIndicator();
-}
-
-function cancelPullToReset() {
-  resetPullToResetState();
-}
-
-function triggerPullToReset() {
-  const pull = state.pullToReset;
-  const now = Date.now();
-  if (pull.isResetting || !pull.isEligibleForPullReset) return;
-  if (!isAtPullResetStart() || now - pull.lastNonTopScrollTime < PULL_RESET_TOP_STABILITY_MS) {
-    cancelPullToReset();
-    return;
-  }
-  Object.assign(state.pullToReset, {
-    phase: "refreshing",
-    tracking: false,
-    thresholdReached: true,
-    isResetting: true,
-    distance: PULL_RESET_THRESHOLD,
-    cooldownUntil: Date.now() + PULL_RESET_COOLDOWN
-  });
-  updatePullToResetIndicator({ settle: true });
-  window.setTimeout(resetDemoData, 180);
-}
-
-function finishPullToReset() {
-  const pull = state.pullToReset;
-  if (!pull.tracking && pull.phase !== "pulling") return;
-  if (pull.isEligibleForPullReset && pull.thresholdReached) {
-    triggerPullToReset();
-  } else {
-    cancelPullToReset();
-  }
-}
-
-function handlePullResetTouchStart(event) {
-  if (isAskAIExpandedOverlayOpen()) return;
-  if (event.touches.length !== 1) return;
-  if (!isAtPullResetStart()) state.pullToReset.lastNonTopScrollTime = Date.now();
-  if (!canUsePullToReset(event)) return;
-  const touch = event.touches[0];
-  startPullToReset("touch", touch.clientX, touch.clientY);
-}
-
-function handlePullResetTouchMove(event) {
-  if (isAskAIExpandedOverlayOpen()) {
-    if (state.pullToReset.tracking) cancelPullToReset();
-    return;
-  }
-  const pull = state.pullToReset;
-  if (!pull.tracking || pull.source !== "touch" || event.touches.length !== 1) return;
-  if (!isAtPullResetStart()) {
-    cancelPullToReset();
-    return;
-  }
-
-  const touch = event.touches[0];
-  const deltaY = touch.clientY - pull.startY;
-  const deltaX = touch.clientX - pull.startX;
-  if (Math.abs(deltaX) > Math.abs(deltaY) * 0.8) {
-    cancelPullToReset();
-    return;
-  }
-
-  if (deltaY <= PULL_RESET_START_DISTANCE) return;
-  event.preventDefault();
-  if (!pull.isEligibleForPullReset) return;
-  setPullToResetDistance((deltaY - PULL_RESET_START_DISTANCE) * PULL_RESET_TOUCH_RESISTANCE);
-}
-
-function handlePullResetTouchEnd() {
-  if (state.pullToReset.source === "touch") finishPullToReset();
-}
-
-function handlePullResetScroll() {
-  if (isAskAIExpandedOverlayOpen()) return;
-  if (isAtPullResetStart()) return;
-  state.pullToReset.lastNonTopScrollTime = Date.now();
-  if (state.pullToReset.tracking) cancelPullToReset();
-}
-
-let pullResetWheelTimer = null;
-let pullResetWheelIdleTimer = null;
-
-function handlePullResetWheel(event) {
-  if (isAskAIExpandedOverlayOpen()) {
-    if (state.pullToReset.tracking) cancelPullToReset();
-    return;
-  }
-
-  const pull = state.pullToReset;
-  const now = Date.now();
-  const atTop = isAtPullResetStart();
-
-  if (!atTop) {
-    pull.lastNonTopScrollTime = now;
-  }
-
-  const sessionExpired = !pull.wheelSessionActive || now - pull.lastWheelTime > PULL_RESET_WHEEL_IDLE_DELAY;
-  if (sessionExpired) {
-    pull.wheelSessionActive = true;
-    pull.wheelSessionStartedAtTop = atTop;
-  }
-  pull.lastWheelTime = now;
-
-  window.clearTimeout(pullResetWheelIdleTimer);
-  pullResetWheelIdleTimer = window.setTimeout(() => {
-    state.pullToReset.wheelSessionActive = false;
-    state.pullToReset.wheelSessionStartedAtTop = false;
-  }, PULL_RESET_WHEEL_IDLE_DELAY);
-
-  if (event.deltaY >= 0) {
-    if (pull.source === "wheel") cancelPullToReset();
-    return;
-  }
-  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-
-  if (!pull.wheelSessionStartedAtTop) {
-    if (pull.source === "wheel") cancelPullToReset();
-    return;
-  }
-
-  if (pull.source === "wheel" && !atTop) {
-    cancelPullToReset();
-    return;
-  }
-  if (!pull.tracking && !canUsePullToReset(event)) return;
-
-  if (!pull.tracking) startPullToReset("wheel", event.clientX, event.clientY);
-  event.preventDefault();
-
-  pull.rawDistance += Math.min(PULL_RESET_WHEEL_STEP_MAX, Math.abs(event.deltaY) * PULL_RESET_WHEEL_RESISTANCE);
-  if (pull.rawDistance > PULL_RESET_START_DISTANCE) {
-    setPullToResetDistance((pull.rawDistance - PULL_RESET_START_DISTANCE) * PULL_RESET_WHEEL_DISTANCE_RESISTANCE);
-  }
-
-  window.clearTimeout(pullResetWheelTimer);
-  pullResetWheelTimer = window.setTimeout(() => {
-    if (state.pullToReset.source === "wheel") finishPullToReset();
-  }, PULL_RESET_WHEEL_RELEASE_DELAY);
-}
-
 function formatDateInput(value) {
   if (!value) return "12 Jun 2026";
   const [year, month, day] = value.split("-");
@@ -9042,6 +9227,8 @@ document.addEventListener("click", (event) => {
     state.askAI.isOpen = false;
     state.askAI.isExpanded = false;
     state.askAI.activationState = "idle";
+    state.askAI.contextPrompt = "";
+    state.askAI.nudgeContext = null;
     render();
     replaceHistoryEntry();
     return;
@@ -9100,6 +9287,18 @@ document.addEventListener("click", (event) => {
     return;
   }
 
+  if (action === "dismiss-ask-ai-nudge") {
+    event.preventDefault();
+    event.stopPropagation();
+    dismissAskAINudge({ manual: true });
+    return;
+  }
+
+  if (action === "trigger-ask-ai-nudge") {
+    triggerAskAINudge();
+    return;
+  }
+
   if (action === "toggle-ask-ai") {
     state.askAI.isOpen ? closeAskAI() : openAskAI();
     return;
@@ -9107,14 +9306,6 @@ document.addEventListener("click", (event) => {
 
   if (action === "close-ask-ai") {
     closeAskAI();
-    return;
-  }
-
-  if (action === "toggle-ask-ai-expanded") {
-    persistActiveAskAISession();
-    state.askAI.isExpanded = !state.askAI.isExpanded;
-    render();
-    focusAskAIInput();
     return;
   }
 
@@ -9177,6 +9368,8 @@ document.addEventListener("click", (event) => {
     state.askAI.isExpanded = false;
     state.askAI.isTyping = false;
     state.askAI.error = null;
+    state.askAI.contextPrompt = "";
+    state.askAI.nudgeContext = null;
     state.askAI.activationState = "idle";
     renderAtTop();
     replaceHistoryEntry();
@@ -9563,8 +9756,12 @@ document.addEventListener("click", (event) => {
   if (action === "portfolio-map-zoom") {
     const direction = actionButton.dataset.direction;
     if (portfolioLeafletMap) {
-      if (direction === "in") portfolioLeafletMap.zoomIn();
-      if (direction === "out") portfolioLeafletMap.zoomOut();
+      stopPortfolioMapMotion();
+      const currentZoom = portfolioLeafletMap.getZoom();
+      const minZoom = portfolioLeafletMap.getMinZoom();
+      const maxZoom = portfolioLeafletMap.getMaxZoom();
+      const nextZoom = direction === "in" ? currentZoom + 1 : currentZoom - 1;
+      portfolioLeafletMap.setZoom(Math.min(maxZoom, Math.max(minZoom, nextZoom)), { animate: false });
       return;
     }
     initializePortfolioLeafletMap();
@@ -9580,7 +9777,8 @@ document.addEventListener("click", (event) => {
       up: [0, -distance],
       down: [0, distance]
     }[direction] || [0, 0];
-    portfolioLeafletMap?.panBy(movement, { animate: true });
+    stopPortfolioMapMotion();
+    portfolioLeafletMap?.panBy(movement, { animate: false });
     return;
   }
 
@@ -9669,7 +9867,10 @@ document.addEventListener("submit", async (event) => {
       activationState: "idle",
       sessions: [],
       activeSessionId: "",
-      search: ""
+      search: "",
+      contextPrompt: "",
+      nudgeContext: null,
+      nudge: defaultAskAINudgeState()
     };
     ensureAskAIMessages(state.role);
     ensureActionCenterData({ persist: true });
@@ -9969,12 +10170,35 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("touchstart", handlePullResetTouchStart, { passive: true });
-window.addEventListener("touchmove", handlePullResetTouchMove, { passive: false });
-window.addEventListener("touchend", handlePullResetTouchEnd, { passive: true });
-window.addEventListener("touchcancel", cancelPullToReset, { passive: true });
-window.addEventListener("scroll", handlePullResetScroll, { passive: true });
-window.addEventListener("wheel", handlePullResetWheel, { passive: false });
+window.addEventListener("scroll", markAskAINudgeActivity, { passive: true });
+window.addEventListener("wheel", markAskAINudgeActivity, { passive: true });
+window.addEventListener("touchmove", markAskAINudgeActivity, { passive: true });
+document.addEventListener("input", markAskAINudgeActivity, true);
+document.addEventListener("focusin", markAskAINudgeActivity, true);
+document.addEventListener(
+  "pointermove",
+  (event) => {
+    askAINotchPointer = { x: event.clientX, y: event.clientY };
+    syncAskAINotchHoverState();
+  },
+  { passive: true }
+);
+document.addEventListener(
+  "pointerleave",
+  () => {
+    askAINotchPointer = { x: -1, y: -1 };
+    syncAskAINotchHoverState();
+  },
+  { passive: true }
+);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    clearAskAINudge({ schedule: false, setCooldown: false });
+    return;
+  }
+  ensureAskAINudgeScheduler();
+});
 
 window.addEventListener("popstate", (event) => {
   restoreFromHistory(event.state);
