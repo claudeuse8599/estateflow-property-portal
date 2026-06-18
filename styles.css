@@ -820,8 +820,8 @@ button:focus-visible {
   --ask-ai-notch-rest-height: var(--ai-notch-rest-height, 46px);
   --ask-ai-notch-hover-height: var(--ai-notch-hover-height, 54px);
   --ask-ai-notch-open-height: var(--ai-notch-open-height, 58px);
-  --ask-ai-notch-nudge-width: var(--ai-notch-nudge-width, 300px);
-  --ask-ai-notch-nudge-height: var(--ai-notch-nudge-height, 72px);
+  --ask-ai-notch-nudge-width: var(--ai-notch-nudge-width, 380px);
+  --ask-ai-notch-nudge-height: var(--ai-notch-nudge-height, 80px);
   position: fixed;
   top: env(safe-area-inset-top, 0px);
   left: 50%;
@@ -829,15 +829,17 @@ button:focus-visible {
   width: var(--ask-ai-notch-width);
   height: var(--ask-ai-notch-rest-height);
   min-height: var(--ask-ai-notch-rest-height);
-  transform: translateX(-50%);
+  transform: translate3d(-50%, 0, 0);
+  transform-origin: top center;
   pointer-events: auto;
   border-radius: var(--ai-notch-radius, 0 0 16px 16px);
   contain: layout paint;
   isolation: isolate;
+  backface-visibility: hidden;
   will-change: width, height;
   transition:
-    width 360ms var(--ask-ai-notch-ease),
-    height 340ms var(--ask-ai-notch-ease);
+    width 420ms var(--ask-ai-notch-ease-soft),
+    height 400ms var(--ask-ai-notch-ease-soft);
 }
 
 .ask-ai-notch-shell::before {
@@ -895,9 +897,11 @@ button:focus-visible {
   cursor: pointer;
   pointer-events: auto;
   transform: translateZ(0);
+  transform-origin: top center;
+  backface-visibility: hidden;
   will-change: padding, box-shadow, background-position;
   transition:
-    padding 300ms var(--ask-ai-notch-ease-soft),
+    padding 380ms var(--ask-ai-notch-ease-soft),
     box-shadow 260ms ease;
   animation: ask-ai-notch-shimmer 8s ease-in-out infinite;
 }
@@ -924,15 +928,18 @@ button:focus-visible {
 }
 
 .ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__content {
-  gap: 8px;
-  justify-content: flex-start;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  justify-content: stretch;
+  justify-items: start;
   width: 100%;
-  font-size: 13.5px;
+  font-size: 14px;
+  line-height: 1.12;
 }
 
 .ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__icon {
-  width: 23px;
-  height: 23px;
+  width: 24px;
+  height: 24px;
 }
 
 .ask-ai-notch-launcher:focus-visible {
@@ -955,54 +962,121 @@ button:focus-visible {
 .ask-ai-notch-launcher__content {
   position: relative;
   z-index: 1;
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto auto;
   align-items: center;
+  justify-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
   font-size: 13px;
   font-weight: 720;
   line-height: 1;
   letter-spacing: 0;
   white-space: nowrap;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition:
+    gap 320ms var(--ask-ai-notch-ease-soft),
+    font-size 260ms ease,
+    opacity 180ms ease;
+}
+
+.ask-ai-notch-shell:not([data-state="nudge"]) .ask-ai-notch-launcher__content {
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 10px;
 }
 
 .ask-ai-notch-launcher__icon {
   display: inline-grid;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   place-items: center;
   color: #fff;
 }
 
+.ask-ai-notch-launcher__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ask-ai-notch-shell:not([data-state="nudge"]) .ask-ai-notch-launcher__icon {
+  justify-self: end;
+  margin-right: 0;
+}
+
+.ask-ai-notch-label-stack {
+  position: relative;
+  display: grid;
+  grid-template-areas: "label";
+  align-items: center;
+  justify-items: start;
+  min-width: 48px;
+  min-height: 1.18em;
+  overflow: visible;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 .ask-ai-notch-launcher__label {
+  grid-area: label;
   display: inline-block;
-  max-width: 68px;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 1;
-  transform: translateY(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
   transition:
-    max-width 280ms var(--ask-ai-notch-ease-soft),
-    opacity 220ms ease,
-    transform 280ms var(--ask-ai-notch-ease-soft);
+    opacity 180ms ease,
+    filter 180ms ease;
 }
 
-.ask-ai-notch-shell:hover .ask-ai-notch-launcher__label,
-.ask-ai-notch-shell[data-hover="true"] .ask-ai-notch-launcher__label,
-.ask-ai-notch-shell:has(.ask-ai-notch-launcher:focus-visible) .ask-ai-notch-launcher__label,
-.ask-ai-notch-shell[data-state="active"] .ask-ai-notch-launcher__label {
-  max-width: 68px;
+.ask-ai-notch-launcher__label--rest {
+  max-width: 78px;
   opacity: 1;
-  transform: translateY(0);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__label {
-  max-width: 178px;
+.ask-ai-notch-launcher__label--message {
+  max-width: min(262px, calc(100vw - 142px));
+  opacity: 0;
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
   line-height: 1.12;
-  animation: ask-ai-nudge-copy-in 260ms var(--ask-ai-notch-ease-soft) both;
+  text-align: left;
+  filter: blur(0.1px);
+}
+
+.ask-ai-notch-shell:not([data-state="nudge"]) .ask-ai-notch-label-stack {
+  justify-self: start;
+  min-width: 48px;
+}
+
+.ask-ai-notch-shell:hover .ask-ai-notch-launcher__label--rest,
+.ask-ai-notch-shell[data-hover="true"] .ask-ai-notch-launcher__label--rest,
+.ask-ai-notch-shell:has(.ask-ai-notch-launcher:focus-visible) .ask-ai-notch-launcher__label--rest,
+.ask-ai-notch-shell[data-state="active"] .ask-ai-notch-launcher__label--rest {
+  max-width: 78px;
+  opacity: 1;
+}
+
+.ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__label--rest {
+  opacity: 0;
+  transition-duration: 90ms;
+}
+
+.ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-launcher__label--message {
+  opacity: 1;
+  filter: blur(0);
+  transition-delay: 120ms;
+}
+
+.ask-ai-notch-shell[data-state="nudge"] .ask-ai-notch-label-stack {
+  width: min(262px, calc(100vw - 142px));
 }
 
 .ask-ai-nudge-close {
@@ -1109,17 +1183,6 @@ button:focus-visible {
   }
 }
 
-@keyframes ask-ai-nudge-copy-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes ask-ai-nudge-countdown {
   to {
     --ask-ai-nudge-progress: 0deg;
@@ -1188,7 +1251,9 @@ button:focus-visible {
 }
 
 .ask-ai-panel.expanded {
-  inset: 16px;
+  --ask-ai-workspace-inset: 16px;
+  --ask-ai-workspace-sidebar-width: calc(var(--sidebar) - var(--ask-ai-workspace-inset) - 1px);
+  inset: var(--ask-ai-workspace-inset);
   z-index: 92;
   width: auto;
   max-height: calc(100vh - 32px);
@@ -1200,7 +1265,7 @@ button:focus-visible {
 .ask-ai-panel.expanded.ask-ai-workspace {
   position: fixed;
   display: grid;
-  grid-template-columns: minmax(260px, 292px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, var(--ask-ai-workspace-sidebar-width)) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 0;
   padding: 0;
@@ -2081,6 +2146,7 @@ button:focus-visible {
 }
 
 .main-area {
+  --page-header-gap: var(--space-6);
   min-width: 0;
   padding: calc(22px + var(--ask-ai-layout-offset, 0px)) 28px 42px;
   transition: padding-top 260ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -2871,6 +2937,51 @@ button:focus-visible {
 .tenant-status-card:hover {
   border-color: var(--line-strong);
   background: var(--surface-soft);
+}
+
+.tenant-status-card.contract-safe {
+  border-color: var(--apple-green-border);
+}
+
+.tenant-status-card.contract-safe > strong,
+.tenant-status-card.contract-safe p,
+.tenant-status-card.contract-safe em {
+  color: var(--apple-green-text);
+}
+
+.tenant-status-card.contract-safe em {
+  border-color: var(--apple-green-border);
+  background: var(--apple-green-soft);
+}
+
+.tenant-status-card.contract-warning {
+  border-color: var(--apple-orange-border);
+}
+
+.tenant-status-card.contract-warning > strong,
+.tenant-status-card.contract-warning p,
+.tenant-status-card.contract-warning em {
+  color: var(--apple-orange-text);
+}
+
+.tenant-status-card.contract-warning em {
+  border-color: var(--apple-orange-border);
+  background: var(--apple-orange-soft);
+}
+
+.tenant-status-card.contract-critical {
+  border-color: var(--apple-red-border);
+}
+
+.tenant-status-card.contract-critical > strong,
+.tenant-status-card.contract-critical p,
+.tenant-status-card.contract-critical em {
+  color: var(--apple-red-text);
+}
+
+.tenant-status-card.contract-critical em {
+  border-color: var(--apple-red-border);
+  background: var(--apple-red-soft);
 }
 
 .tenant-status-card-top {
@@ -5641,23 +5752,24 @@ button,
 .focus-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .focus-meta span,
 .focus-meta button {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 6px 11px;
+  min-height: 38px;
+  padding: 8px 15px;
   border: 0;
   border-radius: 999px;
   color: var(--muted);
   background: var(--surface-soft);
   font: inherit;
-  font-size: 12px;
-  font-weight: 620;
+  font-size: 13px;
+  font-weight: 680;
+  line-height: 1.15;
 }
 
 .focus-meta button {
@@ -6535,9 +6647,13 @@ body {
   line-height: 1.04;
 }
 
-.screen-focus-side > span,
-.focus-meta span {
+.screen-focus-side > span {
   font-size: 11.5px;
+}
+
+.focus-meta span,
+.focus-meta button {
+  font-size: 13px;
 }
 
 .focus-block h3,
@@ -6744,8 +6860,8 @@ td,
   --ai-notch-rest-height: 46px;
   --ai-notch-hover-height: 54px;
   --ai-notch-open-height: 58px;
-  --ai-notch-nudge-width: 300px;
-  --ai-notch-nudge-height: 72px;
+  --ai-notch-nudge-width: 380px;
+  --ai-notch-nudge-height: 80px;
   --ai-notch-radius: 0 0 16px 16px;
   --ai-workspace-groove-width: 292px;
   --ai-workspace-groove-height: 58px;
@@ -6760,8 +6876,8 @@ td,
   margin-bottom: var(--space-5);
 }
 
-.dashboard-topbar {
-  margin-bottom: calc(var(--space-16) + var(--space-5));
+.standard-main-area > .screen-focus:first-of-type {
+  margin-top: var(--page-header-gap);
 }
 
 @media (min-width: 901px) {
@@ -7663,6 +7779,7 @@ td {
 
 @media (max-width: 620px) {
   .main-area {
+    --page-header-gap: var(--space-4);
     padding: calc(var(--space-5) + var(--ask-ai-layout-offset, 0px)) var(--space-5) 32px;
   }
 

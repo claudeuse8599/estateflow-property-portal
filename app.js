@@ -70,25 +70,100 @@ const ASK_AI_NUDGE_PROMPTS = [
   "Want a shortcut?",
   "I can help with the next step."
 ];
-const TENANT_ASK_AI_NUDGE_PROMPTS = [
-  "Want help paying rent?",
-  "I can find your receipt.",
-  "Need help with maintenance?",
-  "I can explain your contract.",
-  "Want me to guide you?"
+const ASK_AI_GENERAL_NUDGE_MESSAGES = [
+  { id: "general_shortcut", text: "Want a shortcut?", intent: "general_help", suggestedPrompt: "Help me with this page." },
+  { id: "general_save_time", text: "I can save you a few clicks.", intent: "general_help", suggestedPrompt: "What can you help me with here?" },
+  { id: "general_next_step", text: "Need the next step?", intent: "general_help", suggestedPrompt: "What should I do next?" },
+  { id: "general_find_faster", text: "Let me find that faster.", intent: "general_help", suggestedPrompt: "Help me find what I need." }
 ];
-const MANAGEMENT_ASK_AI_NUDGE_PROMPTS = [
-  "Want today's queue summarized?",
-  "I can find urgent actions.",
-  "Want rent follow-ups first?",
-  "I can summarize maintenance.",
-  "Let me sort the queue."
-];
+const ASK_AI_NUDGE_MESSAGES = {
+  tenant: {
+    general: [
+      { id: "tenant_general_guide", text: "Want me to guide you?", intent: "tenant_help", suggestedPrompt: "Guide me through this page." },
+      { id: "tenant_general_receipt", text: "Need your latest receipt?", intent: "tenant_receipt_help", suggestedPrompt: "Help me find my latest receipt." }
+    ],
+    dashboard: [
+      { id: "tenant_dashboard_rent_overdue", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "overdue", text: "Your rent is overdue. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Help me pay my overdue rent.", actionTarget: "rent" },
+      { id: "tenant_dashboard_rent_due", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "dueSoon", text: "Rent is due soon. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Explain my rent payment options.", actionTarget: "rent" },
+      { id: "tenant_dashboard_renewal", condition: (ctx) => ctx.contract?.renewalSoon, text: "Renewal coming up. Want help?", intent: "tenant_contract_renewal", suggestedPrompt: "Help me review my renewal.", actionTarget: "renewal" },
+      { id: "tenant_dashboard_actions", condition: (ctx) => ctx.actions?.count > 0, text: "Pending actions waiting. Sort them?", intent: "tenant_action_summary", suggestedPrompt: "Summarize my pending actions.", actionTarget: "actionCenter" },
+      { id: "tenant_dashboard_general", text: "Want help with this dashboard?", intent: "tenant_dashboard_help", suggestedPrompt: "What should I check first?" }
+    ],
+    rent: [
+      { id: "tenant_rent_overdue", priority: "urgent", condition: (ctx) => ctx.rent?.urgency === "overdue", text: "Your rent is overdue. Need help?", intent: "tenant_pay_rent", suggestedPrompt: "Help me pay my overdue rent.", actionTarget: "rent" },
+      { id: "tenant_rent_help", text: "Want help with rent payment?", intent: "tenant_rent_help", suggestedPrompt: "Explain my rent payment options.", actionTarget: "rent" }
+    ],
+    maintenance: [
+      { id: "tenant_maintenance_pending", condition: (ctx) => ctx.maintenance?.openCount > 0, text: "Maintenance is open. Need an update?", intent: "tenant_maintenance_update", suggestedPrompt: "Summarize my maintenance request.", actionTarget: "maintenance" },
+      { id: "tenant_maintenance_report", text: "Want help reporting an issue?", intent: "tenant_report_maintenance", suggestedPrompt: "Help me submit a maintenance request.", actionTarget: "maintenance" }
+    ],
+    complaints: [
+      { id: "tenant_complaint_help", text: "Want help writing this clearly?", intent: "tenant_file_complaint", suggestedPrompt: "Help me write a complaint.", actionTarget: "maintenance" }
+    ],
+    contracts: [
+      { id: "tenant_contract_renewal", condition: (ctx) => ctx.contract?.renewalSoon || ctx.contract?.hasRequest, text: "Want help with your contract?", intent: "tenant_contract_help", suggestedPrompt: "Help me review my contract request.", actionTarget: "renewal" }
+    ],
+    documents: [
+      { id: "tenant_documents_receipt", text: "Need a document or receipt?", intent: "tenant_document_help", suggestedPrompt: "Help me find a tenant document.", actionTarget: "documents" }
+    ],
+    "action-center": [
+      { id: "tenant_actions_sort", condition: (ctx) => ctx.actions?.count > 0, text: "Pending actions waiting. Sort them?", intent: "tenant_action_summary", suggestedPrompt: "Summarize my pending actions.", actionTarget: "actionCenter" },
+      { id: "tenant_actions_clear", text: "You are caught up. Need anything?", intent: "tenant_action_help", suggestedPrompt: "What can you help me with?" }
+    ]
+  },
+  manager: {
+    general: [
+      { id: "manager_general_ops", text: "Want a quick ops summary?", intent: "management_ops_summary", suggestedPrompt: "Summarize the management dashboard." },
+      { id: "manager_general_prioritize", text: "Want urgent follow-ups first?", intent: "management_prioritize", suggestedPrompt: "Show urgent follow-ups first." }
+    ],
+    dashboard: [
+      { id: "manager_dashboard_queue", priority: "urgent", condition: (ctx) => ctx.queue?.totalActions > 0, text: "{count} actions waiting. Summarize?", count: (ctx) => ctx.queue.totalActions, intent: "management_action_summary", suggestedPrompt: "Summarize today's action queue.", actionTarget: "actionCenter" },
+      { id: "manager_dashboard_ops", text: "Want a quick ops summary?", intent: "management_ops_summary", suggestedPrompt: "Summarize the management dashboard." }
+    ],
+    "tenant-management": [
+      { id: "manager_tenants_followup", text: "Want tenant follow-ups first?", intent: "management_tenant_followups", suggestedPrompt: "Show tenant follow-ups.", actionTarget: "tenants" }
+    ],
+    rent: [
+      { id: "manager_rent_followups", priority: "urgent", condition: (ctx) => ctx.rent?.pendingFollowUps > 0, text: "{count} rent follow-ups waiting.", count: (ctx) => ctx.rent.pendingFollowUps, intent: "management_rent_followups", suggestedPrompt: "Summarize rent follow-ups.", actionTarget: "rentTracking" },
+      { id: "manager_rent_review", text: "Want overdue rent first?", intent: "management_rent_review", suggestedPrompt: "Show overdue rent first.", actionTarget: "rentTracking" }
+    ],
+    "payment-review": [
+      { id: "manager_payment_review", priority: "urgent", condition: (ctx) => ctx.payments?.pendingCount > 0, text: "{count} payments need review.", count: (ctx) => ctx.payments.pendingCount, intent: "management_payment_review", suggestedPrompt: "Summarize payment reviews.", actionTarget: "chequeReview" }
+    ],
+    maintenance: [
+      { id: "manager_maintenance_open", priority: "urgent", condition: (ctx) => ctx.maintenance?.openCount > 0, text: "{count} maintenance requests open.", count: (ctx) => ctx.maintenance.openCount, intent: "management_maintenance_summary", suggestedPrompt: "Summarize open maintenance requests.", actionTarget: "maintenanceMgmt" },
+      { id: "manager_maintenance_review", text: "Want urgent requests first?", intent: "management_maintenance_review", suggestedPrompt: "Show urgent maintenance requests.", actionTarget: "maintenanceMgmt" }
+    ],
+    contracts: [
+      { id: "manager_renewals_pending", priority: "urgent", condition: (ctx) => ctx.renewals?.pendingCount > 0, text: "{count} renewals need decision.", count: (ctx) => ctx.renewals.pendingCount, intent: "management_renewal_review", suggestedPrompt: "Summarize pending renewals.", actionTarget: "renewalsMgmt" }
+    ],
+    documents: [
+      { id: "manager_documents_review", condition: (ctx) => ctx.documents?.pendingReviews > 0, text: "{count} documents need review.", count: (ctx) => ctx.documents.pendingReviews, intent: "management_document_review", suggestedPrompt: "Summarize document reviews.", actionTarget: "docsMgmt" }
+    ],
+    finance: [
+      { id: "manager_finance_summary", text: "Want finance summarized?", intent: "management_finance_summary", suggestedPrompt: "Summarize the financial overview.", actionTarget: "financial" }
+    ],
+    portfolio: [
+      { id: "manager_portfolio_summary", text: "Want portfolio highlights?", intent: "management_portfolio_summary", suggestedPrompt: "Summarize portfolio health.", actionTarget: "portfolio" }
+    ],
+    "action-center": [
+      { id: "manager_action_queue", condition: (ctx) => ctx.queue?.totalActions > 0, text: "{count} actions in queue. Sort them?", count: (ctx) => ctx.queue.totalActions, intent: "management_action_summary", suggestedPrompt: "Summarize today's action queue.", actionTarget: "actionCenter" },
+      { id: "manager_action_clear", text: "Queue is clear. Need anything?", intent: "management_action_help", suggestedPrompt: "What can you help me with?" }
+    ]
+  }
+};
 
 function defaultAskAINudgeState() {
   return {
     isVisible: false,
+    id: "",
     message: "",
+    intent: "",
+    suggestedPrompt: "",
+    actionTarget: "",
+    context: null,
+    recentlyShownIds: [],
+    lastShownAt: null,
     startedAt: null,
     durationMs: ASK_AI_NUDGE_CONFIG.visibleDurationMs,
     dismissedAt: 0,
@@ -134,6 +209,8 @@ const state = {
     sessions: [],
     activeSessionId: "",
     search: "",
+    contextPrompt: "",
+    nudgeContext: null,
     nudge: defaultAskAINudgeState()
   },
   sequence: 0,
@@ -608,7 +685,7 @@ const nav = {
   manager: [
     { id: "dashboard", label: "Dashboard", icon: "home", group: "Overview" },
     { id: "actionCenter", label: "Action Center", icon: "bell", group: "Overview" },
-    { id: "tenants", label: "Tenant Records", icon: "users", group: "Operations" },
+    { id: "tenants", label: "Tenant Management", icon: "users", group: "Operations" },
     { id: "rentTracking", label: "Rent Tracking", icon: "wallet", group: "Operations" },
     { id: "chequeReview", label: "Payment Review", icon: "file", group: "Operations" },
     { id: "maintenanceMgmt", label: "Maintenance", icon: "tool", group: "Operations" },
@@ -635,7 +712,7 @@ const pageMeta = {
   manager: {
     dashboard: ["Management Dashboard", "Today's priorities and portfolio health."],
     actionCenter: ["Action Center", "Resolve requests, approvals, and tenant updates."],
-    tenants: ["Tenant Records", "Search profiles, leases, payments, and documents."],
+    tenants: ["Tenant Management", "Search profiles, leases, payments, and documents."],
     rentTracking: ["Rent Tracking", "Track paid, pending, and late rent."],
     chequeReview: ["Payment Review", "Approve or reject submitted proof."],
     maintenanceMgmt: ["Maintenance", "Review and update work orders."],
@@ -1193,6 +1270,8 @@ function startNewAskAIChat() {
   state.askAI.error = null;
   state.askAI.isTyping = false;
   state.askAI.search = "";
+  state.askAI.contextPrompt = "";
+  state.askAI.nudgeContext = null;
   saveAskAISessions();
 }
 
@@ -1231,6 +1310,8 @@ function buildAskAIContext(message) {
       management: role === "manager" ? getManagementDashboardSummary() : null,
       actionCount: actionCenterCountForRole(role)
     },
+    askAIContext: state.askAI.nudgeContext,
+    suggestedPrompt: state.askAI.contextPrompt,
     history: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
     conversationHistory: state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT),
     chatId: state.askAI.activeSessionId
@@ -1331,7 +1412,15 @@ function tenantProfile() {
 }
 
 function amountNumber(value) {
-  return Number(String(value || "").replace(/[^\d.]/g, "")) || 0;
+  const text = String(value || "").trim();
+  const normalized = text.replace(/,/g, "");
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  const amount = match ? Number(match[0]) : 0;
+  const suffix = normalized.match(/\b\d+(?:\.\d+)?\s*([kKmM])\b/);
+  if (!Number.isFinite(amount)) return 0;
+  if (suffix?.[1]?.toLowerCase() === "m") return amount * 1000000;
+  if (suffix?.[1]?.toLowerCase() === "k") return amount * 1000;
+  return amount;
 }
 
 function formatAed(amount, { compact = false } = {}) {
@@ -1674,6 +1763,126 @@ function managerRentStats() {
     pendingAmount: sum(pendingRows),
     lateAmount: sum(lateRows),
     expectedAmount: sum(rows)
+  };
+}
+
+function countStatus(rows, statuses) {
+  const wanted = Array.isArray(statuses) ? statuses : [statuses];
+  return rows.filter((row) => wanted.includes(row.status)).length;
+}
+
+function tenantDocumentStats() {
+  const documents = state.data.tenant.documents || [];
+  return {
+    total: documents.length,
+    approved: countStatus(documents, "Approved"),
+    inReview: countStatus(documents, "In Review"),
+    uploaded: countStatus(documents, "Uploaded")
+  };
+}
+
+function managerPaymentReviewStats() {
+  const activeStatuses = ["Pending", "Submitted", "In Review", "Info Requested"];
+  const chequeRows = state.data.manager.chequeReviews || [];
+  const cashRows = state.data.manager.cashRequests || [];
+  return {
+    pendingCount: countStatus(chequeRows, activeStatuses) + countStatus(cashRows, activeStatuses),
+    approvedCount: countStatus(chequeRows, "Approved") + countStatus(cashRows, "Approved"),
+    rejectedCount: countStatus(chequeRows, "Rejected") + countStatus(cashRows, "Rejected"),
+    total: chequeRows.length + cashRows.length
+  };
+}
+
+function managerMaintenanceStats(requests = state.data.manager.maintenanceRequests) {
+  const rows = requests || [];
+  const newCount = countStatus(rows, ["New", "Submitted"]);
+  const scheduledCount = countStatus(rows, "Scheduled");
+  const completedCount = countStatus(rows, ["Completed", "Canceled", "Cancelled", "Rejected"]);
+  const inProgressCount = rows.filter((row) =>
+    !["New", "Submitted", "Scheduled", "Completed", "Canceled", "Cancelled", "Rejected"].includes(row.status)
+  ).length;
+
+  return {
+    newCount,
+    inProgressCount,
+    scheduledCount,
+    completedCount,
+    openCount: rows.length - completedCount,
+    total: rows.length,
+    byStatus: {
+      New: newCount,
+      "In Progress": inProgressCount,
+      Scheduled: scheduledCount,
+      Completed: completedCount
+    }
+  };
+}
+
+function managerRenewalStats(renewals = state.data.manager.renewals) {
+  const rows = renewals || [];
+  const activeStatuses = ["Pending", "Submitted", "In Review", "Info Requested"];
+  const expiringSoonCount = rows.filter((row) => {
+    if (!activeStatuses.includes(row.status)) return false;
+    const daysRemaining = daysUntilDate(row.endDate);
+    return daysRemaining >= 0 && daysRemaining <= 90;
+  }).length;
+
+  return {
+    pendingCount: countStatus(rows, activeStatuses),
+    approvedCount: countStatus(rows, "Approved"),
+    rejectedCount: countStatus(rows, "Rejected"),
+    expiringSoonCount,
+    total: rows.length
+  };
+}
+
+function managerDocumentStats(documents = state.data.manager.documents) {
+  const rows = documents || [];
+  return {
+    total: rows.length,
+    pendingReviews: countStatus(rows, "In Review"),
+    approvedCount: countStatus(rows, "Approved"),
+    uploadedCount: countStatus(rows, "Uploaded"),
+    rejectedCount: countStatus(rows, "Rejected")
+  };
+}
+
+function managerNotificationStats(notifications = state.data.manager.notifications) {
+  const rows = notifications || [];
+  return {
+    total: rows.length,
+    sentCount: countStatus(rows, "Sent")
+  };
+}
+
+function managerFinanceStats() {
+  const portfolio = getPortfolioSummary();
+  const rent = managerRentStats();
+  const financial = state.data.manager.financial || {};
+  const rentalIncome = portfolio.currentMonthlyRent || amountNumber(financial.income);
+  const rentalPotential = Math.max(portfolio.monthlyRentPotential || 0, rentalIncome);
+  const vacancyGap = Math.max(0, rentalPotential - rentalIncome);
+  const pendingReceivables = rent.pendingAmount + rent.lateAmount;
+  const expenses = amountNumber(financial.expenses);
+  const operationalCosts = amountNumber(financial.operational);
+  const netIncome = Math.max(0, rentalIncome - expenses - operationalCosts);
+  const rentalIncomePercent = rentalPotential ? Math.round((rentalIncome / rentalPotential) * 100) : 0;
+  const vacancyGapPercent = Math.max(0, 100 - rentalIncomePercent);
+  const paidTrackerPercent = rent.expectedAmount ? Math.round((rent.paidAmount / rent.expectedAmount) * 100) : 0;
+
+  return {
+    rentalIncome,
+    rentalPotential,
+    vacancyGap,
+    pendingReceivables,
+    expenses,
+    operationalCosts,
+    netIncome,
+    rentalIncomePercent,
+    vacancyGapPercent,
+    paidTrackerPercent,
+    pendingTrackerPercent: Math.max(0, 100 - paidTrackerPercent),
+    timeframe: "This month"
   };
 }
 
@@ -2351,7 +2560,6 @@ function getManagementQueueSummary() {
   return {
     totalActions: attentionItems.length,
     categories: activeCategories,
-    priorityActions: activeCategories.slice(0, 4),
     primaryAction: { label: "Open Action Center", icon: "bell", page: "actionCenter", variant: "primary" },
     secondaryAction: { label: "Track Rent", icon: "wallet", page: "rentTracking", variant: "secondary" }
   };
@@ -2366,27 +2574,18 @@ function getManagementDashboardSummary() {
   const rent = managerRentStats();
   const properties = data.properties || [];
   const portfolioSummary = getPortfolioSummary(properties);
-  const totalUnits = properties.reduce((total, property) => total + (Number(property.units) || 0), 0);
-  const occupiedUnits = properties.reduce((total, property) => {
-    const units = Number(property.units) || 0;
-    return total + Math.round(units * (percentValue(property.occupancy) / 100));
-  }, 0);
-  const vacantUnits = Math.max(totalUnits - occupiedUnits, 0);
-  const activeMaintenance = data.maintenanceRequests.filter((row) => row.status !== "Completed");
-  const maintenanceByStatus = {
-    New: data.maintenanceRequests.filter((row) => row.status === "New").length,
-    "In Progress": data.maintenanceRequests.filter((row) => row.status === "In Progress").length,
-    Scheduled: data.maintenanceRequests.filter((row) => row.status === "Scheduled").length,
-    Completed: data.maintenanceRequests.filter((row) => row.status === "Completed").length
-  };
-  const pendingRenewals = data.renewals.filter((row) => row.status === "Pending");
-  const pendingDocuments = data.documents.filter((row) => row.status === "In Review");
+  const maintenance = managerMaintenanceStats(data.maintenanceRequests);
+  const renewals = managerRenewalStats(data.renewals);
+  const documents = managerDocumentStats(data.documents);
+  const finance = managerFinanceStats();
   const rentFollowUps = data.rentRows.filter((row) => row.status !== "Paid");
+  const activeTenantCount = Math.max(portfolioSummary.occupiedUnits, data.tenants.length);
 
   return {
     tenants: {
-      total: data.tenants.length,
-      label: "Active lease records"
+      total: activeTenantCount,
+      records: data.tenants.length,
+      label: "From occupied units"
     },
     rent: {
       collectedAmount: rent.paidAmount,
@@ -2396,29 +2595,23 @@ function getManagementDashboardSummary() {
       cycleLabel: "This cycle"
     },
     maintenance: {
-      openCount: activeMaintenance.length,
-      byStatus: maintenanceByStatus
+      openCount: maintenance.openCount,
+      byStatus: maintenance.byStatus
     },
     renewals: {
-      pendingCount: pendingRenewals.length
+      pendingCount: renewals.pendingCount
     },
     portfolio: {
       totalProperties: portfolioSummary.totalProperties,
-      totalUnits: portfolioSummary.totalUnits || totalUnits,
-      occupiedUnits: portfolioSummary.occupiedUnits || occupiedUnits,
-      vacantUnits: portfolioSummary.vacantUnits || vacantUnits,
+      totalUnits: portfolioSummary.totalUnits,
+      occupiedUnits: portfolioSummary.occupiedUnits,
+      vacantUnits: portfolioSummary.vacantUnits,
       totalAssetValue: portfolioSummary.totalAssetValue
     },
     documents: {
-      pendingReviews: pendingDocuments.length
+      pendingReviews: documents.pendingReviews
     },
-    finance: {
-      rentalIncome: data.financial.income,
-      expenses: data.financial.expenses,
-      netIncome: data.financial.net,
-      operationalCosts: data.financial.operational,
-      timeframe: "This month"
-    },
+    finance,
     updates: managerActivityItems()
   };
 }
@@ -2997,29 +3190,184 @@ function askAINudgeDelay() {
   return Math.round(minIntervalMs + Math.random() * (maxIntervalMs - minIntervalMs));
 }
 
-function askAINudgePromptPool() {
-  const rolePrompts = state.role === "management" ? MANAGEMENT_ASK_AI_NUDGE_PROMPTS : TENANT_ASK_AI_NUDGE_PROMPTS;
-  const pagePrompts = {
-    rent: ["Want rent details summarized?", "I can check payment status."],
-    rentTracking: ["Want rent follow-ups first?", "I can find late rent."],
-    chequeReview: ["Want payment proof sorted?", "I can review the queue."],
-    maintenance: ["Want help with this request?", "I can summarize maintenance."],
-    maintenanceMgmt: ["I can summarize maintenance.", "Want active requests first?"],
-    renewal: ["Need contract details?", "I can explain renewal steps."],
-    renewalsMgmt: ["Want renewal decisions first?", "I can sort renewals."],
-    actionCenter: ["Want this queue sorted?", "I can find the next action."],
-    tenants: ["Need a tenant summary?", "I can find a tenant faster."],
-    financial: ["Want finance summarized?", "I can explain this snapshot."],
-    portfolio: ["Want portfolio highlights?", "I can compare properties."]
-  };
-  return [...(pagePrompts[state.page] || []), ...rolePrompts, ...ASK_AI_NUDGE_PROMPTS];
+function getAskAIPageType(route = state.page) {
+  const value = String(route || "").toLowerCase();
+  if (value.includes("action")) return "action-center";
+  if (value === "rent" || value.includes("renttracking")) return "rent";
+  if (value.includes("cheque") || value.includes("payment")) return "payment-review";
+  if (value.includes("maintenance")) return "maintenance";
+  if (value.includes("complaint")) return "complaints";
+  if (value.includes("renewal") || value.includes("contract")) return "contracts";
+  if (value.includes("tenant")) return "tenant-management";
+  if (value.includes("financial") || value.includes("finance")) return "finance";
+  if (value.includes("portfolio")) return "portfolio";
+  if (value.includes("document") || value.includes("docs")) return "documents";
+  if (value.includes("dashboard")) return "dashboard";
+  return "general";
 }
 
-function nextAskAINudgeMessage() {
-  const pool = askAINudgePromptPool();
-  const message = pool[askAINudgePromptCursor % pool.length] || "Ask AI can help.";
+function getAskAIContext(options = {}) {
+  const role = options.role || state.role || state.selectedRole || "tenant";
+  const route = options.route || state.page || "dashboard";
+  const pageType = getAskAIPageType(route);
+  const pageMetaCopy = pageMeta[role]?.[route] || ["Dashboard", ""];
+  const context = {
+    role,
+    route,
+    pageType,
+    pageTitle: options.pageTitle || pageMetaCopy[0],
+    relevantCounts: {},
+    urgentItems: [],
+    suggestedCapabilities: [],
+    primaryAction: null
+  };
+
+  if (!state.auth) return context;
+
+  if (role === "tenant" && state.data.tenant) {
+    const profile = tenantProfile();
+    const rent = tenantRentSummary();
+    const maintenanceOpenCount = state.data.tenant.maintenanceRequests.filter(isActiveRepeatableRequest).length;
+    const contractDaysRemaining = daysUntilDate(profile.contractEnd);
+    const latestContractRequest = latestTenantContractRequest(profile);
+    const actionCount = actionCenterCountForRole("tenant");
+    context.rent = {
+      urgency: rent.dashboardState?.urgency || "healthy",
+      daysUntilDue: rent.dashboardState?.daysUntilDue,
+      status: rent.status,
+      isPaid: rent.isPaid
+    };
+    context.contract = {
+      daysRemaining: contractDaysRemaining,
+      renewalSoon: contractDaysRemaining >= 0 && contractDaysRemaining <= 60,
+      hasRequest: Boolean(latestContractRequest),
+      status: latestContractRequest?.status || profile.renewalStatus
+    };
+    context.maintenance = {
+      openCount: maintenanceOpenCount,
+      status: activeTenantMaintenance()?.status || "Completed"
+    };
+    context.actions = { count: actionCount };
+    context.relevantCounts = {
+      actions: actionCount,
+      maintenance: maintenanceOpenCount
+    };
+    if (context.rent.urgency === "overdue") context.urgentItems.push("rent-overdue");
+    if (context.rent.urgency === "dueSoon") context.urgentItems.push("rent-due-soon");
+    if (actionCount > 0) context.urgentItems.push("tenant-actions");
+    return context;
+  }
+
+  if (role === "manager" && state.data.manager) {
+    const queue = getManagementQueueSummary();
+    const rent = managerRentStats();
+    const payments = managerPaymentReviewStats();
+    const maintenance = managerMaintenanceStats();
+    const renewals = managerRenewalStats();
+    const documents = managerDocumentStats();
+    context.queue = queue;
+    context.rent = {
+      pendingFollowUps: rent.pendingRows.length + rent.lateRows.length,
+      lateCount: rent.lateRows.length,
+      pendingCount: rent.pendingRows.length
+    };
+    context.payments = { pendingCount: payments.pendingCount };
+    context.maintenance = { openCount: maintenance.openCount };
+    context.renewals = { pendingCount: renewals.pendingCount };
+    context.documents = { pendingReviews: documents.pendingReviews };
+    context.relevantCounts = {
+      actions: queue.totalActions,
+      rent: context.rent.pendingFollowUps,
+      payments: payments.pendingCount,
+      maintenance: maintenance.openCount,
+      renewals: renewals.pendingCount,
+      documents: documents.pendingReviews
+    };
+    if (queue.totalActions > 0) context.urgentItems.push("management-actions");
+  }
+
+  return context;
+}
+
+function askAINudgeMessageApplies(message, context) {
+  if (!message?.condition) return true;
+  try {
+    return Boolean(message.condition(context));
+  } catch {
+    return false;
+  }
+}
+
+function askAINudgeMessageCount(message, context) {
+  if (typeof message.count !== "function") return context.relevantCounts?.actions || 0;
+  const count = Number(message.count(context));
+  return Number.isFinite(count) ? count : 0;
+}
+
+function hydrateAskAINudgeMessage(message, context) {
+  const count = askAINudgeMessageCount(message, context);
+  const text = String(message.text || "Ask AI can help.").replace(/\{count\}/g, String(count)).trim();
+  return {
+    id: message.id || `ask-ai-nudge-${askAINudgePromptCursor}`,
+    text,
+    intent: message.intent || "general_help",
+    actionLabel: message.actionLabel || "",
+    actionTarget: message.actionTarget || "",
+    suggestedPrompt: message.suggestedPrompt || "Help me with this page.",
+    priority: message.priority || "normal",
+    context
+  };
+}
+
+function askAINudgeRoleMessages(context) {
+  return ASK_AI_NUDGE_MESSAGES[context.role] || ASK_AI_NUDGE_MESSAGES.tenant;
+}
+
+function askAINudgeCandidates(context) {
+  const roleMessages = askAINudgeRoleMessages(context);
+  const roleGroups = Object.entries(roleMessages).filter(([group]) => group !== "general");
+  const urgent = roleGroups
+    .flatMap(([, messages]) => messages)
+    .filter((message) => message.priority === "urgent" && askAINudgeMessageApplies(message, context));
+  const pageSpecific = [
+    ...(roleMessages[context.pageType] || []),
+    ...(context.pageType !== "dashboard" && context.route === "dashboard" ? roleMessages.dashboard || [] : [])
+  ].filter((message) => askAINudgeMessageApplies(message, context));
+  const roleGeneral = (roleMessages.general || []).filter((message) => askAINudgeMessageApplies(message, context));
+  const general = ASK_AI_GENERAL_NUDGE_MESSAGES.filter((message) => askAINudgeMessageApplies(message, context));
+
+  if (urgent.length) return urgent.map((message) => hydrateAskAINudgeMessage(message, context));
+  if (Math.random() < 0.3 && general.length) return general.map((message) => hydrateAskAINudgeMessage(message, context));
+  const contextual = [...pageSpecific, ...roleGeneral];
+  return (contextual.length ? contextual : general).map((message) => hydrateAskAINudgeMessage(message, context));
+}
+
+function selectAskAINudgeMessage(candidates, nudge = ensureAskAINudgeState()) {
+  const pool = candidates.length
+    ? candidates
+    : [{ id: "general_fallback", text: "Want help with this page?", intent: "general_help", suggestedPrompt: "Help me with this page.", context: getAskAIContext() }];
+  const recentIds = nudge.recentlyShownIds || [];
+  const freshPool = pool.filter((message) => !recentIds.includes(message.id));
+  const usablePool = freshPool.length ? freshPool : pool.filter((message) => message.id !== recentIds[0]);
+  const finalPool = usablePool.length ? usablePool : pool;
+  const message = finalPool[askAINudgePromptCursor % finalPool.length] || finalPool[0];
   askAINudgePromptCursor += 1;
   return message;
+}
+
+function getAskAINotchMessage(context = getAskAIContext()) {
+  return selectAskAINudgeMessage(askAINudgeCandidates(context));
+}
+
+function applyAskAINudgeMessage(nudge, message) {
+  nudge.id = message.id;
+  nudge.message = message.text;
+  nudge.intent = message.intent;
+  nudge.suggestedPrompt = message.suggestedPrompt;
+  nudge.actionTarget = message.actionTarget;
+  nudge.context = message.context;
+  nudge.lastShownAt = Date.now();
+  nudge.recentlyShownIds = [message.id, ...(nudge.recentlyShownIds || []).filter((id) => id !== message.id)].slice(0, 3);
 }
 
 function clearAskAINudgeTimers() {
@@ -3039,7 +3387,12 @@ function clearAskAINudge(options = {}) {
   clearAskAINudgeTimers();
   if (setCooldown) nudge.dismissedAt = Date.now();
   nudge.isVisible = false;
+  nudge.id = "";
   nudge.message = "";
+  nudge.intent = "";
+  nudge.suggestedPrompt = "";
+  nudge.actionTarget = "";
+  nudge.context = null;
   nudge.startedAt = null;
   nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
   nudge.phase = "idle";
@@ -3113,7 +3466,7 @@ function showAskAINudge() {
   }
 
   nudge.isVisible = true;
-  nudge.message = nextAskAINudgeMessage();
+  applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
   nudge.startedAt = Date.now();
   nudge.durationMs = prefersReducedAskAIMotion() ? ASK_AI_NUDGE_CONFIG.visibleDurationMs : ASK_AI_NUDGE_CONFIG.visibleDurationMs;
   nudge.phase = "visible";
@@ -3126,7 +3479,7 @@ function triggerAskAINudge() {
   const nudge = ensureAskAINudgeState();
   clearAskAINudgeTimers();
   nudge.isVisible = true;
-  nudge.message = nextAskAINudgeMessage();
+  applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
   nudge.startedAt = Date.now();
   nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
   nudge.phase = "visible";
@@ -3164,7 +3517,7 @@ function syncAskAINotchLauncher() {
   }
 
   const closeButton = root.querySelector("[data-action='dismiss-ask-ai-nudge']");
-  const label = root.querySelector(".ask-ai-notch-launcher__label");
+  const messageLabel = root.querySelector(".ask-ai-notch-launcher__label--message");
   const nudge = ensureAskAINudgeState();
   const isActive = state.askAI.isOpen || state.askAI.activationState === "activating";
   const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
@@ -3173,9 +3526,9 @@ function syncAskAINotchLauncher() {
   button.dataset.state = displayState;
   button.setAttribute("aria-expanded", state.askAI.isOpen ? "true" : "false");
   button.setAttribute("aria-label", nudge.isVisible ? `Open Ask AI: ${nudge.message}` : "Open Ask AI");
-  if (label) {
-    label.textContent = nudge.isVisible ? nudge.message : "Ask AI";
-    label.removeAttribute("title");
+  if (messageLabel) {
+    messageLabel.textContent = nudge.message || "";
+    messageLabel.removeAttribute("title");
   }
   if (closeButton) {
     closeButton.hidden = !nudge.isVisible;
@@ -3493,18 +3846,21 @@ function askAIIcon() {
 }
 
 function askAICopy() {
+  const contextPrompt = state.askAI.contextPrompt;
   if (state.role === "manager") {
+    const suggestions = ["What needs action today?", "Show rent follow-ups.", "Which maintenance requests are open?", "What renewals need review?", "Summarize portfolio status."];
     return {
       helper: "Ask about actions, rent, tenants, maintenance, renewals, documents, or portfolio status.",
       placeholder: "Ask AI about today's operations...",
-      suggestions: ["What needs action today?", "Show rent follow-ups.", "Which maintenance requests are open?", "What renewals need review?", "Summarize portfolio status."]
+      suggestions: contextPrompt ? [contextPrompt, ...suggestions.filter((prompt) => prompt !== contextPrompt)] : suggestions
     };
   }
 
+  const suggestions = ["How do I pay rent?", "Where is my receipt?", "How do I request maintenance?", "How do I view my contract?", "What needs my attention?"];
   return {
     helper: "Ask about rent, receipts, contracts, maintenance, requests, or documents.",
     placeholder: "Ask AI about your rent or requests...",
-    suggestions: ["How do I pay rent?", "Where is my receipt?", "How do I request maintenance?", "How do I view my contract?", "What needs my attention?"]
+    suggestions: contextPrompt ? [contextPrompt, ...suggestions.filter((prompt) => prompt !== contextPrompt)] : suggestions
   };
 }
 
@@ -3626,7 +3982,7 @@ function renderAskAINotchLauncher() {
   const isActive = askAIState.isOpen || askAIState.activationState === "activating";
   const nudge = ensureAskAINudgeState();
   const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
-  const label = nudge.isVisible ? nudge.message : "Ask AI";
+  const messageLabel = nudge.message || "";
   return `
     <div id="ask-ai-notch-shell" class="ask-ai-notch-shell" data-state="${displayState}">
       <button
@@ -3635,14 +3991,17 @@ function renderAskAINotchLauncher() {
         type="button"
         data-action="toggle-ask-ai"
         data-state="${displayState}"
-        aria-label="${nudge.isVisible ? `Open Ask AI: ${escapeHtml(label)}` : "Open Ask AI"}"
+        aria-label="${nudge.isVisible ? `Open Ask AI: ${escapeHtml(messageLabel)}` : "Open Ask AI"}"
         aria-expanded="${askAIState.isOpen ? "true" : "false"}"
         aria-controls="ask-ai-panel"
       >
         <span class="ask-ai-notch-launcher__glow" aria-hidden="true"></span>
         <span class="ask-ai-notch-launcher__content">
           <span class="ask-ai-notch-launcher__icon">${askAIIcon()}</span>
-          <span class="ask-ai-notch-launcher__label" aria-live="polite">${escapeHtml(label)}</span>
+          <span class="ask-ai-notch-label-stack">
+            <span class="ask-ai-notch-launcher__label ask-ai-notch-launcher__label--rest" aria-hidden="${nudge.isVisible ? "true" : "false"}">Ask AI</span>
+            <span class="ask-ai-notch-launcher__label ask-ai-notch-launcher__label--message" aria-live="polite">${escapeHtml(messageLabel)}</span>
+          </span>
         </span>
       </button>
       <button
@@ -4408,17 +4767,13 @@ function renderPortal() {
   const profile = profileForRole();
   const meta = pageMeta[state.role][state.page];
   const isDashboardPage = state.page === "dashboard";
-  const showScreenFocus = !(
-    (state.role === "tenant" && state.page === "dashboard") ||
-    (state.role === "manager" && state.page === "dashboard")
-  );
   return `
     <div class="portal-layout">
       ${renderSidebar(profile)}
-      <main class="main-area">
-        <header class="topbar ${isDashboardPage ? "dashboard-topbar" : ""}">
+      <main class="main-area standard-main-area">
+        <header class="topbar">
           <div class="topbar-copy">
-            ${isDashboardPage ? "" : `<p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>`}
+            <p class="page-kicker">${state.role === "tenant" ? "Tenant Portal" : "Management Portal"}</p>
             <h1>${escapeHtml(meta[0])}</h1>
             ${meta[1] ? `<p>${escapeHtml(meta[1])}</p>` : ""}
           </div>
@@ -4428,7 +4783,7 @@ function renderPortal() {
             ${renderNotificationPanel()}
           </div>
         </header>
-        ${showScreenFocus ? renderScreenFocus() : ""}
+        ${renderScreenFocus()}
         ${renderRouteChips()}
         ${state.role === "tenant" ? renderTenantPage() : renderManagerPage()}
       </main>
@@ -4604,6 +4959,8 @@ function pageFocus() {
     const profile = state.data.tenant.profile;
     const summary = tenantRentSummary();
     const maintenance = activeTenantMaintenance();
+    const activeMaintenanceCount = state.data.tenant.maintenanceRequests.filter(isActiveRepeatableRequest).length;
+    const documentStats = tenantDocumentStats();
     const actionCount = actionCenterCountForRole("tenant");
     const latestContractRequest = latestTenantContractRequest(profile);
     const contractSummaryStatus = contractRequestSummaryStatus(latestContractRequest, profile.renewalStatus || "Pending");
@@ -4642,24 +4999,24 @@ function pageFocus() {
         eyebrow: "Maintenance",
         title: "Report the issue",
         body: "Add the category, priority, and a short note.",
-        value: "1 active",
-        meta: ["AC request in progress", "Average response 1 day"],
+        value: `${activeMaintenanceCount} ${activeMaintenanceCount === 1 ? "active" : "active"}`,
+        meta: [maintenance ? `${maintenance.category || maintenance.issue} request ${String(maintenance.status || "").toLowerCase()}` : "No open requests", `${state.data.tenant.maintenanceRequests.length} total requests`],
         actions: []
       },
       renewal: {
         eyebrow: "Contract renewal",
-        title: "Contract ends 31 Dec 2026",
+        title: `Contract ends ${profile.contractEnd}`,
         body: "Request renewal when ready.",
         value: contractSummaryStatus,
-        meta: ["Current rent AED 8,500", "Unit 1204"],
+        meta: [`Current rent ${profile.rent}`, `Unit ${profile.unit}`],
         actions: [{ label: "Request renewal", icon: "refresh", action: "request-renewal", variant: "primary", ariaLabel: "Request renewal from summary" }]
       },
       documents: {
         eyebrow: "Documents",
         title: "Tenancy files",
         body: "View contracts, ID, cheques, and receipts.",
-        value: "4 files",
-        meta: ["2 approved", "1 in review"],
+        value: `${documentStats.total} ${documentStats.total === 1 ? "file" : "files"}`,
+        meta: [`${documentStats.approved} approved`, `${documentStats.inReview} in review`],
         actions: []
       },
       uiKit: {
@@ -4677,10 +5034,17 @@ function pageFocus() {
 
   const data = state.data.manager;
   const rentStats = managerRentStats();
+  const paymentStats = managerPaymentReviewStats();
+  const maintenanceStats = managerMaintenanceStats();
+  const renewalStats = managerRenewalStats();
+  const documentStats = managerDocumentStats();
+  const notificationStats = managerNotificationStats();
+  const financeStats = managerFinanceStats();
+  const portfolioStats = getPortfolioSummary();
   const queueSummary = getManagementQueueSummary();
-  const pendingPayments = queueSummary.categories.find((category) => category.type === "payments")?.count || 0;
-  const openMaintenance = queueSummary.categories.find((category) => category.type === "maintenance")?.count || 0;
-  const pendingRenewals = queueSummary.categories.find((category) => category.type === "renewals")?.count || 0;
+  const pendingPayments = paymentStats.pendingCount;
+  const openMaintenance = maintenanceStats.openCount;
+  const pendingRenewals = renewalStats.pendingCount;
   const managerActionCount = queueSummary.totalActions;
   const map = {
     dashboard: {
@@ -4700,10 +5064,10 @@ function pageFocus() {
       actions: [{ label: "Review rent", icon: "wallet", page: "rentTracking", variant: "secondary" }]
     },
     tenants: {
-      eyebrow: "Tenant records",
-      title: "Find tenant records",
+      eyebrow: "Tenant management",
+      title: "Manage Tenants",
       body: "Search by tenant, unit, or property.",
-      value: `${data.tenants.length} tenants`,
+      value: `${data.tenants.length} records`,
       meta: [`${data.tenants.length} records`, "Linked documents"],
       actions: [{ label: "Add tenant", icon: "users", action: "add-tenant", variant: "primary" }]
     },
@@ -4728,7 +5092,7 @@ function pageFocus() {
       title: `${openMaintenance} requests open`,
       body: "Open a request and update the status.",
       value: `${openMaintenance} open`,
-      meta: ["New", "In progress", "Scheduled"],
+      meta: [`${maintenanceStats.newCount} new`, `${maintenanceStats.inProgressCount} in progress`, `${maintenanceStats.scheduledCount} scheduled`],
       actions: []
     },
     renewalsMgmt: {
@@ -4736,39 +5100,39 @@ function pageFocus() {
       title: `${pendingRenewals} renewals pending`,
       body: "Check lease dates before deciding.",
       value: `${pendingRenewals} pending`,
-      meta: ["Expiring soon", "Decision needed"],
+      meta: [`${renewalStats.expiringSoonCount} expiring soon`, `${renewalStats.approvedCount} approved`],
       actions: []
     },
     docsMgmt: {
       eyebrow: "Documents",
       title: "Find tenant documents",
       body: "Filter by tenant, type, or status.",
-      value: "5 records",
-      meta: ["Cheque copies", "Contracts", "IDs"],
+      value: `${documentStats.total} records`,
+      meta: [`${documentStats.pendingReviews} in review`, `${documentStats.approvedCount} approved`],
       actions: []
     },
     notifications: {
       eyebrow: "Reminders",
       title: "Send tenant updates",
       body: "Use a template or write a short message.",
-      value: "2 sent",
-      meta: ["Late payment", "Maintenance", "Renewal"],
+      value: `${notificationStats.sentCount} sent`,
+      meta: [`${notificationStats.total} total`, "Tenant messages"],
       actions: []
     },
     financial: {
       eyebrow: "Finance",
       title: "Income is on track",
       body: "Follow up on pending rent.",
-      value: data.financial.net,
+      value: formatAed(financeStats.netIncome),
       meta: [formatAed(rentStats.paidAmount), `${formatAed(rentStats.pendingAmount + rentStats.lateAmount)} pending`],
       actions: [{ label: "Track rent", icon: "wallet", page: "rentTracking", variant: "primary" }]
     },
     portfolio: {
       eyebrow: "Portfolio",
-      title: `${getPortfolioSummary().totalProperties} Properties`,
+      title: `${portfolioStats.totalProperties} Properties`,
       body: "Open the map, inspect assets, and add properties.",
-      value: formatAed(getPortfolioSummary().totalAssetValue, { compact: true }),
-      meta: [`${getPortfolioSummary().occupiedUnits} occupied`, `${getPortfolioSummary().vacantUnits} vacant`],
+      value: formatAed(portfolioStats.totalAssetValue, { compact: true }),
+      meta: [`${portfolioStats.occupiedUnits} occupied`, `${portfolioStats.vacantUnits} vacant`],
       actions: [{ label: "Open map", icon: "building", action: "open-portfolio-map", variant: "primary" }]
     },
     uiKit: {
@@ -5775,7 +6139,6 @@ function renderTenantDashboard() {
   const tenant = state.data.tenant;
   const profile = tenant.profile;
   const summary = tenantRentSummary();
-  const rentState = summary.dashboardState;
   const quickActions = tenantDashboardQuickActions(summary);
   const activityItems = tenantDashboardActivities(summary);
   const visibleActivityItems = activityItems.slice(0, ACTIVITY_FEED_PREVIEW_LIMIT);
@@ -5805,30 +6168,6 @@ function renderTenantDashboard() {
   ];
   return `
     <div class="content-stack">
-      <section class="tenant-summary-strip" aria-label="Tenant overview">
-        <div class="tenant-summary-profile">
-          ${renderAvatar(profile, "hero-avatar")}
-          <div>
-            <h2>${escapeHtml(profile.name)}</h2>
-            <p>Unit ${escapeHtml(profile.unit)} · ${escapeHtml(profile.property)}</p>
-          </div>
-        </div>
-        <div class="tenant-summary-facts">
-          <button class="contract-health ${contractHealth}" type="button" data-page="renewal" aria-label="Open contract renewal summary">
-            <strong>Contract</strong>
-            <em>Active until ${escapeHtml(profile.contractEnd)}</em>
-          </button>
-          <button type="button" data-page="rent" aria-label="Open rent details">
-            <strong>Rent cycle</strong>
-            <em>${escapeHtml(summary.rent.month)} · ${escapeHtml(rentState.urgencyLabel)}</em>
-          </button>
-          <button type="button" data-page="maintenance" aria-label="Open maintenance details">
-            <strong>Maintenance</strong>
-            <em>${escapeHtml(summary.maintenanceStatus)}</em>
-          </button>
-        </div>
-      </section>
-
       <section class="tenant-dashboard-flow" aria-label="Tenant dashboard status">
         ${renderTenantRentOverview(summary)}
         <div class="tenant-secondary-status-grid">
@@ -6278,59 +6617,6 @@ function renderManagerPage() {
   }
 }
 
-function renderManagementQueueChips(summary) {
-  if (!summary.categories.length) {
-    return `<div class="queue-empty compact">No pending categories.</div>`;
-  }
-
-  return `
-    <div class="operations-chip-row" aria-label="Management action categories">
-      ${summary.categories
-        .map(
-          (category) => `
-            <button class="operations-chip" type="button" data-page="${escapeHtml(category.page)}">
-              <strong>${category.count}</strong>
-              <span>${escapeHtml(category.count === 1 ? category.singularLabel || category.label : category.label)}</span>
-            </button>
-          `
-        )
-        .join("")}
-    </div>
-  `;
-}
-
-function renderManagementPriorityQueue(summary) {
-  if (!summary.priorityActions.length) {
-    return `
-      <div class="queue-empty">
-        <strong>You're all caught up.</strong>
-        <span>No payments, maintenance, or renewal decisions need a response.</span>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="priority-list management-priority-list">
-      ${summary.priorityActions
-        .map(
-          (action) => `
-            <button class="priority-item management-priority-item" type="button" data-page="${escapeHtml(action.page)}">
-              <span class="priority-copy">
-                <strong>${escapeHtml(action.title)}</strong>
-                <em>${escapeHtml(action.description)}</em>
-              </span>
-              <span class="priority-detail">
-                <strong>${action.count}</strong>
-                ${badgeSlot(action.badgeStatus, action.badgeLabel)}
-              </span>
-            </button>
-          `
-        )
-        .join("")}
-    </div>
-  `;
-}
-
 function renderDashboardGroupHeader(label, copy, actions = []) {
   return `
     <div class="dashboard-group-header">
@@ -6369,39 +6655,14 @@ function renderDashboardSnapshotCard(label, copy, items, className = "") {
 }
 
 function renderManagerDashboard() {
-  const queueSummary = getManagementQueueSummary();
   const summary = getManagementDashboardSummary();
   const maintenanceCounts = summary.maintenance.byStatus;
   const maintenanceTotal = Math.max(Object.values(maintenanceCounts).reduce((total, count) => total + count, 0), 1);
   const maintenancePercent = (count) => Math.max(8, Math.round((count / maintenanceTotal) * 100));
-  const actionsLabel = `${queueSummary.totalActions} ${queueSummary.totalActions === 1 ? "action" : "actions"}`;
   return `
     <div class="content-stack">
-      <section class="home-grid manager-home manager-command-grid">
-        <article class="focus-block primary-block operations-summary-card">
-          <span class="focus-eyebrow">Operations summary</span>
-          <h2>${queueSummary.totalActions ? `${actionsLabel} need response` : "You're all caught up"}</h2>
-          <p>${queueSummary.totalActions ? "Review payments, maintenance, and renewals from one queue." : "No management actions need a response right now."}</p>
-          ${renderManagementQueueChips(queueSummary)}
-          ${renderActionButtons([
-            queueSummary.primaryAction,
-            queueSummary.secondaryAction
-          ], "inline-actions operations-summary-actions")}
-        </article>
-        <article class="focus-block queue-block priority-queue-card">
-          <div class="section-header">
-            <div>
-              <span class="focus-eyebrow">Priority queue</span>
-              <h3>Actions that need priority</h3>
-              <p>Use the oldest or most urgent category first.</p>
-            </div>
-          </div>
-          ${renderManagementPriorityQueue(queueSummary)}
-        </article>
-      </section>
-
       ${renderDashboardSnapshotCard("Operations Snapshot", "Key portfolio, rent, and request numbers for today.", [
-        { label: "Total Tenants", value: summary.tenants.total, note: summary.tenants.label, icon: "users", page: "tenants", actionLabel: "View tenants" },
+        { label: "Active Tenants", value: summary.tenants.total, note: summary.tenants.label, icon: "users", page: "tenants", actionLabel: "Manage tenants" },
         { label: "Rent Collected", value: formatAed(summary.rent.collectedAmount), note: `${summary.rent.cycleLabel} · ${summary.rent.collectedCount} ${summary.rent.collectedCount === 1 ? "payment" : "payments"}`, icon: "wallet", page: "financial", actionLabel: "Open finance" },
         { label: "Pending Rent", value: formatAed(summary.rent.pendingAmount), note: "Requires follow-up", icon: "refresh", page: "rentTracking", actionLabel: "Track rent" },
         { label: "Open Maintenance", value: summary.maintenance.openCount, note: "Active requests", icon: "tool", page: "maintenanceMgmt", actionLabel: "Open queue" },
@@ -6470,10 +6731,10 @@ function renderManagerDashboard() {
           </div>
         </div>
         <div class="metric-grid compact-metrics">
-          ${metricCard("Rental income", summary.finance.rentalIncome, `${summary.finance.timeframe} · collected and due`, "chart", "financial", { hideActionLabel: true })}
-          ${metricCard("Expenses", summary.finance.expenses, "Service costs", "wallet", "financial", { hideActionLabel: true })}
-          ${metricCard("Net income", summary.finance.netIncome, "After costs", "chart", "financial", { hideActionLabel: true })}
-          ${metricCard("Operational costs", summary.finance.operationalCosts, "Ops spend", "tool", "financial", { hideActionLabel: true })}
+          ${metricCard("Rental income", formatAed(summary.finance.rentalIncome), `${summary.finance.timeframe} · occupied units`, "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Expenses", formatAed(summary.finance.expenses), "Service costs", "wallet", "financial", { hideActionLabel: true })}
+          ${metricCard("Net income", formatAed(summary.finance.netIncome), "Income after costs", "chart", "financial", { hideActionLabel: true })}
+          ${metricCard("Operational costs", formatAed(summary.finance.operationalCosts), "Ops spend", "tool", "financial", { hideActionLabel: true })}
         </div>
       </section>
     </div>
@@ -6661,6 +6922,7 @@ function renderChequeReview() {
 }
 
 function renderMaintenanceManagement() {
+  const stats = managerMaintenanceStats();
   const rows = state.data.manager.maintenanceRequests.map(
     (row) => `
       <tr>
@@ -6678,10 +6940,10 @@ function renderMaintenanceManagement() {
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCard("New Requests", "1", "Triage", "tool")}
-        ${metricCard("In Progress", "1", "Technician assigned", "refresh")}
-        ${metricCard("Scheduled", "1", "Visit booked", "file")}
-        ${metricCard("Completed", "1", "Closed", "check")}
+        ${metricCard("New Requests", String(stats.newCount), "Triage", "tool")}
+        ${metricCard("In Progress", String(stats.inProgressCount), "Active work", "refresh")}
+        ${metricCard("Scheduled", String(stats.scheduledCount), "Visit booked", "file")}
+        ${metricCard("Completed", String(stats.completedCount), "Closed", "check")}
       </section>
       <section class="section-band">
         <div class="section-header">
@@ -6697,6 +6959,7 @@ function renderMaintenanceManagement() {
 }
 
 function renderRenewalsManagement() {
+  const stats = managerRenewalStats();
   const rows = state.data.manager.renewals.map(
     (row) => `
       <tr>
@@ -6726,10 +6989,10 @@ function renderRenewalsManagement() {
   return `
     <div class="content-stack">
       <section class="metric-grid">
-        ${metricCard("Pending Renewals", "2", "Need decision", "refresh")}
-        ${metricCard("Approved Renewals", "1", "Approved", "check")}
-        ${metricCard("Rejected Renewals", "1", "Rejected", "close")}
-        ${metricCard("Expiring Soon", "2", "Within 90 days", "file")}
+        ${metricCard("Pending Renewals", String(stats.pendingCount), "Need decision", "refresh")}
+        ${metricCard("Approved Renewals", String(stats.approvedCount), "Approved", "check")}
+        ${metricCard("Rejected Renewals", String(stats.rejectedCount), "Rejected", "close")}
+        ${metricCard("Expiring Soon", String(stats.expiringSoonCount), "Within 90 days", "file")}
       </section>
       <section class="section-band">
         <div class="section-header">
@@ -6933,24 +7196,24 @@ function renderNotifications() {
 }
 
 function renderFinancial() {
-  const financial = state.data.manager.financial;
+  const finance = managerFinanceStats();
   const stats = managerRentStats();
-  const pendingReceivables = stats.pendingAmount + stats.lateAmount;
-  const collectedPercent = stats.expectedAmount ? Math.round((stats.paidAmount / stats.expectedAmount) * 100) : 0;
-  const pendingPercent = Math.max(0, 100 - collectedPercent);
+  const expenseBreakdown = [["Maintenance", 38, "AED 119K"], ["Utilities", 24, "AED 75K"], ["Vendors", 20, "AED 62K"], ["Other", 18, "AED 56K"]];
+  const operationalBreakdown = [["Admin", 34, "AED 40K"], ["Security", 28, "AED 33K"], ["Cleaning", 22, "AED 26K"], ["Transport", 16, "AED 19K"]];
   return `
     <div class="content-stack">
       <section class="metric-grid five">
-        ${metricCard("Total Rental Income", formatAed(stats.paidAmount), "Recorded paid", "chart")}
-        ${metricCard("Pending Rent", formatAed(pendingReceivables), "Receivables", "wallet")}
-        ${metricCard("Monthly Expenses", financial.expenses, "Service spend", "file")}
-        ${metricCard("Operational Costs", financial.operational, "Ops costs", "tool")}
-        ${metricCard("Net Income", financial.net, "Estimate", "chart")}
+        ${metricCard("Total Rental Income", formatAed(finance.rentalIncome), "Current occupied rent", "chart")}
+        ${metricCard("Pending Rent", formatAed(finance.pendingReceivables), `${stats.pendingRows.length + stats.lateRows.length} tracked follow-ups`, "wallet")}
+        ${metricCard("Monthly Expenses", formatAed(finance.expenses), "Service spend", "file")}
+        ${metricCard("Operational Costs", formatAed(finance.operationalCosts), "Ops costs", "tool")}
+        ${metricCard("Net Income", formatAed(finance.netIncome), "Income after costs", "chart")}
       </section>
       <section class="visual-grid">
-        ${visualCard("Rental income", [["Collected", collectedPercent, formatAed(stats.paidAmount)], ["Pending", pendingPercent, formatAed(pendingReceivables)]])}
-        ${visualCard("Expenses", [["Maintenance", 38, "AED 119K"], ["Utilities", 24, "AED 75K"], ["Vendors", 20, "AED 62K"]])}
-        ${visualCard("Operational costs", [["Admin", 34, "AED 40K"], ["Security", 28, "AED 33K"], ["Cleaning", 22, "AED 26K"]])}
+        ${visualCard("Rental income", [["Current rent", finance.rentalIncomePercent, formatAed(finance.rentalIncome)], ["Vacancy gap", finance.vacancyGapPercent, formatAed(finance.vacancyGap)]])}
+        ${visualCard("Rent tracker", [["Paid", finance.paidTrackerPercent, formatAed(stats.paidAmount)], ["Pending / Late", finance.pendingTrackerPercent, formatAed(finance.pendingReceivables)]])}
+        ${visualCard("Expenses", expenseBreakdown)}
+        ${visualCard("Operational costs", operationalBreakdown)}
         ${visualCard("Mortgage", [["Serviced", 72, "AED 410K"], ["Remaining", 28, "AED 160K"]])}
         ${visualCard("Insurance", [["Annual allocation", 48, "AED 92K"], ["Paid to date", 34, "AED 64K"]])}
         ${visualCard("Tax payments", [["Provisioned", 60, "AED 76K"], ["Filed", 30, "AED 38K"]])}
@@ -6980,7 +7243,7 @@ function portfolioMapTitle(filter = state.filters.portfolioMapFilter) {
   const titles = {
     All: "All Properties",
     Occupied: "Occupied Properties",
-    Vacant: "Vacant Properties",
+    Vacant: "Properties With Vacancy",
     Mixed: "Mixed Properties"
   };
   return titles[filter] || "All Properties";
@@ -7188,7 +7451,7 @@ function renderPortfolio() {
       <section class="metric-grid five">
         ${portfolioSummaryCard("Total Properties", String(summary.totalProperties), "Properties", "building", "All")}
         ${portfolioSummaryCard("Occupied Properties", String(summary.occupiedProperties), `${summary.occupiedUnits} occupied units`, "users", "Occupied")}
-        ${portfolioSummaryCard("Vacant Properties", String(summary.vacantProperties), `${summary.vacantUnits} vacant units`, "file", "Vacant")}
+        ${portfolioSummaryCard("Properties With Vacancy", String(summary.vacantProperties), `${summary.vacantUnits} vacant units`, "file", "Vacant")}
         ${portfolioSummaryCard("Total Units", String(summary.totalUnits), "Managed units", "home", "All")}
         ${portfolioSummaryCard("Total Assets", formatAed(summary.totalAssetValue, { compact: true }), "Portfolio value", "chart", "All", { focus: "assets" })}
       </section>
@@ -8831,8 +9094,16 @@ function focusAskAITrigger() {
 }
 
 function openAskAI() {
+  const nudge = ensureAskAINudgeState();
+  const nudgeSuggestedPrompt = nudge.isVisible ? nudge.suggestedPrompt : "";
+  const nudgeContext = nudge.isVisible ? nudge.context : null;
   ensureAskAIMessages();
   clearAskAINudge({ schedule: false, setCooldown: false });
+  if (nudgeSuggestedPrompt && !state.askAI.inputValue.trim()) {
+    state.askAI.inputValue = nudgeSuggestedPrompt;
+  }
+  state.askAI.contextPrompt = nudgeSuggestedPrompt || "";
+  state.askAI.nudgeContext = nudgeContext;
   state.askAI.isOpen = true;
   state.askAI.isExpanded = true;
   state.askAI.activationState = "activating";
@@ -8849,6 +9120,8 @@ function closeAskAI() {
   state.askAI.isExpanded = false;
   state.askAI.isTyping = false;
   state.askAI.error = null;
+  state.askAI.contextPrompt = "";
+  state.askAI.nudgeContext = null;
   state.askAI.activationState = "idle";
   render();
   ensureAskAINudgeScheduler();
@@ -8954,6 +9227,8 @@ document.addEventListener("click", (event) => {
     state.askAI.isOpen = false;
     state.askAI.isExpanded = false;
     state.askAI.activationState = "idle";
+    state.askAI.contextPrompt = "";
+    state.askAI.nudgeContext = null;
     render();
     replaceHistoryEntry();
     return;
@@ -9093,6 +9368,8 @@ document.addEventListener("click", (event) => {
     state.askAI.isExpanded = false;
     state.askAI.isTyping = false;
     state.askAI.error = null;
+    state.askAI.contextPrompt = "";
+    state.askAI.nudgeContext = null;
     state.askAI.activationState = "idle";
     renderAtTop();
     replaceHistoryEntry();
@@ -9591,6 +9868,8 @@ document.addEventListener("submit", async (event) => {
       sessions: [],
       activeSessionId: "",
       search: "",
+      contextPrompt: "",
+      nudgeContext: null,
       nudge: defaultAskAINudgeState()
     };
     ensureAskAIMessages(state.role);
