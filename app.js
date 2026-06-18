@@ -223,6 +223,7 @@ let portfolioLeafletMarkerLayer = null;
 let askAIScrollLockY = 0;
 let askAINudgeTimer = 0;
 let askAINudgeAutoTimer = 0;
+let askAINudgeRevealTimer = 0;
 let askAINudgePromptCursor = 0;
 let askAINudgeLastActivityAt = 0;
 let askAINotchPointer = { x: -1, y: -1 };
@@ -3379,6 +3380,29 @@ function clearAskAINudgeTimers() {
     window.clearTimeout(askAINudgeAutoTimer);
     askAINudgeAutoTimer = 0;
   }
+  if (askAINudgeRevealTimer) {
+    window.clearTimeout(askAINudgeRevealTimer);
+    askAINudgeRevealTimer = 0;
+  }
+}
+
+function beginAskAINudgeReveal() {
+  const nudge = ensureAskAINudgeState();
+  if (!nudge.isVisible) return;
+  if (askAINudgeRevealTimer) {
+    window.clearTimeout(askAINudgeRevealTimer);
+    askAINudgeRevealTimer = 0;
+  }
+  nudge.phase = prefersReducedAskAIMotion() ? "visible" : "entering";
+  syncAskAINotchLauncher();
+  if (nudge.phase === "visible") return;
+  askAINudgeRevealTimer = window.setTimeout(() => {
+    askAINudgeRevealTimer = 0;
+    const currentNudge = ensureAskAINudgeState();
+    if (!currentNudge.isVisible || currentNudge.phase !== "entering") return;
+    currentNudge.phase = "visible";
+    syncAskAINotchLauncher();
+  }, 180);
 }
 
 function clearAskAINudge(options = {}) {
@@ -3469,8 +3493,7 @@ function showAskAINudge() {
   applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
   nudge.startedAt = Date.now();
   nudge.durationMs = prefersReducedAskAIMotion() ? ASK_AI_NUDGE_CONFIG.visibleDurationMs : ASK_AI_NUDGE_CONFIG.visibleDurationMs;
-  nudge.phase = "visible";
-  syncAskAINotchLauncher();
+  beginAskAINudgeReveal();
   askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
 }
 
@@ -3482,9 +3505,8 @@ function triggerAskAINudge() {
   applyAskAINudgeMessage(nudge, getAskAINotchMessage(getAskAIContext()));
   nudge.startedAt = Date.now();
   nudge.durationMs = ASK_AI_NUDGE_CONFIG.visibleDurationMs;
-  nudge.phase = "visible";
   nudge.hasScheduled = true;
-  syncAskAINotchLauncher();
+  beginAskAINudgeReveal();
   askAINudgeAutoTimer = window.setTimeout(() => dismissAskAINudge({ manual: false }), nudge.durationMs);
 }
 
@@ -3522,8 +3544,12 @@ function syncAskAINotchLauncher() {
   const isActive = state.askAI.isOpen || state.askAI.activationState === "activating";
   const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
   document.body.dataset.askAiNotchState = displayState;
-  if (shell) shell.dataset.state = displayState;
+  if (shell) {
+    shell.dataset.state = displayState;
+    shell.dataset.nudgePhase = nudge.phase || "idle";
+  }
   button.dataset.state = displayState;
+  button.dataset.nudgePhase = nudge.phase || "idle";
   button.setAttribute("aria-expanded", state.askAI.isOpen ? "true" : "false");
   button.setAttribute("aria-label", nudge.isVisible ? `Open Ask AI: ${nudge.message}` : "Open Ask AI");
   if (messageLabel) {
@@ -3797,6 +3823,10 @@ function badgeSlot(status, label) {
   return `<span class="status-slot">${badge(status, label)}</span>`;
 }
 
+function detailBadge(status, label) {
+  return `<strong class="detail-status-only">${badge(status, label)}</strong>`;
+}
+
 function brand(options = {}) {
   const content = `
     <span class="brand-mark">${icon.building}</span>
@@ -3984,13 +4014,14 @@ function renderAskAINotchLauncher() {
   const displayState = isActive ? "active" : nudge.isVisible ? "nudge" : "idle";
   const messageLabel = nudge.message || "";
   return `
-    <div id="ask-ai-notch-shell" class="ask-ai-notch-shell" data-state="${displayState}">
+    <div id="ask-ai-notch-shell" class="ask-ai-notch-shell" data-state="${displayState}" data-nudge-phase="${nudge.phase || "idle"}">
       <button
         id="ask-ai-notch"
         class="ask-ai-notch-launcher"
         type="button"
         data-action="toggle-ask-ai"
         data-state="${displayState}"
+        data-nudge-phase="${nudge.phase || "idle"}"
         aria-label="${nudge.isVisible ? `Open Ask AI: ${escapeHtml(messageLabel)}` : "Open Ask AI"}"
         aria-expanded="${askAIState.isOpen ? "true" : "false"}"
         aria-controls="ask-ai-panel"
@@ -6498,7 +6529,7 @@ function renderTenantRenewal() {
 
   return `
     <div class="content-stack">
-      <section class="layout-two">
+      <section class="layout-two renewal-contract-layout">
         <div class="section-band">
           <div class="section-header">
             <div>
@@ -6512,7 +6543,7 @@ function renderTenantRenewal() {
             <div class="detail-item"><span>Start date</span><strong>${escapeHtml(profile.contractStart)}</strong></div>
             <div class="detail-item"><span>End date</span><strong>${escapeHtml(profile.contractEnd)}</strong></div>
             <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(profile.rent)}</strong></div>
-            <div class="detail-item"><span>${latestRequest ? "Request status" : "Renewal status"}</span><strong>${badge(status)}</strong></div>
+            <div class="detail-item"><span>${latestRequest ? "Request status" : "Renewal status"}</span>${detailBadge(status)}</div>
           </div>
           <div class="section-actions contract-action-row">
             <button class="button primary" type="button" data-action="request-renewal" aria-label="Request renewal from current contract">${buttonIcon("refresh")}Request Renewal</button>
@@ -8385,7 +8416,7 @@ function propertyDetailModal(id) {
     body: `
       <div class="detail-grid">
         <div class="detail-item"><span>Type</span><strong>${escapeHtml(property.propertyType)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(property.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(property.status)}</div>
         <div class="detail-item"><span>Address</span><strong>${escapeHtml(property.address)}</strong></div>
         <div class="detail-item"><span>Coordinates</span><strong>${escapeHtml(`${property.latitude.toFixed(4)}, ${property.longitude.toFixed(4)}`)}</strong></div>
         <div class="detail-item"><span>Total units</span><strong>${escapeHtml(String(property.unitCount))}</strong></div>
@@ -8603,7 +8634,7 @@ function modalContent(current) {
         body: `
           <div class="detail-grid">
             <div class="detail-item"><span>Amount</span><strong>${escapeHtml(summary.rent.amount)}</strong></div>
-            <div class="detail-item"><span>Status</span><strong>${badge(summary.status)}</strong></div>
+            <div class="detail-item"><span>Status</span>${detailBadge(summary.status)}</div>
             <div class="detail-item"><span>Receipt</span><strong>${escapeHtml(summary.receipt)}</strong></div>
             <div class="detail-item"><span>Next due date</span><strong>${escapeHtml(summary.rent.dueDate)}</strong></div>
           </div>
@@ -8791,29 +8822,31 @@ function tenantDetailModal(id) {
     title: tenant.name,
     subtitle: "Profile, lease, rent, requests, and documents.",
     body: `
-      <div class="detail-grid">
-        <div class="detail-item"><span>Profile</span><strong>${escapeHtml(tenant.email)}<br>${escapeHtml(tenant.phone)}</strong></div>
-        <div class="detail-item"><span>Identity</span><strong>${escapeHtml([tenant.nationality, tenant.idNumber].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
-        <div class="detail-item"><span>Unit</span><strong>Unit ${escapeHtml(tenant.unit)} · ${escapeHtml(tenant.property)}</strong></div>
-        <div class="detail-item"><span>Property address</span><strong>${escapeHtml(tenant.propertyAddress || "Not provided")}</strong></div>
-        <div class="detail-item"><span>Contract</span><strong>${escapeHtml(tenant.contract)} · ${badge(tenant.contractStatus)}</strong></div>
-        <div class="detail-item"><span>Renewal</span><strong>${badge(tenant.renewalStatus)}</strong></div>
-        <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(tenant.rent)} · ${badge(tenant.rentStatus)}</strong></div>
-        <div class="detail-item"><span>Pending balance</span><strong>${escapeHtml(formatAed(tenant.pendingBalance))}</strong></div>
-        <div class="detail-item"><span>Emergency contact</span><strong>${escapeHtml([tenant.emergencyContactName, tenant.emergencyContactPhone, tenant.emergencyContactRelationship].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
-        <div class="detail-item"><span>Notes</span><strong>${escapeHtml(tenant.notes || "No notes")}</strong></div>
-      </div>
-      <div class="section-band">
-        <div class="section-header"><div><h3>Rent history</h3><p>Latest rent record.</p></div></div>
-        ${table(["Tenant", "Amount", "Due Date", "Status"], rentHistory.map((row) => `<tr><td>${escapeHtml(row.tenant)}</td><td>${escapeHtml(row.amount)}</td><td>${escapeHtml(row.dueDate)}</td><td>${badge(row.status)}</td></tr>`))}
-      </div>
-      <div class="section-band">
-        <div class="section-header"><div><h3>Maintenance history</h3><p>Recent requests.</p></div></div>
-        ${table(["Issue", "Priority", "Date", "Status"], maintenance.map((row) => `<tr><td>${escapeHtml(row.issue)}</td><td>${badge(row.priority)}</td><td>${escapeHtml(row.date)}</td><td>${badge(row.status)}</td></tr>`))}
-      </div>
-      <div class="section-band">
-        <div class="section-header"><div><h3>Documents</h3><p>Document records.</p></div></div>
-        ${table(["Document Type", "Status", "Last Updated"], docs.map((doc) => `<tr><td>${escapeHtml(doc.type)}</td><td>${badge(doc.status)}</td><td>${escapeHtml(doc.lastUpdated)}</td></tr>`))}
+      <div class="tenant-detail-modal">
+        <div class="detail-grid">
+          <div class="detail-item"><span>Profile</span><strong>${escapeHtml(tenant.email)}<br>${escapeHtml(tenant.phone)}</strong></div>
+          <div class="detail-item"><span>Identity</span><strong>${escapeHtml([tenant.nationality, tenant.idNumber].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
+          <div class="detail-item"><span>Unit</span><strong>Unit ${escapeHtml(tenant.unit)} · ${escapeHtml(tenant.property)}</strong></div>
+          <div class="detail-item"><span>Property address</span><strong>${escapeHtml(tenant.propertyAddress || "Not provided")}</strong></div>
+          <div class="detail-item"><span>Contract</span><strong class="detail-value-line"><span class="detail-value-text">${escapeHtml(tenant.contract)}</span>${badge(tenant.contractStatus)}</strong></div>
+          <div class="detail-item"><span>Renewal</span><strong class="detail-status-only">${badge(tenant.renewalStatus)}</strong></div>
+          <div class="detail-item"><span>Current rent</span><strong class="detail-value-line"><span class="detail-value-text">${escapeHtml(tenant.rent)}</span>${badge(tenant.rentStatus)}</strong></div>
+          <div class="detail-item"><span>Pending balance</span><strong>${escapeHtml(formatAed(tenant.pendingBalance))}</strong></div>
+          <div class="detail-item"><span>Emergency contact</span><strong>${escapeHtml([tenant.emergencyContactName, tenant.emergencyContactPhone, tenant.emergencyContactRelationship].filter(Boolean).join(" · ") || "Not provided")}</strong></div>
+          <div class="detail-item"><span>Notes</span><strong>${escapeHtml(tenant.notes || "No notes")}</strong></div>
+        </div>
+        <div class="section-band">
+          <div class="section-header"><div><h3>Rent history</h3><p>Latest rent record.</p></div></div>
+          ${table(["Tenant", "Amount", "Due Date", "Status"], rentHistory.map((row) => `<tr><td>${escapeHtml(row.tenant)}</td><td>${escapeHtml(row.amount)}</td><td>${escapeHtml(row.dueDate)}</td><td>${badge(row.status)}</td></tr>`))}
+        </div>
+        <div class="section-band">
+          <div class="section-header"><div><h3>Maintenance history</h3><p>Recent requests.</p></div></div>
+          ${table(["Issue", "Priority", "Date", "Status"], maintenance.map((row) => `<tr><td>${escapeHtml(row.issue)}</td><td>${badge(row.priority)}</td><td>${escapeHtml(row.date)}</td><td>${badge(row.status)}</td></tr>`))}
+        </div>
+        <div class="section-band">
+          <div class="section-header"><div><h3>Documents</h3><p>Document records.</p></div></div>
+          ${table(["Document Type", "Status", "Last Updated"], docs.map((doc) => `<tr><td>${escapeHtml(doc.type)}</td><td>${badge(doc.status)}</td><td>${escapeHtml(doc.lastUpdated)}</td></tr>`))}
+        </div>
       </div>
     `,
     actions: `<button class="button secondary" type="button" data-action="close-modal">Close</button>`
@@ -8827,13 +8860,15 @@ function rentDetailModal(id) {
     title: "Rent Record",
     subtitle: `${row.tenant} · Unit ${row.unit}`,
     body: `
-      <div class="detail-grid">
-        <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
-        <div class="detail-item"><span>Unit</span><strong>${escapeHtml(row.unit)}</strong></div>
-        <div class="detail-item"><span>Property</span><strong>${escapeHtml(row.property)}</strong></div>
-        <div class="detail-item"><span>Rent amount</span><strong>${escapeHtml(row.amount)}</strong></div>
-        <div class="detail-item"><span>Due date</span><strong>${escapeHtml(row.dueDate)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+      <div class="rent-detail-modal">
+        <div class="detail-grid">
+          <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
+          <div class="detail-item"><span>Unit</span><strong>${escapeHtml(row.unit)}</strong></div>
+          <div class="detail-item"><span>Property</span><strong>${escapeHtml(row.property)}</strong></div>
+          <div class="detail-item"><span>Rent amount</span><strong>${escapeHtml(row.amount)}</strong></div>
+          <div class="detail-item"><span>Due date</span><strong>${escapeHtml(row.dueDate)}</strong></div>
+          <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
+        </div>
       </div>
     `,
     actions: `
@@ -8856,7 +8891,7 @@ function chequeReviewModal(id) {
         <div class="detail-item"><span>Bank</span><strong>${escapeHtml(row.bank)}</strong></div>
         <div class="detail-item"><span>Cheque number</span><strong>${escapeHtml(row.chequeNumber)}</strong></div>
         <div class="detail-item"><span>Due date</span><strong>${escapeHtml(row.dueDate)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
       </div>
       <div class="upload-box">Proof preview: cheque copy and receipt.</div>
       <div class="detail-item"><span>Notes</span><strong>${escapeHtml(row.notes)}</strong></div>
@@ -8881,9 +8916,9 @@ function maintenanceDetailModal(id) {
         <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
         <div class="detail-item"><span>Unit</span><strong>${escapeHtml(row.unit)}</strong></div>
         <div class="detail-item"><span>Issue</span><strong>${escapeHtml(row.issue)}</strong></div>
-        <div class="detail-item"><span>Priority</span><strong>${badge(row.priority)}</strong></div>
+        <div class="detail-item"><span>Priority</span>${detailBadge(row.priority)}</div>
         <div class="detail-item"><span>Date</span><strong>${escapeHtml(row.date)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
       </div>
       <div class="detail-item"><span>Description</span><strong>${escapeHtml(row.description)}</strong></div>
       <div class="upload-box">Issue photo preview.</div>
@@ -8910,7 +8945,7 @@ function renewalDetailModal(id) {
         <div class="detail-item"><span>Property</span><strong>${escapeHtml(row.property)}</strong></div>
         <div class="detail-item"><span>Contract dates</span><strong>${escapeHtml(row.startDate)} - ${escapeHtml(row.endDate)}</strong></div>
         <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(row.currentRent)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
         <div class="detail-item"><span>Note</span><strong>Decision updates the tenant timeline.</strong></div>
       </div>
     `,
@@ -8933,7 +8968,7 @@ function cashReviewModal(id) {
         <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
         <div class="detail-item"><span>Amount</span><strong>${escapeHtml(row.amount)}</strong></div>
         <div class="detail-item"><span>Preferred time</span><strong>${escapeHtml(row.preferredTime)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
       </div>
       <div class="detail-item"><span>Notes</span><strong>${escapeHtml(row.notes || "No notes")}</strong></div>
     `,
@@ -8956,7 +8991,7 @@ function contractRequestModal(id) {
         <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
         <div class="detail-item"><span>Property</span><strong>${escapeHtml(row.property)}</strong></div>
         <div class="detail-item"><span>Current rent</span><strong>${escapeHtml(row.currentRent)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
       </div>
       <div class="detail-item"><span>Request details</span><strong>${escapeHtml(row.notes || "No notes")}</strong></div>
     `,
@@ -8977,7 +9012,7 @@ function complaintDetailModal(id) {
     body: `
       <div class="detail-grid">
         <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
         <div class="detail-item"><span>Supporting file</span><strong>${escapeHtml(row.attachment || "Attached placeholder")}</strong></div>
       </div>
       <div class="detail-item"><span>Complaint</span><strong>${escapeHtml(row.description)}</strong></div>
@@ -9000,7 +9035,7 @@ function suggestionDetailModal(id) {
     body: `
       <div class="detail-grid">
         <div class="detail-item"><span>Tenant</span><strong>${escapeHtml(row.tenant)}</strong></div>
-        <div class="detail-item"><span>Status</span><strong>${badge(row.status)}</strong></div>
+        <div class="detail-item"><span>Status</span>${detailBadge(row.status)}</div>
       </div>
       <div class="detail-item"><span>Suggestion</span><strong>${escapeHtml(row.description)}</strong></div>
     `,
