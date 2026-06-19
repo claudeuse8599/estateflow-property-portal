@@ -1,20 +1,22 @@
-const MAX_BODY_BYTES = 16 * 1024;
-const MAX_MESSAGE_LENGTH = 1500;
-const MAX_HISTORY_ITEMS = 8;
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = Number(process.env.ASK_AI_MAX_MESSAGES_PER_MINUTE || 10);
-const DUPLICATE_MESSAGE_WINDOW_MS = 60 * 1000;
+import { httpAction, httpRouter } from "convex/server";
+import { api } from "./_generated/api";
+
+const http = httpRouter();
+const DEFAULT_APP_ID = "estateflow-mvp";
+const DATA_STORE_VERSION = 1;
+const MAX_SNAPSHOT_BYTES = 2_000_000;
+const MAX_AI_BYTES = 24_000;
+const MAX_AI_MESSAGE_LENGTH = 1500;
+const MAX_AI_HISTORY_ITEMS = 8;
 const ASK_AI_USAGE_LIMIT_MS = Number(process.env.ASK_AI_USAGE_LIMIT_MS || 300000);
-const MAX_BLOCKED_ATTEMPTS_PER_MINUTE = 8;
+const MAX_MESSAGES_PER_MINUTE = Number(process.env.ASK_AI_MAX_MESSAGES_PER_MINUTE || 10);
+const DUPLICATE_MESSAGE_WINDOW_MS = Number(process.env.ASK_AI_DUPLICATE_MESSAGE_WINDOW_MS || 60000);
+const MAX_BLOCKED_ATTEMPTS_PER_MINUTE = Number(process.env.ASK_AI_MAX_BLOCKED_ATTEMPTS_PER_MINUTE || 8);
 const DEFAULT_AI_MODEL = "gpt-5.4-nano";
 const DEFAULT_CLASSIFIER_MODEL = DEFAULT_AI_MODEL;
 const ALLOWED_AI_MODELS = new Set([DEFAULT_AI_MODEL]);
 
-const rateLimitStore = new Map();
-const duplicateStore = new Map();
-const usageStore = new Map();
-const blockedAttemptStore = new Map();
-const inFlightUsers = new Set();
+const inFlightUsers = new Set<string>();
 
 const SAFE_RESPONSES = {
   apiUnavailable: "Ask AI could not respond right now. Try again.",
@@ -338,229 +340,127 @@ const MANAGEMENT_DASHBOARD_KNOWLEDGE = {
   ]
 };
 
-function getHeader(req, name) {
-  const headers = req.headers || {};
-  return headers[name.toLowerCase()] || headers[name] || "";
-}
-
-function setHeader(res, name, value) {
-  if (typeof res.setHeader === "function") {
-    res.setHeader(name, value);
-  }
-}
-
-function sendJson(res, statusCode, payload) {
-  setHeader(res, "Content-Type", "application/json; charset=utf-8");
-  if (typeof res.status === "function" && typeof res.json === "function") {
-    return res.status(statusCode).json(payload);
-  }
-  res.statusCode = statusCode;
-  return res.end(JSON.stringify(payload));
-}
-
-function sendNoContent(res) {
-  if (typeof res.status === "function" && typeof res.end === "function") {
-    return res.status(204).end();
-  }
-  res.statusCode = 204;
-  return res.end();
-}
-
-function requestError(statusCode, code, message) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  error.code = code;
-  return error;
-}
-
-function parseAllowedOrigins() {
-  return String(process.env.AI_ALLOWED_ORIGINS || "")
+function allowedOrigins() {
+  return String(process.env.CONVEX_ALLOWED_ORIGINS || "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 }
 
-function sameOriginFromRequest(req) {
-  const host = getHeader(req, "host");
-  if (!host) return "";
-  const proto = getHeader(req, "x-forwarded-proto") || (req.socket?.encrypted ? "https" : "http");
-  return `${proto}://${host}`;
+function requestOrigin(request: Request) {
+  return request.headers.get("origin") || "";
 }
 
-function isOriginAllowed(req) {
-  const origin = getHeader(req, "origin");
-  if (!origin) return true;
-
-  const allowedOrigins = parseAllowedOrigins();
-  if (allowedOrigins.length > 0) return allowedOrigins.includes(origin);
-
-  return origin === sameOriginFromRequest(req);
+function corsOrigin(request: Request) {
+  const origin = requestOrigin(request);
+  const allowed = allowedOrigins();
+  if (!origin) return "*";
+  if (!allowed.length) return origin;
+  return allowed.includes(origin) ? origin : "";
 }
 
-function applyCors(req, res) {
-  const origin = getHeader(req, "origin");
-  setHeader(res, "Vary", "Origin");
-  setHeader(res, "Access-Control-Allow-Methods", "POST, OPTIONS");
-  setHeader(res, "Access-Control-Allow-Headers", "Content-Type");
-  setHeader(res, "Access-Control-Max-Age", "600");
-  if (origin && isOriginAllowed(req)) {
-    setHeader(res, "Access-Control-Allow-Origin", origin);
-  }
+function corsHeaders(request: Request) {
+  const origin = corsOrigin(request);
+  return {
+    "Access-Control-Allow-Origin": origin || "null",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "600",
+    "Content-Type": "application/json; charset=utf-8",
+    Vary: "Origin"
+  };
 }
 
-function clientIp(req) {
-  const forwardedFor = getHeader(req, "x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
-  return req.socket?.remoteAddress || "unknown";
-}
-
-function normalizeMessageKey(value) {
-  return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function pruneTimedStore(store, now, windowMs) {
-  if (store.size < 500) return;
-  for (const [key, value] of store.entries()) {
-    const startedAt = value.startedAt || value.lastAt || value.updatedAt || 0;
-    if (now - startedAt > windowMs) store.delete(key);
-  }
-}
-
-function checkRequestPace(userKey, message) {
-  const now = Date.now();
-  const entry = rateLimitStore.get(userKey);
-  if (!entry || now - entry.startedAt > RATE_LIMIT_WINDOW_MS) {
-    rateLimitStore.set(userKey, { startedAt: now, count: 1 });
-  } else {
-    entry.count += 1;
-    if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
-      return { allowed: false, reason: "rate_limited", localResponse: SAFE_RESPONSES.rateLimited };
-    }
-  }
-
-  const messageKey = normalizeMessageKey(message);
-  const duplicateKey = `${userKey}:${messageKey}`;
-  const duplicate = duplicateStore.get(duplicateKey);
-  duplicateStore.set(duplicateKey, { lastAt: now });
-  pruneTimedStore(rateLimitStore, now, RATE_LIMIT_WINDOW_MS);
-  pruneTimedStore(duplicateStore, now, DUPLICATE_MESSAGE_WINDOW_MS);
-
-  if (duplicate && now - duplicate.lastAt < DUPLICATE_MESSAGE_WINDOW_MS) {
-    return { allowed: false, reason: "duplicate_message", localResponse: SAFE_RESPONSES.repeated };
-  }
-
-  return { allowed: true };
-}
-
-function checkBlockedAttemptBudget(userKey) {
-  const now = Date.now();
-  const entry = blockedAttemptStore.get(userKey);
-  if (!entry || now - entry.startedAt > RATE_LIMIT_WINDOW_MS) {
-    blockedAttemptStore.set(userKey, { startedAt: now, count: 1 });
-    return { allowed: true };
-  }
-
-  entry.count += 1;
-  return entry.count <= MAX_BLOCKED_ATTEMPTS_PER_MINUTE
-    ? { allowed: true }
-    : { allowed: false, reason: "blocked_attempt_limit", localResponse: SAFE_RESPONSES.rateLimited };
-}
-
-function usageKey(userId) {
-  return `${userId}:${new Date().toISOString().slice(0, 10)}`;
-}
-
-function currentUsage(userId) {
-  const key = usageKey(userId);
-  const existing = usageStore.get(key);
-  return existing?.usedMs || 0;
-}
-
-function recordUsage(userId, elapsedMs) {
-  const key = usageKey(userId);
-  const existing = usageStore.get(key) || { usedMs: 0, requestCount: 0, updatedAt: Date.now() };
-  existing.usedMs += Math.max(0, Math.round(elapsedMs));
-  existing.requestCount += 1;
-  existing.updatedAt = Date.now();
-  usageStore.set(key, existing);
-}
-
-function parseJson(raw) {
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw requestError(400, "INVALID_JSON", "Request body must be valid JSON.");
-  }
-}
-
-function readBody(req) {
-  if (req.body !== undefined && req.body !== null) {
-    if (typeof req.body === "object" && !Buffer.isBuffer(req.body)) return Promise.resolve(req.body);
-    const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body);
-    if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) {
-      return Promise.reject(requestError(413, "REQUEST_TOO_LARGE", "Request body is too large."));
-    }
-    return Promise.resolve(parseJson(raw));
-  }
-
-  return new Promise((resolve, reject) => {
-    let raw = "";
-    let settled = false;
-    let tooLarge = false;
-
-    function fail(error) {
-      if (settled) return;
-      settled = true;
-      reject(error);
-    }
-
-    function done(value) {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    }
-
-    req.on("data", (chunk) => {
-      if (tooLarge) return;
-      raw += chunk;
-      if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) {
-        tooLarge = true;
-        fail(requestError(413, "REQUEST_TOO_LARGE", "Request body is too large."));
-      }
-    });
-    req.on("end", () => {
-      try {
-        done(parseJson(raw));
-      } catch (error) {
-        fail(error);
-      }
-    });
-    req.on("error", () => {
-      fail(requestError(400, "REQUEST_FAILED", "Request could not be read."));
-    });
+function json(request: Request, body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: corsHeaders(request)
   });
 }
 
-function cleanText(value, maxLength, options = {}) {
+function localAssistantResponse(request: Request, payload: {
+  reason: string;
+  localResponse: string;
+  intent?: string;
+  source?: string;
+}, status = 200) {
+  return json(request, {
+    message: payload.localResponse,
+    blocked: true,
+    reason: payload.reason,
+    intent: payload.intent || "out_of_scope",
+    source: payload.source || "security"
+  }, status);
+}
+
+function preflight(request: Request) {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(request)
+  });
+}
+
+function originAllowed(request: Request) {
+  return Boolean(corsOrigin(request));
+}
+
+async function readJson(request: Request, maxBytes: number) {
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > maxBytes) {
+    throw new Response(JSON.stringify({ error: "REQUEST_TOO_LARGE", message: "Request body is too large." }), {
+      status: 413,
+      headers: corsHeaders(request)
+    });
+  }
+
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    throw new Response(JSON.stringify({ error: "INVALID_JSON", message: "Request body must be valid JSON." }), {
+      status: 400,
+      headers: corsHeaders(request)
+    });
+  }
+}
+
+function cleanText(value: unknown, maxLength: number, options: { truncate?: boolean } = {}) {
   const text = String(value || "").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
   if (text.length > maxLength) {
     if (options.truncate) return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
-    throw requestError(400, "FIELD_TOO_LONG", SAFE_RESPONSES.tooLong);
+    throw new Error("FIELD_TOO_LONG");
   }
   return text;
 }
 
-function cleanContext(pageContext = {}) {
+function normalizeAssistantText(value: unknown, maxLength: number) {
+  const text = String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\s+\*\*(Result\/Next step|Result|Next step|Note):\*\*\s*/gi, "\n**$1:** ")
+    .replace(/\s+(Result\/Next step|Result|Next step|Note):\s*/gi, "\n$1: ")
+    .replace(/\s+(\d+)\.\s+/g, "\n$1. ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  if (text.length > maxLength) return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
+  return text;
+}
+
+function normalizeMessageKey(value: unknown) {
+  return String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function cleanContext(pageContext: any = {}) {
   const source = typeof pageContext === "object" && pageContext !== null ? pageContext : {};
   return {
-    page: cleanText(source.page || "", 80),
-    title: cleanText(source.title || "", 120),
-    subtitle: cleanText(source.subtitle || "", 180)
+    page: cleanText(source.page, 80),
+    title: cleanText(source.title, 120),
+    subtitle: cleanText(source.subtitle, 180)
   };
 }
 
-function hasSensitiveRequest(content) {
+function hasSensitiveRequest(content: unknown) {
   const text = normalizeMessageKey(content);
   return [
     /\b(api\s*key|secret|private\s*key|token|authorization|bearer|password|credential|env|environment\s+variable)\b/,
@@ -572,79 +472,24 @@ function hasSensitiveRequest(content) {
   ].some((pattern) => pattern.test(text));
 }
 
-function cleanHistory(conversationHistory) {
-  if (!Array.isArray(conversationHistory)) return [];
-  return conversationHistory
-    .slice(-MAX_HISTORY_ITEMS)
+function safeHistory(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(-MAX_AI_HISTORY_ITEMS)
     .map((item) => {
       const role = item?.role === "assistant" ? "assistant" : item?.role === "user" ? "user" : "";
-      const content = cleanText(item?.content || "", MAX_MESSAGE_LENGTH, { truncate: true });
+      const content = cleanText(item?.content, MAX_AI_MESSAGE_LENGTH, { truncate: true });
       if (!role || !content || hasSensitiveRequest(content)) return null;
       return { role, content };
     })
-    .filter(Boolean);
+    .filter(Boolean) as Array<{ role: string; content: string }>;
 }
 
-function normalizeAssistantText(value) {
-  return String(value || "")
-    .replace(/\r\n?/g, "\n")
-    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, " ")
-    .replace(/[ \t]+/g, " ")
-    .replace(/[ \t]*\n[ \t]*/g, "\n")
-    .replace(/\s+\*\*(Result\/Next step|Result|Next step|Note):\*\*\s*/gi, "\n**$1:** ")
-    .replace(/\s+(Result\/Next step|Result|Next step|Note):\s*/gi, "\n$1: ")
-    .replace(/\s+(\d+)\.\s+/g, "\n$1. ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function cleanProviderText(value, maxLength) {
-  const text = normalizeAssistantText(value);
-  if (text.length > maxLength) return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
-  return text;
-}
-
-function cleanDashboardData(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value;
-}
-
-function validatePayload(body) {
-  const message = cleanText(body?.message || "", MAX_MESSAGE_LENGTH);
-  if (!message) {
-    throw requestError(400, "MESSAGE_REQUIRED", "Message is required.");
-  }
-
-  const role = body?.role === "manager" || body?.role === "management" ? "manager" : "tenant";
-  return {
-    appId: cleanText(body?.appId || "estateflow-mvp", 80),
-    message,
-    role,
-    pageContext: cleanContext(body?.pageContext),
-    dashboardData: cleanDashboardData(body?.dashboardData),
-    conversationHistory: cleanHistory(body?.conversationHistory)
-  };
-}
-
-function getTrustedUserContext(req, payload) {
-  // MVP bridge: the static demo has no real auth yet, so the server centralizes
-  // the temporary role mapping here. Replace this with a signed session/JWT and
-  // backend-derived tenant/company IDs before exposing real customer data.
-  const role = payload.role === "manager" ? "manager" : "tenant";
-  return {
-    userId: role === "manager" ? "demo-manager-noura" : "demo-tenant-ahmed",
-    role,
-    tenantId: role === "tenant" ? "tenant-ahmed-khan" : undefined,
-    managementCompanyId: role === "manager" ? "noura-property-co" : undefined,
-    requestKey: `${role}:${clientIp(req)}`
-  };
-}
-
-function includesAny(text, words) {
+function includesAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
 }
 
-function detectIntent(message, role, pageType = "") {
+function detectIntent(message: string, role: string, pageType = "") {
   const text = normalizeMessageKey(`${message} ${pageType}`);
   if (role === "tenant") {
     if (includesAny(text, ["rent", "pay", "due", "overdue", "balance"])) return "tenant_rent";
@@ -671,10 +516,10 @@ function detectIntent(message, role, pageType = "") {
   return "management_navigation";
 }
 
-function classifyAskAIRequest({ message, role, pageType }) {
+function classifyAskAIRequest({ message, role, pageType }: { message: string; role: string; pageType?: string }) {
   const text = normalizeMessageKey(message);
   if (!text) return { allowed: false, reason: "empty", localResponse: "Message is required.", intent: "out_of_scope" };
-  if (text.length > MAX_MESSAGE_LENGTH) {
+  if (text.length > MAX_AI_MESSAGE_LENGTH) {
     return { allowed: false, reason: "too_long", localResponse: SAFE_RESPONSES.tooLong, intent: "out_of_scope" };
   }
   if (hasSensitiveRequest(text)) {
@@ -737,8 +582,8 @@ function classifyAskAIRequest({ message, role, pageType }) {
   };
 }
 
-function pick(source, keys) {
-  const output = {};
+function pick(source: any, keys: string[]) {
+  const output: Record<string, unknown> = {};
   if (!source || typeof source !== "object") return output;
   for (const key of keys) {
     const value = source[key];
@@ -747,12 +592,12 @@ function pick(source, keys) {
   return output;
 }
 
-function limitArray(value, count, mapper) {
+function limitArray(value: any, count: number, mapper: (item: any) => unknown) {
   if (!Array.isArray(value)) return [];
   return value.slice(0, count).map(mapper);
 }
 
-function amountNumber(value) {
+function amountNumber(value: unknown) {
   const text = String(value || "").replace(/,/g, "");
   const match = text.match(/-?\d+(?:\.\d+)?/);
   const amount = match ? Number(match[0]) : 0;
@@ -763,17 +608,16 @@ function amountNumber(value) {
   return amount;
 }
 
-function formatAed(amount) {
-  const value = Number(amount) || 0;
-  return `AED ${value.toLocaleString("en-US")}`;
+function formatAed(amount: number) {
+  return `AED ${(Number(amount) || 0).toLocaleString("en-US")}`;
 }
 
-function monthIndexFromName(value) {
+function monthIndexFromName(value: unknown) {
   const key = String(value || "").slice(0, 3).toLowerCase();
   return ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(key);
 }
 
-function parseRentMonth(value) {
+function parseRentMonth(value: unknown) {
   const match = String(value || "").match(/\b([A-Za-z]{3,})\s+(\d{4})\b/);
   if (!match) return null;
   const month = monthIndexFromName(match[1]);
@@ -782,7 +626,7 @@ function parseRentMonth(value) {
   return new Date(Date.UTC(year, month, 1));
 }
 
-function parseRentDueDate(value) {
+function parseRentDueDate(value: unknown) {
   const match = String(value || "").match(/\b(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})\b/);
   if (!match) return null;
   const day = Number(match[1]);
@@ -792,40 +636,40 @@ function parseRentDueDate(value) {
   return new Date(Date.UTC(year, month, day));
 }
 
-function addUtcMonths(date, count) {
+function addUtcMonths(date: Date, count: number) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + count, date.getUTCDate()));
 }
 
-function formatRentMonth(date) {
+function formatRentMonth(date: Date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
 }
 
-function formatRentDate(date) {
+function formatRentDate(date: Date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
   const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][date.getUTCMonth()];
   return `${String(date.getUTCDate()).padStart(2, "0")} ${month} ${date.getUTCFullYear()}`;
 }
 
-function nextRentMonthLabel(month, dueDate) {
+function nextRentMonthLabel(month: unknown, dueDate: unknown) {
   const base = parseRentDueDate(dueDate) || parseRentMonth(month);
   return base ? formatRentMonth(addUtcMonths(base, 1)) : "next rent cycle";
 }
 
-function nextRentDueDateLabel(dueDate) {
+function nextRentDueDateLabel(dueDate: unknown) {
   const base = parseRentDueDate(dueDate);
   return base ? formatRentDate(addUtcMonths(base, 1)) : "";
 }
 
-function statusIsPaid(status) {
+function statusIsPaid(status: unknown) {
   return ["paid", "approved", "confirmed"].includes(normalizeMessageKey(status));
 }
 
-function knowledgeForRole(role) {
+function knowledgeForRole(role: string) {
   return role === "manager" ? MANAGEMENT_DASHBOARD_KNOWLEDGE : TENANT_DASHBOARD_KNOWLEDGE;
 }
 
-function selectDashboardKnowledge({ role, intent, pageType }) {
+function selectDashboardKnowledge({ role, intent, pageType }: { role: string; intent: string; pageType?: string }) {
   const knowledge = knowledgeForRole(role);
   const normalizedPage = String(pageType || "").trim();
   const isNavigationIntent = String(intent || "").includes("navigation");
@@ -842,8 +686,8 @@ function selectDashboardKnowledge({ role, intent, pageType }) {
   }
 
   const pages = [...pageIds]
-    .filter((pageId) => knowledge.pages[pageId])
-    .map((pageId) => ({ id: pageId, ...knowledge.pages[pageId] }));
+    .filter((pageId) => knowledge.pages[pageId as keyof typeof knowledge.pages])
+    .map((pageId) => ({ id: pageId, ...knowledge.pages[pageId as keyof typeof knowledge.pages] }));
 
   return {
     role: knowledge.role,
@@ -856,24 +700,31 @@ function selectDashboardKnowledge({ role, intent, pageType }) {
   };
 }
 
-function buildTenantRentFacts(dashboardData = {}) {
-  const tenant = dashboardData.tenant || {};
-  const profile = dashboardData.profile || {};
-  const rent = tenant.rent || tenant.rentSummary || tenant.currentRent || tenant;
-  const payment = tenant.payment || tenant.latestPayment || {};
-  const cashRequest = tenant.cashRequest || {};
-  const nextRent = tenant.nextRent || tenant.nextRentCycle || rent.nextRent || {};
-  const amount = rent.amount || tenant.amount || tenant.dueAmount || tenant.outstanding || profile.rent || "";
+function buildTenantRentFactsFromSources(data: any = {}, fallback: any = {}) {
+  const tenant = data?.tenant || {};
+  const fallbackTenant = fallback?.tenant || {};
+  const profile = tenant.profile || fallback?.profile || {};
+  const rent = Array.isArray(tenant.rentHistory) && tenant.rentHistory.length
+    ? tenant.rentHistory[0]
+    : fallbackTenant.rent || fallbackTenant.rentSummary || fallbackTenant;
+  const payment = Array.isArray(tenant.paymentSubmissions) && tenant.paymentSubmissions.length
+    ? tenant.paymentSubmissions[0]
+    : fallbackTenant.payment || fallbackTenant.latestPayment || {};
+  const cashRequest = Array.isArray(tenant.cashRequests) && tenant.cashRequests.length
+    ? tenant.cashRequests[0]
+    : fallbackTenant.cashRequest || {};
+  const nextRent = fallbackTenant.nextRent || fallbackTenant.nextRentCycle || rent.nextRent || {};
+  const amount = rent.amount || fallbackTenant.amount || fallbackTenant.dueAmount || fallbackTenant.outstanding || profile.rent || "";
   const amountValue = amountNumber(amount);
-  const dueDate = rent.dueDate || tenant.dueDate || "";
-  const month = rent.month || tenant.month || "current rent cycle";
+  const dueDate = rent.dueDate || fallbackTenant.dueDate || "";
+  const month = rent.month || fallbackTenant.month || "current rent cycle";
   const nextAmount = nextRent.amount || nextRent.rent || amount || (amountValue ? formatAed(amountValue) : "");
   const nextAmountValue = amountNumber(nextAmount);
-  const explicitOutstanding = tenant.outstanding || tenant.balance || tenant.dueAmount || rent.outstanding || "";
-  const paymentStatus = tenant.status || tenant.paymentStatus || rent.status || payment.status || "";
-  const isPaid = tenant.isPaid === true || statusIsPaid(paymentStatus) || statusIsPaid(rent.status);
+  const explicitOutstanding = fallbackTenant.outstanding || fallbackTenant.balance || fallbackTenant.dueAmount || rent.outstanding || "";
+  const paymentStatus = fallbackTenant.status || fallbackTenant.paymentStatus || rent.status || payment.status || "";
+  const isPaid = fallbackTenant.isPaid === true || statusIsPaid(paymentStatus) || statusIsPaid(rent.status);
   const paymentApproved = statusIsPaid(payment.status);
-  const paidAmountFromData = tenant.paidAmount || rent.paidAmount || payment.paidAmount || "";
+  const paidAmountFromData = fallbackTenant.paidAmount || rent.paidAmount || payment.paidAmount || "";
   let paidValue = amountNumber(paidAmountFromData);
 
   if (!paidValue && isPaid) paidValue = amountValue;
@@ -896,36 +747,49 @@ function buildTenantRentFacts(dashboardData = {}) {
     nextDueDate: nextRent.dueDate || nextRent.due || nextRentDueDateLabel(dueDate),
     nextHasScheduledChange: Boolean(nextRent.amount && amount && nextAmountValue !== amountValue),
     status: paymentStatus || "Pending",
-    workflow: tenant.paymentWorkflow || tenant.paymentStatus || "",
-    workflowLabel: tenant.dashboardState?.workflowLabel || "",
-    workflowNote: tenant.dashboardState?.workflowNote || tenant.paymentNote || "",
+    workflow: fallbackTenant.paymentWorkflow || fallbackTenant.paymentStatus || "",
+    workflowLabel: fallbackTenant.dashboardState?.workflowLabel || "",
+    workflowNote: fallbackTenant.dashboardState?.workflowNote || fallbackTenant.paymentNote || "",
     paidAmount: formatAed(paidValue),
     paidValue,
     outstanding: formatAed(outstandingValue),
     outstandingValue,
-    receipt: tenant.receipt || rent.receipt || "",
+    receipt: fallbackTenant.receipt || rent.receipt || "",
     latestPayment: pick(payment, ["type", "amount", "dueDate", "status", "submittedOn", "bank"]),
     cashRequest: pick(cashRequest, ["amount", "dueDate", "status", "preferredTime", "createdAt"]),
     hasData: Boolean(amount || rent.month || rent.dueDate || paymentStatus)
   };
 }
 
-function buildTenantRentHistory(dashboardData = {}) {
-  const tenant = dashboardData.tenant || {};
-  const history = Array.isArray(tenant.rentHistory) ? tenant.rentHistory : [];
-  const fallbackRows = [tenant.rent || tenant.rentSummary || tenant.currentRent || tenant].filter(Boolean);
+function buildTenantRentHistoryFromSources(data: any = {}, fallback: any = {}) {
+  const tenant = data?.tenant || {};
+  const fallbackTenant = fallback?.tenant || {};
+  const history = Array.isArray(tenant.rentHistory) && tenant.rentHistory.length
+    ? tenant.rentHistory
+    : Array.isArray(fallbackTenant.rentHistory)
+      ? fallbackTenant.rentHistory
+      : [];
+  const fallbackRows = [
+    Array.isArray(tenant.rentHistory) ? tenant.rentHistory[0] : null,
+    fallbackTenant.rent || fallbackTenant.rentSummary || fallbackTenant
+  ].filter(Boolean);
   return limitArray(history.length ? history : fallbackRows, 8, (row) =>
     pick(row, ["month", "amount", "dueDate", "status", "receipt", "paidAmount", "outstanding"])
   ).filter((row) => Object.keys(row).length);
 }
 
-function buildAIDataBrokerContext({ userContext, intent, dashboardData, pageContext }) {
-  const topics = [];
+function buildAIDataBrokerContext({ userContext, intent, dashboardData, fallbackData, pageContext }: {
+  userContext: { role: string };
+  intent: string;
+  dashboardData: any;
+  fallbackData: any;
+  pageContext: any;
+}) {
+  const topics: any[] = [];
   const pageType = pageContext?.page || "dashboard";
-
   if (userContext.role === "tenant" && ["tenant_rent", "tenant_payment"].includes(intent)) {
-    topics.push(buildTenantRentFacts(dashboardData));
-    const rentHistory = buildTenantRentHistory(dashboardData);
+    topics.push(buildTenantRentFactsFromSources(dashboardData, fallbackData));
+    const rentHistory = buildTenantRentHistoryFromSources(dashboardData, fallbackData);
     if (rentHistory.length) {
       topics.push({
         topic: "rent_history",
@@ -935,7 +799,6 @@ function buildAIDataBrokerContext({ userContext, intent, dashboardData, pageCont
       });
     }
   }
-
   return {
     selectedForIntent: intent,
     selectedForPage: pageType,
@@ -943,7 +806,48 @@ function buildAIDataBrokerContext({ userContext, intent, dashboardData, pageCont
   };
 }
 
-function buildLLMContext({ userContext, intent, dashboardData, pageContext }) {
+function tenantContext(data: any, fallback: any) {
+  const tenant = data?.tenant || {};
+  const profile = tenant.profile || fallback?.profile || {};
+  const rent = Array.isArray(tenant.rentHistory) ? tenant.rentHistory[0] : fallback?.tenant || {};
+  const payment = Array.isArray(tenant.paymentSubmissions) ? tenant.paymentSubmissions[0] : {};
+  const rentFacts = buildTenantRentFactsFromSources(data, fallback);
+  return {
+    tenantProfile: pick(profile, ["name", "unit", "property", "contractStatus", "renewalStatus"]),
+    rentSummary: pick({ ...rent, ...rentFacts }, ["month", "amount", "dueDate", "status", "workflow", "workflowLabel", "workflowNote", "paidAmount", "outstanding", "receipt", "nextMonth", "nextAmount", "nextDueDate", "nextHasScheduledChange"]),
+    rentHistory: buildTenantRentHistoryFromSources(data, fallback),
+    latestPayment: pick(payment, ["type", "amount", "dueDate", "status", "submittedOn"]),
+    contract: pick(profile, ["contractStart", "contractEnd", "rent", "renewalStatus"]),
+    openMaintenance: limitArray(tenant.maintenanceRequests, 4, (item) => pick(item, ["issue", "category", "priority", "date", "status"])),
+    openRequests: limitArray([...(tenant.contractRequests || []), ...(tenant.complaints || []), ...(tenant.suggestions || [])], 6, (item) => pick(item, ["type", "title", "details", "status", "createdAt"])),
+    actionCount: fallback?.actionCount || 0
+  };
+}
+
+function managerContext(data: any, fallback: any) {
+  const manager = data?.manager || {};
+  const summary = fallback?.management || {};
+  return {
+    companyProfile: pick(manager.profile || fallback?.profile || {}, ["name", "email"]),
+    managementSummary: summary,
+    tenantRecords: limitArray(manager.tenants, 8, (item) => pick(item, ["name", "unit", "property", "contractStatus", "rentStatus", "documentStatus"])),
+    rentTracking: limitArray(manager.rentRows, 8, (item) => pick(item, ["tenant", "unit", "property", "amount", "dueDate", "status"])),
+    paymentReviews: limitArray(manager.chequeReviews, 8, (item) => pick(item, ["tenant", "unit", "amount", "dueDate", "status", "bank"])),
+    maintenance: limitArray(manager.maintenanceRequests, 8, (item) => pick(item, ["tenant", "unit", "issue", "priority", "date", "status"])),
+    renewals: limitArray(manager.renewals, 8, (item) => pick(item, ["tenant", "unit", "property", "endDate", "currentRent", "status"])),
+    finance: pick(manager.financial || {}, ["income", "expenses", "netIncome", "pendingRent", "operationalCosts"]),
+    portfolio: limitArray(manager.properties, 6, (item) => pick(item, ["name", "location", "units", "occupiedUnits", "vacantUnits", "income", "status"])),
+    actionCount: fallback?.actionCount || 0
+  };
+}
+
+function buildLLMContext({ userContext, intent, dashboardData, fallbackData, pageContext }: {
+  userContext: { role: string };
+  intent: string;
+  dashboardData: any;
+  fallbackData: any;
+  pageContext: any;
+}) {
   const base = {
     role: userContext.role,
     intent,
@@ -953,48 +857,72 @@ function buildLLMContext({ userContext, intent, dashboardData, pageContext }) {
       intent,
       pageType: pageContext?.page
     }),
-    aiData: buildAIDataBrokerContext({ userContext, intent, dashboardData, pageContext })
+    aiData: buildAIDataBrokerContext({ userContext, intent, dashboardData, fallbackData, pageContext })
   };
+  return userContext.role === "tenant"
+    ? { ...base, ...tenantContext(dashboardData, fallbackData) }
+    : { ...base, ...managerContext(dashboardData, fallbackData) };
+}
 
-  if (userContext.role === "tenant") {
-    const profile = dashboardData.profile || {};
-    const tenant = dashboardData.tenant || {};
-    const rentFacts = buildTenantRentFacts(dashboardData);
-    return {
-      ...base,
-      tenantProfile: pick(profile, ["name", "unit", "property", "contractStatus", "renewalStatus"]),
-      rentSummary: pick({ ...tenant, ...rentFacts }, ["amount", "month", "dueDate", "status", "workflow", "workflowLabel", "workflowNote", "paidAmount", "outstanding", "receipt", "nextMonth", "nextAmount", "nextDueDate", "nextHasScheduledChange"]),
-      rentHistory: buildTenantRentHistory(dashboardData),
-      recentPayments: limitArray(tenant.paymentSubmissions, 5, (item) => pick(item, ["type", "amount", "dueDate", "status", "submittedOn", "bank"])),
-      receipts: limitArray(tenant.receipts, 6, (item) => pick(item, ["month", "amount", "receipt", "date", "status"])),
-      actionCount: dashboardData.actionCount || 0
-    };
-  }
-
-  const management = dashboardData.management || {};
+function getTrustedUserContext(_request: Request, body: any) {
+  // MVP bridge: the static demo has no real auth yet, so Convex centralizes the
+  // temporary role mapping here. Replace this with a signed session/JWT and
+  // backend-derived tenant/company IDs before exposing real customer data.
+  const role = body?.role === "manager" || body?.role === "management" ? "manager" : "tenant";
   return {
-    ...base,
-    companyProfile: pick(dashboardData.profile || {}, ["name", "email"]),
-    managementSummary: pick(management, [
-      "totalTenants",
-      "activeTenants",
-      "rentCollected",
-      "pendingRent",
-      "lateRent",
-      "openMaintenance",
-      "pendingRenewals",
-      "totalProperties",
-      "occupiedUnits",
-      "vacantUnits",
-      "totalUnits",
-      "documentReviews",
-      "actionCount"
-    ]),
-    actionCount: dashboardData.actionCount || 0
+    userId: role === "manager" ? "demo-manager-noura" : "demo-tenant-ahmed",
+    role,
+    tenantId: role === "tenant" ? "tenant-ahmed-khan" : undefined,
+    managementCompanyId: role === "manager" ? "noura-property-co" : undefined
   };
 }
 
-function systemPromptFor(userContext, intent) {
+function windowKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function minuteAgoIso() {
+  return new Date(Date.now() - 60 * 1000).toISOString();
+}
+
+async function recordAiEvent(ctx: any, args: {
+  appId: string;
+  userId: string;
+  role: string;
+  page?: string;
+  intent?: string;
+  blocked?: boolean;
+  reason?: string;
+  elapsedMs?: number;
+  messageKey?: string;
+  prompt: string;
+  response: string;
+}) {
+  await ctx.runMutation(api.estateflow.saveAiEvent, args);
+}
+
+async function checkRequestPace(ctx: any, userId: string, messageKey: string) {
+  const recent = await ctx.runQuery(api.estateflow.recentAiEvents, {
+    userId,
+    since: minuteAgoIso()
+  });
+
+  if (recent.length >= MAX_MESSAGES_PER_MINUTE) {
+    return { allowed: false, reason: "rate_limited", localResponse: SAFE_RESPONSES.rateLimited };
+  }
+
+  if (recent.some((row: any) => row.messageKey === messageKey && Date.now() - Date.parse(row.createdAt) < DUPLICATE_MESSAGE_WINDOW_MS)) {
+    return { allowed: false, reason: "duplicate_message", localResponse: SAFE_RESPONSES.repeated };
+  }
+
+  if (recent.filter((row: any) => row.blocked).length >= MAX_BLOCKED_ATTEMPTS_PER_MINUTE) {
+    return { allowed: false, reason: "blocked_attempt_limit", localResponse: SAFE_RESPONSES.rateLimited };
+  }
+
+  return { allowed: true };
+}
+
+function systemPromptFor(userContext: { role: string }, intent: string) {
   const roleLabel = userContext.role === "manager" ? "property management company user" : "tenant";
   return [
     "You are EstateFlow Ask AI, a concise assistant inside a real estate property management dashboard.",
@@ -1014,25 +942,30 @@ function systemPromptFor(userContext, intent) {
   ].join(" ");
 }
 
-function providerMessages({ payload, userContext, intent, llmContext }) {
+function providerMessages(payload: {
+  message: string;
+  userContext: { role: string };
+  intent: string;
+  llmContext: any;
+  conversationHistory: Array<{ role: string; content: string }>;
+}) {
   return [
-    { role: "system", content: systemPromptFor(userContext, intent) },
-    { role: "user", content: `Authorized dashboard context JSON: ${JSON.stringify(llmContext)}` },
+    { role: "system", content: systemPromptFor(payload.userContext, payload.intent) },
+    { role: "user", content: `Authorized dashboard context JSON: ${JSON.stringify(payload.llmContext)}` },
     ...payload.conversationHistory,
     { role: "user", content: payload.message }
   ];
 }
 
-function extractProviderMessage(data) {
+function extractProviderMessage(data: any) {
   if (typeof data?.choices?.[0]?.message?.content === "string") return data.choices[0].message.content;
   if (typeof data?.output_text === "string") return data.output_text;
   if (Array.isArray(data?.output)) {
-    const text = data.output
-      .flatMap((item) => item?.content || [])
-      .map((item) => item?.text || "")
+    return data.output
+      .flatMap((item: any) => item?.content || [])
+      .map((item: any) => item?.text || "")
       .filter(Boolean)
       .join(" ");
-    if (text) return text;
   }
   return "";
 }
@@ -1044,7 +977,7 @@ function configuredApiKey() {
 function configuredAIModel() {
   const model = process.env.AI_MODEL || DEFAULT_AI_MODEL;
   if (!ALLOWED_AI_MODELS.has(model)) {
-    throw requestError(500, "AI_MODEL_NOT_ALLOWED", "Ask AI model is not allowed.");
+    throw new Error("AI_MODEL_NOT_ALLOWED");
   }
   return model;
 }
@@ -1052,13 +985,18 @@ function configuredAIModel() {
 function configuredClassifierModel() {
   const model = process.env.AI_CLASSIFIER_MODEL || DEFAULT_CLASSIFIER_MODEL;
   if (!ALLOWED_AI_MODELS.has(model)) {
-    throw requestError(500, "AI_CLASSIFIER_MODEL_NOT_ALLOWED", "Ask AI classifier model is not allowed.");
+    throw new Error("AI_CLASSIFIER_MODEL_NOT_ALLOWED");
   }
   return model;
 }
 
-function classifierMessages({ payload, userContext, intent }) {
-  const roleScope = userContext.role === "manager"
+function classifierMessages(payload: {
+  message: string;
+  userContext: { role: string };
+  pageContext: { page: string };
+  intent: string;
+}) {
+  const roleScope = payload.userContext.role === "manager"
     ? "Allowed: EstateFlow management portal workflows and authorized dashboard facts for tenant operations, rent tracking, payment review, maintenance, renewals, documents, notifications, finance, portfolio, and management dashboard navigation. Not allowed: unrelated general knowledge, puzzles, trivia, coding, private secrets, or non-dashboard requests."
     : "Allowed: EstateFlow tenant portal workflows and authorized dashboard facts for the tenant's own rent history, rent status, payments, maintenance, renewal, documents, notifications, Action Center, and dashboard navigation. Not allowed: company finance/revenue/profit, other tenants, management-only data, unrelated general knowledge, puzzles, trivia, coding, private secrets, or non-dashboard requests.";
   return [
@@ -1076,9 +1014,9 @@ function classifierMessages({ payload, userContext, intent }) {
     {
       role: "user",
       content: JSON.stringify({
-        role: userContext.role,
+        role: payload.userContext.role,
         page: payload.pageContext.page || "dashboard",
-        localIntent: intent,
+        localIntent: payload.intent,
         scope: roleScope,
         message: payload.message
       })
@@ -1086,7 +1024,7 @@ function classifierMessages({ payload, userContext, intent }) {
   ];
 }
 
-function parseClassifierDecision(content, fallbackIntent = "out_of_scope") {
+function parseClassifierDecision(content: unknown, fallbackIntent = "out_of_scope") {
   const text = String(content || "").trim();
   const jsonText = text.match(/\{[\s\S]*\}/)?.[0] || "";
   if (!jsonText) {
@@ -1108,202 +1046,328 @@ function parseClassifierDecision(content, fallbackIntent = "out_of_scope") {
   }
 }
 
-async function requestScopeClassifier({ payload, userContext, intent }) {
-  const apiKey = configuredApiKey();
-  const model = configuredClassifierModel();
-  const baseUrl = process.env.AI_API_BASE_URL || "https://api.openai.com/v1/chat/completions";
-
-  if (!apiKey || !baseUrl) {
-    throw requestError(503, "AI_NOT_CONFIGURED", SAFE_RESPONSES.notConfigured);
-  }
-
-  const providerResponse = await fetch(baseUrl, {
+async function requestScopeClassifier(payload: {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  message: string;
+  userContext: { role: string };
+  pageContext: { page: string };
+  intent: string;
+}) {
+  const providerResponse = await fetch(payload.baseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${payload.apiKey}`
     },
     body: JSON.stringify({
-      model,
-      messages: classifierMessages({ payload, userContext, intent }),
+      model: payload.model,
+      messages: classifierMessages(payload),
       temperature: 0,
       max_completion_tokens: 90
     })
   });
 
   if (!providerResponse.ok) {
-    throw requestError(502, "AI_CLASSIFIER_ERROR", "AI classifier request failed.");
+    throw new Error("AI_CLASSIFIER_ERROR");
   }
 
   const data = await providerResponse.json();
-  return parseClassifierDecision(extractProviderMessage(data), intent);
+  return parseClassifierDecision(extractProviderMessage(data), payload.intent);
 }
 
-async function requestAI({ payload, userContext, intent, llmContext }) {
-  const apiKey = configuredApiKey();
-  const model = configuredAIModel();
-  const baseUrl = process.env.AI_API_BASE_URL || "https://api.openai.com/v1/chat/completions";
+http.route({
+  path: "/estateflow/snapshot",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, request) => preflight(request))
+});
 
-  if (!apiKey || !baseUrl) {
-    throw requestError(503, "AI_NOT_CONFIGURED", SAFE_RESPONSES.notConfigured);
-  }
+http.route({
+  path: "/estateflow/snapshot",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    if (!originAllowed(request)) return json(request, { error: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." }, 403);
+    const appId = new URL(request.url).searchParams.get("appId") || DEFAULT_APP_ID;
+    const snapshot = await ctx.runQuery(api.estateflow.getSnapshot, { appId });
+    return json(request, snapshot || { empty: true, appId, version: DATA_STORE_VERSION });
+  })
+});
 
-  const providerResponse = await fetch(baseUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: providerMessages({ payload, userContext, intent, llmContext }),
-      temperature: 0.2,
-      max_completion_tokens: 500
-    })
-  });
+http.route({
+  path: "/estateflow/snapshot",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (!originAllowed(request)) return json(request, { error: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." }, 403);
 
-  if (!providerResponse.ok) {
-    throw requestError(502, "AI_PROVIDER_ERROR", "AI provider request failed.");
-  }
+    try {
+      const body = await readJson(request, MAX_SNAPSHOT_BYTES);
+      if (body?.version !== DATA_STORE_VERSION || !body?.data?.tenant || !body?.data?.manager) {
+        return json(request, { error: "INVALID_SNAPSHOT", message: "Snapshot data is invalid." }, 400);
+      }
 
-  const data = await providerResponse.json();
-  const message = cleanProviderText(extractProviderMessage(data), 4000);
-  if (!message) {
-    throw requestError(502, "AI_EMPTY_RESPONSE", "AI provider returned an empty response.");
-  }
-  return message;
-}
-
-function localAssistantResponse(res, payload, status = 200) {
-  return sendJson(res, status, {
-    message: payload.localResponse,
-    blocked: true,
-    reason: payload.reason,
-    intent: payload.intent || "out_of_scope",
-    source: payload.source || "security"
-  });
-}
-
-async function handler(req, res) {
-  applyCors(req, res);
-
-  if (!isOriginAllowed(req)) {
-    return sendJson(res, 403, { error: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." });
-  }
-
-  if (req.method === "OPTIONS") return sendNoContent(res);
-  if (req.method !== "POST") {
-    return sendJson(res, 405, { error: "METHOD_NOT_ALLOWED", message: "Use POST." });
-  }
-
-  try {
-    const body = await readBody(req);
-    const payload = validatePayload(body);
-    const userContext = getTrustedUserContext(req, payload);
-
-    if (inFlightUsers.has(userContext.userId)) {
-      return localAssistantResponse(res, { reason: "in_flight", localResponse: SAFE_RESPONSES.busy, intent: "dashboard_help" });
+      const snapshot = await ctx.runMutation(api.estateflow.saveSnapshot, {
+        appId: cleanText(body.appId, 80) || DEFAULT_APP_ID,
+        version: DATA_STORE_VERSION,
+        sequence: Number(body.sequence) || 0,
+        data: body.data,
+        clientUpdatedAt: cleanText(body.clientUpdatedAt, 80) || undefined
+      });
+      return json(request, snapshot);
+    } catch (error) {
+      if (error instanceof Response) return error;
+      return json(request, { error: "SNAPSHOT_SAVE_FAILED", message: "Snapshot could not be saved." }, 500);
     }
+  })
+});
 
-    const pace = checkRequestPace(userContext.requestKey, payload.message);
-    if (!pace.allowed) {
-      return localAssistantResponse(res, { ...pace, intent: "out_of_scope" });
+http.route({
+  path: "/estateflow/reset",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, request) => preflight(request))
+});
+
+http.route({
+  path: "/estateflow/reset",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (!originAllowed(request)) return json(request, { error: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." }, 403);
+
+    try {
+      const body = await readJson(request, MAX_SNAPSHOT_BYTES);
+      if (body?.version !== DATA_STORE_VERSION || !body?.data?.tenant || !body?.data?.manager) {
+        return json(request, { error: "INVALID_RESET_SNAPSHOT", message: "Reset snapshot data is invalid." }, 400);
+      }
+
+      const snapshot = await ctx.runMutation(api.estateflow.resetDemoState, {
+        appId: cleanText(body.appId, 80) || DEFAULT_APP_ID,
+        version: DATA_STORE_VERSION,
+        sequence: Number(body.sequence) || 0,
+        data: body.data,
+        clientUpdatedAt: cleanText(body.clientUpdatedAt, 80) || undefined
+      });
+      return json(request, snapshot);
+    } catch (error) {
+      if (error instanceof Response) return error;
+      return json(request, { error: "RESET_FAILED", message: "Demo data could not be reset." }, 500);
     }
+  })
+});
 
-    const classification = classifyAskAIRequest({
-      message: payload.message,
-      role: userContext.role,
-      pageType: payload.pageContext.page
-    });
+http.route({
+  path: "/estateflow/ask-ai",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, request) => preflight(request))
+});
 
-    if (!classification.allowed) {
-      const blockedBudget = checkBlockedAttemptBudget(userContext.requestKey);
-      if (!blockedBudget.allowed) return localAssistantResponse(res, { ...blockedBudget, intent: "out_of_scope" });
-      return localAssistantResponse(res, classification);
-    }
+http.route({
+  path: "/estateflow/ask-ai",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (!originAllowed(request)) return json(request, { error: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." }, 403);
 
-    if (currentUsage(userContext.userId) >= ASK_AI_USAGE_LIMIT_MS) {
-      return localAssistantResponse(res, {
-        reason: "usage_limit",
-        localResponse: SAFE_RESPONSES.usageLimit,
+    try {
+      const body = await readJson(request, MAX_AI_BYTES);
+      const message = cleanText(body?.message, MAX_AI_MESSAGE_LENGTH);
+      if (!message) return json(request, { error: "MESSAGE_REQUIRED", message: "Message is required." }, 400);
+
+      const appId = cleanText(body?.appId, 80) || DEFAULT_APP_ID;
+      const pageContext = cleanContext(body?.pageContext);
+      const userContext = getTrustedUserContext(request, body);
+      const messageKey = normalizeMessageKey(message);
+
+      if (inFlightUsers.has(userContext.userId)) {
+        return localAssistantResponse(request, { reason: "in_flight", localResponse: SAFE_RESPONSES.busy, intent: "dashboard_help" });
+      }
+
+      const pace = await checkRequestPace(ctx, userContext.userId, messageKey);
+      if (!pace.allowed) {
+        await recordAiEvent(ctx, {
+          appId,
+          userId: userContext.userId,
+          role: userContext.role,
+          page: pageContext.page || undefined,
+          intent: "out_of_scope",
+          blocked: true,
+          reason: pace.reason,
+          messageKey,
+          prompt: message,
+          response: pace.localResponse
+        });
+        await ctx.runMutation(api.estateflow.recordAiUsage, {
+          userId: userContext.userId,
+          windowKey: windowKey(),
+          elapsedMs: 0,
+          blocked: true
+        });
+        return localAssistantResponse(request, { ...pace, intent: "out_of_scope" });
+      }
+
+      const classification = classifyAskAIRequest({
+        message,
+        role: userContext.role,
+        pageType: pageContext.page
+      });
+      if (!classification.allowed) {
+        await recordAiEvent(ctx, {
+          appId,
+          userId: userContext.userId,
+          role: userContext.role,
+          page: pageContext.page || undefined,
+          intent: classification.intent,
+          blocked: true,
+          reason: classification.reason,
+          messageKey,
+          prompt: message,
+          response: classification.localResponse
+        });
+        await ctx.runMutation(api.estateflow.recordAiUsage, {
+          userId: userContext.userId,
+          windowKey: windowKey(),
+          elapsedMs: 0,
+          blocked: true
+        });
+        return localAssistantResponse(request, classification);
+      }
+
+      const usage = await ctx.runQuery(api.estateflow.getAiUsage, {
+        userId: userContext.userId,
+        windowKey: windowKey()
+      });
+      if ((usage?.usedMs || 0) >= ASK_AI_USAGE_LIMIT_MS) {
+        return localAssistantResponse(request, {
+          reason: "usage_limit",
+          localResponse: SAFE_RESPONSES.usageLimit,
+          intent: classification.intent
+        });
+      }
+
+      const apiKey = configuredApiKey();
+      const model = configuredAIModel();
+      const classifierModel = configuredClassifierModel();
+      const baseUrl = process.env.AI_API_BASE_URL || "https://api.openai.com/v1/chat/completions";
+      if (!apiKey) {
+        return json(request, { error: "AI_NOT_CONFIGURED", message: SAFE_RESPONSES.notConfigured }, 503);
+      }
+
+      const classifierStartedAt = Date.now();
+      const scopeDecision = await requestScopeClassifier({
+        apiKey,
+        baseUrl,
+        model: classifierModel,
+        message,
+        userContext,
+        pageContext,
         intent: classification.intent
       });
-    }
 
-    const scopeDecision = await requestScopeClassifier({
-      payload,
-      userContext,
-      intent: classification.intent
-    });
+      if (!scopeDecision.allowed) {
+        const elapsedMs = Date.now() - classifierStartedAt;
+        await recordAiEvent(ctx, {
+          appId,
+          userId: userContext.userId,
+          role: userContext.role,
+          page: pageContext.page || undefined,
+          intent: scopeDecision.intent || classification.intent,
+          blocked: true,
+          reason: scopeDecision.reason,
+          elapsedMs,
+          messageKey,
+          prompt: message,
+          response: scopeDecision.localResponse || SAFE_RESPONSES.classifierBlocked
+        });
+        await ctx.runMutation(api.estateflow.recordAiUsage, {
+          userId: userContext.userId,
+          windowKey: windowKey(),
+          elapsedMs,
+          blocked: true
+        });
+        return localAssistantResponse(request, {
+          reason: scopeDecision.reason,
+          localResponse: scopeDecision.localResponse || SAFE_RESPONSES.classifierBlocked,
+          intent: scopeDecision.intent || classification.intent,
+          source: "classifier"
+        });
+      }
 
-    if (!scopeDecision.allowed) {
-      const blockedBudget = checkBlockedAttemptBudget(userContext.requestKey);
-      if (!blockedBudget.allowed) return localAssistantResponse(res, { ...blockedBudget, intent: "out_of_scope" });
-      return localAssistantResponse(res, {
-        reason: scopeDecision.reason,
-        localResponse: scopeDecision.localResponse || SAFE_RESPONSES.classifierBlocked,
-        intent: scopeDecision.intent || classification.intent,
-        source: "classifier"
-      });
-    }
-
-    const llmContext = buildLLMContext({
-      userContext,
-      intent: scopeDecision.intent || classification.intent,
-      dashboardData: payload.dashboardData,
-      pageContext: payload.pageContext
-    });
-
-    inFlightUsers.add(userContext.userId);
-    const startedAt = Date.now();
-    try {
-      const message = await requestAI({
-        payload,
+      const snapshot = await ctx.runQuery(api.estateflow.getSnapshot, { appId });
+      const llmContext = buildLLMContext({
         userContext,
         intent: scopeDecision.intent || classification.intent,
-        llmContext
+        dashboardData: snapshot?.data || {},
+        fallbackData: body?.dashboardData || {},
+        pageContext
       });
-      recordUsage(userContext.userId, Date.now() - startedAt);
-      return sendJson(res, 200, { message, intent: scopeDecision.intent || classification.intent, source: "chatgpt" });
-    } finally {
-      inFlightUsers.delete(userContext.userId);
-    }
-  } catch (error) {
-    const statusCode = error.statusCode || 500;
-    const code = error.code || "AI_REQUEST_FAILED";
-    const safeMessage = code === "AI_NOT_CONFIGURED"
-      ? SAFE_RESPONSES.notConfigured
-      : code === "FIELD_TOO_LONG"
-        ? SAFE_RESPONSES.tooLong
-        : statusCode >= 500
-          ? SAFE_RESPONSES.apiUnavailable
-          : error.message;
-    return sendJson(res, statusCode, { error: code, message: safeMessage });
-  }
-}
 
-module.exports = handler;
-module.exports._internal = {
-  MAX_BODY_BYTES,
-  MAX_MESSAGE_LENGTH,
-  MAX_HISTORY_ITEMS,
-  RATE_LIMIT_WINDOW_MS,
-  RATE_LIMIT_MAX_REQUESTS,
-  DUPLICATE_MESSAGE_WINDOW_MS,
-  ASK_AI_USAGE_LIMIT_MS,
-  validatePayload,
-  isOriginAllowed,
-  checkRequestPace,
-  classifyAskAIRequest,
-  buildLLMContext,
-  getTrustedUserContext,
-  selectDashboardKnowledge,
-  normalizeAssistantText,
-  parseClassifierDecision,
-  buildTenantRentFacts,
-  buildAIDataBrokerContext,
-  configuredClassifierModel,
-  configuredAIModel,
-  DEFAULT_AI_MODEL,
-  DEFAULT_CLASSIFIER_MODEL
-};
+      inFlightUsers.add(userContext.userId);
+      const startedAt = Date.now();
+      try {
+        const providerResponse = await fetch(baseUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: providerMessages({
+              message,
+              userContext,
+              intent: scopeDecision.intent || classification.intent,
+              llmContext,
+              conversationHistory: safeHistory(body?.conversationHistory)
+            }),
+            temperature: 0.2,
+            max_completion_tokens: 500
+          })
+        });
+
+        if (!providerResponse.ok) {
+          return json(request, { error: "AI_PROVIDER_ERROR", message: SAFE_RESPONSES.apiUnavailable }, 502);
+        }
+
+        const data = await providerResponse.json();
+        const response = normalizeAssistantText(extractProviderMessage(data), 4000);
+        if (!response) {
+          return json(request, { error: "AI_EMPTY_RESPONSE", message: SAFE_RESPONSES.apiUnavailable }, 502);
+        }
+
+        const elapsedMs = Date.now() - startedAt;
+        await ctx.runMutation(api.estateflow.recordAiUsage, {
+          userId: userContext.userId,
+          windowKey: windowKey(),
+          elapsedMs,
+          blocked: false
+        });
+        await recordAiEvent(ctx, {
+          appId,
+          userId: userContext.userId,
+          role: userContext.role,
+          page: pageContext.page || undefined,
+          intent: scopeDecision.intent || classification.intent,
+          blocked: false,
+          reason: "allowed",
+          elapsedMs,
+          messageKey,
+          prompt: message,
+          response
+        });
+
+        return json(request, { message: response, intent: scopeDecision.intent || classification.intent, source: "chatgpt" });
+      } finally {
+        inFlightUsers.delete(userContext.userId);
+      }
+    } catch (error) {
+      if (error instanceof Response) return error;
+      if (error instanceof Error && error.message === "AI_MODEL_NOT_ALLOWED") {
+        return json(request, { error: "AI_MODEL_NOT_ALLOWED", message: "Ask AI model is not allowed." }, 500);
+      }
+      if (error instanceof Error && error.message === "FIELD_TOO_LONG") {
+        return json(request, { error: "FIELD_TOO_LONG", message: SAFE_RESPONSES.tooLong }, 400);
+      }
+      return json(request, { error: "AI_REQUEST_FAILED", message: SAFE_RESPONSES.apiUnavailable }, 500);
+    }
+  })
+});
+
+export default http;

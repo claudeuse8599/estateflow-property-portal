@@ -14,6 +14,7 @@ const icon = {
   sun: lineIcon('<circle cx="12" cy="12" r="4"/><path d="M12 2.8v2"/><path d="M12 19.2v2"/><path d="M4.5 4.5l1.4 1.4"/><path d="M18.1 18.1l1.4 1.4"/><path d="M2.8 12h2"/><path d="M19.2 12h2"/><path d="M4.5 19.5l1.4-1.4"/><path d="M18.1 5.9l1.4-1.4"/>'),
   moon: lineIcon('<path d="M20.2 15.2A8.2 8.2 0 0 1 8.8 3.8a8.8 8.8 0 1 0 11.4 11.4Z"/>'),
   compose: lineIcon('<path d="M12 5H6.8A2.8 2.8 0 0 0 4 7.8v9.4A2.8 2.8 0 0 0 6.8 20h9.4a2.8 2.8 0 0 0 2.8-2.8V12"/><path d="M15.4 4.9 19.1 8.6 11 16.7H7.3V13z"/>'),
+  copy: lineIcon('<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15.5V6.8A1.8 1.8 0 0 1 6.8 5h8.7"/>'),
   send: lineIcon('<path d="m21 3.5-7.3 17-3.2-7-7-3.2z"/><path d="m10.5 13.5 4.1-4.1"/>'),
   plus: lineIcon('<path d="M12 5v14"/><path d="M5 12h14"/>'),
   mic: lineIcon('<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M9 21h6"/>'),
@@ -50,6 +51,9 @@ function defaultFilters() {
 
 const DATA_STORE_KEY = "estateflow-demo-data-v1";
 const DATA_STORE_VERSION = 1;
+const BACKEND_REQUEST_TIMEOUT_MS = 8000;
+const BACKEND_SYNC_DEBOUNCE_MS = 650;
+const ESTATEFLOW_CONFIG = window.ESTATEFLOW_CONFIG || {};
 const ASK_AI_MESSAGE_LIMIT = 24;
 const ASK_AI_SESSION_LIMIT = 12;
 const ASK_AI_TYPING_DELAY = 720;
@@ -1061,7 +1065,54 @@ function loadStoredSnapshot() {
   }
 }
 
-function saveData() {
+function storedConvexUrl() {
+  try {
+    return localStorage.getItem("estateflow-convex-http-url") || "";
+  } catch {
+    return "";
+  }
+}
+
+function backendConfigValue(key, fallback = "") {
+  const value = ESTATEFLOW_CONFIG?.[key] ?? window[`ESTATEFLOW_${key.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`];
+  return String(value || fallback || "").trim();
+}
+
+function estateflowAppId() {
+  return backendConfigValue("appId", "estateflow-mvp") || "estateflow-mvp";
+}
+
+function convexHttpUrl() {
+  return (backendConfigValue("convexHttpUrl") || storedConvexUrl()).replace(/\/+$/, "");
+}
+
+function backendMode() {
+  return backendConfigValue("backendMode", "local").toLowerCase();
+}
+
+function convexBackendEnabled() {
+  return backendMode() === "convex" && Boolean(convexHttpUrl());
+}
+
+function convexRoute(path) {
+  return `${convexHttpUrl()}/estateflow/${path.replace(/^\/+/, "")}`;
+}
+
+function snapshotPayload() {
+  return {
+    appId: estateflowAppId(),
+    version: DATA_STORE_VERSION,
+    sequence: state.sequence,
+    data: state.data,
+    clientUpdatedAt: new Date().toISOString()
+  };
+}
+
+function validRemoteSnapshot(snapshot) {
+  return snapshot?.version === DATA_STORE_VERSION && snapshot.data?.tenant && snapshot.data?.manager;
+}
+
+function saveLocalSnapshot() {
   try {
     localStorage.setItem(
       DATA_STORE_KEY,
@@ -1074,6 +1125,125 @@ function saveData() {
     );
   } catch {
     // The demo remains usable if browser storage is unavailable.
+  }
+}
+
+let backendSyncTimer = 0;
+let backendSyncPending = false;
+let backendSyncInFlight = false;
+let backendHydrationStarted = false;
+let backendSyncErrorShown = false;
+
+function saveData() {
+  saveLocalSnapshot();
+  queueBackendSync();
+}
+
+async function requestBackendJson(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), BACKEND_REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    if (!response.ok) {
+      const error = new Error(data?.message || "Backend request failed.");
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function showBackendSyncError() {
+  if (backendSyncErrorShown) return;
+  backendSyncErrorShown = true;
+  showToast("Cloud sync unavailable. Saved in this browser.");
+}
+
+function queueBackendSync() {
+  if (!convexBackendEnabled()) return;
+  backendSyncPending = true;
+  window.clearTimeout(backendSyncTimer);
+  backendSyncTimer = window.setTimeout(syncBackendSnapshot, BACKEND_SYNC_DEBOUNCE_MS);
+}
+
+async function syncBackendSnapshot() {
+  if (!convexBackendEnabled() || backendSyncInFlight || !backendSyncPending) return;
+  backendSyncPending = false;
+  backendSyncInFlight = true;
+
+  try {
+    await requestBackendJson(convexRoute("snapshot"), {
+      method: "POST",
+      body: JSON.stringify(snapshotPayload())
+    });
+    backendSyncErrorShown = false;
+  } catch {
+    backendSyncPending = true;
+    showBackendSyncError();
+  } finally {
+    backendSyncInFlight = false;
+    if (backendSyncPending) {
+      window.clearTimeout(backendSyncTimer);
+      backendSyncTimer = window.setTimeout(syncBackendSnapshot, BACKEND_SYNC_DEBOUNCE_MS * 2);
+    }
+  }
+}
+
+async function resetBackendDemoSnapshot() {
+  if (!convexBackendEnabled()) return;
+  backendSyncPending = false;
+  window.clearTimeout(backendSyncTimer);
+  backendSyncInFlight = true;
+
+  try {
+    await requestBackendJson(convexRoute("reset"), {
+      method: "POST",
+      body: JSON.stringify(snapshotPayload())
+    });
+    backendSyncErrorShown = false;
+  } catch {
+    showBackendSyncError();
+  } finally {
+    backendSyncInFlight = false;
+  }
+}
+
+async function hydrateBackendSnapshot({ force = false } = {}) {
+  if (!convexBackendEnabled()) return;
+  if (backendHydrationStarted && !force) return;
+  backendHydrationStarted = true;
+
+  try {
+    const snapshot = await requestBackendJson(`${convexRoute("snapshot")}?appId=${encodeURIComponent(estateflowAppId())}`);
+    if (validRemoteSnapshot(snapshot)) {
+      state.data = normalizeData(snapshot.data);
+      state.sequence = Number(snapshot.sequence) || 0;
+      ensureActionCenterData();
+      saveLocalSnapshot();
+      render();
+      backendSyncErrorShown = false;
+      return;
+    }
+    queueBackendSync();
+  } catch {
+    showBackendSyncError();
   }
 }
 
@@ -1090,12 +1260,18 @@ function askAISessionsStorageKey(role = state.role) {
 }
 
 function normalizeAskAIMessage(message = {}) {
+  const blocked = Boolean(message.blocked || message.source === "security" || message.source === "classifier");
   return {
     id: message.id || nextId("ai-message"),
     role: message.role === "assistant" ? "assistant" : "user",
     content: String(message.content || "").trim(),
     createdAt: message.createdAt || new Date().toISOString(),
-    status: message.status || "sent"
+    status: message.status || "sent",
+    tone: message.tone || "",
+    source: message.source || (message.role === "assistant" ? (blocked ? "security" : "chatgpt") : ""),
+    blocked,
+    reason: message.reason || "",
+    intent: message.intent || ""
   };
 }
 
@@ -1247,6 +1423,37 @@ function saveAskAIMessages(role = state.role) {
   }
 }
 
+function clearStoredAskAIChats() {
+  ["tenant", "manager"].forEach((role) => {
+    try {
+      localStorage.removeItem(askAIStorageKey(role));
+      localStorage.removeItem(askAISessionsStorageKey(role));
+    } catch {
+      // Ask AI storage cleanup should not block the demo reset.
+    }
+  });
+}
+
+function resetAskAIForDemo() {
+  clearStoredAskAIChats();
+  clearAskAINudgeTimers();
+  state.askAI = {
+    isOpen: false,
+    messages: [],
+    inputValue: "",
+    isTyping: false,
+    error: null,
+    isExpanded: false,
+    activationState: "idle",
+    sessions: [],
+    activeSessionId: "",
+    search: "",
+    contextPrompt: "",
+    nudgeContext: null,
+    nudge: defaultAskAINudgeState()
+  };
+}
+
 function ensureAskAIMessages(role = state.role) {
   const sessions = loadAskAISessions(role);
   state.askAI.sessions = sessions.length ? sessions : [createAskAISession(role)];
@@ -1336,6 +1543,33 @@ function buildAskAIContext(message) {
   const role = state.role || state.selectedRole;
   const profile = role === "tenant" ? state.data.tenant?.profile : state.data.manager?.profile;
   const pageMetaCopy = pageMeta[role]?.[state.page] || ["Dashboard", ""];
+  const tenantAskAIData = role === "tenant"
+    ? {
+      ...tenantRentSummary(),
+      rentHistory: state.data.tenant.rentHistory.slice(0, 8).map((row) => ({
+        month: row.month,
+        amount: row.amount,
+        dueDate: row.dueDate,
+        status: row.status,
+        receipt: row.receipt
+      })),
+      paymentSubmissions: state.data.tenant.paymentSubmissions.slice(0, 5).map((row) => ({
+        type: row.type,
+        amount: row.amount,
+        dueDate: row.dueDate,
+        status: row.status,
+        submittedOn: row.submittedOn,
+        bank: row.bank
+      })),
+      receipts: state.data.tenant.receipts.slice(0, 6).map((row) => ({
+        month: row.month,
+        amount: row.amount,
+        receipt: row.receipt,
+        date: row.date,
+        status: row.status
+      }))
+    }
+    : null;
   return {
     message,
     role,
@@ -1346,7 +1580,7 @@ function buildAskAIContext(message) {
     },
     dashboardData: {
       profile,
-      tenant: role === "tenant" ? tenantRentSummary() : null,
+      tenant: tenantAskAIData,
       management: role === "manager" ? getManagementDashboardSummary() : null,
       actionCount: actionCenterCountForRole(role)
     },
@@ -1384,8 +1618,13 @@ function safeAskAIHistory(history = []) {
 }
 
 function askAIConfiguredForApi() {
-  return window.ESTATEFLOW_ASK_AI_MODE === ASK_AI_API_MODE
+  return backendConfigValue("askAiMode", "").toLowerCase() === ASK_AI_API_MODE
+    || window.ESTATEFLOW_ASK_AI_MODE === ASK_AI_API_MODE
     || document.documentElement.dataset.askAiMode === ASK_AI_API_MODE;
+}
+
+function askAIEndpoint() {
+  return convexBackendEnabled() ? convexRoute("ask-ai") : ASK_AI_API_ENDPOINT;
 }
 
 async function askAIClient(payload) {
@@ -1396,13 +1635,15 @@ async function askAIClient(payload) {
     ? conversationHistory.slice(0, -1)
     : conversationHistory;
   const request = {
+    appId: estateflowAppId(),
     message,
     role: payload.role,
     pageContext: payload.pageContext || {},
+    dashboardData: payload.dashboardData || {},
     conversationHistory: safeConversationHistory
   };
 
-  const response = await fetch(ASK_AI_API_ENDPOINT, {
+  const response = await fetch(askAIEndpoint(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request)
@@ -1419,12 +1660,16 @@ async function askAIClient(payload) {
     const error = new Error("Ask AI request failed");
     error.safeMessage = data?.error === "AI_NOT_CONFIGURED"
       ? ASK_AI_NOT_CONFIGURED_ERROR
-      : ASK_AI_SAFE_ERROR;
+      : data?.message || ASK_AI_SAFE_ERROR;
     throw error;
   }
 
   return {
-    message: String(data.message || "").trim()
+    message: String(data.message || "").trim(),
+    blocked: Boolean(data.blocked),
+    reason: String(data.reason || ""),
+    intent: String(data.intent || ""),
+    source: String(data.source || "")
   };
 }
 
@@ -1445,6 +1690,10 @@ async function askAI({ message, role, pageContext, dashboardData, history, conve
     role: "assistant",
     content: response.message,
     tone: "api",
+    source: response.source || (response.blocked ? "security" : "chatgpt"),
+    blocked: Boolean(response.blocked),
+    reason: response.reason || "",
+    intent: response.intent || "",
     createdAt: new Date().toISOString()
   };
 }
@@ -3701,6 +3950,141 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeAskAIMessageText(content) {
+  return String(content ?? "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\s+\*\*(Result\/Next step|Result|Next step|Note):\*\*\s*/gi, "\n$1: ")
+    .replace(/\s+(Result\/Next step|Result|Next step|Note):\s*/gi, "\n$1: ")
+    .replace(/\s+(\d+)\.\s+/g, "\n$1. ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatAskAIInline(content) {
+  return escapeHtml(content).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function renderAskAIContent(content) {
+  const lines = normalizeAskAIMessageText(content)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const html = [];
+  let listType = "";
+  let listItems = [];
+
+  const flushList = () => {
+    if (!listType || !listItems.length) return;
+    const listClass = listType === "ol" ? "ask-ai-steps" : "ask-ai-points";
+    html.push(`<${listType} class="${listClass}">${listItems.map((item) => `<li>${item}</li>`).join("")}</${listType}>`);
+    listType = "";
+    listItems = [];
+  };
+
+  lines.forEach((line) => {
+    const numberedMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (numberedMatch) {
+      if (listType !== "ol") flushList();
+      listType = "ol";
+      listItems.push(formatAskAIInline(numberedMatch[1]));
+      return;
+    }
+
+    const bulletMatch = line.match(/^[-•]\s+(.+)$/);
+    if (bulletMatch) {
+      if (listType !== "ul") flushList();
+      listType = "ul";
+      listItems.push(formatAskAIInline(bulletMatch[1]));
+      return;
+    }
+
+    flushList();
+    const resultMatch = line.match(/^(Result\/Next step|Result|Next step|Note):\s*(.+)$/i);
+    if (resultMatch) {
+      html.push(`<p class="ask-ai-result"><strong>${escapeHtml(resultMatch[1])}:</strong> ${formatAskAIInline(resultMatch[2])}</p>`);
+      return;
+    }
+    html.push(`<p>${formatAskAIInline(line)}</p>`);
+  });
+
+  flushList();
+  return html.join("");
+}
+
+function renderAskAIReplyTag(message) {
+  if (message.role !== "assistant") return "";
+  const source = message.source === "classifier" ? "classifier" : message.source === "security" ? "security" : "chatgpt";
+  const labels = {
+    classifier: "blocked by classifier",
+    security: "blocked by security layer",
+    chatgpt: "answered by ChatGPT"
+  };
+  const label = labels[source] || labels.chatgpt;
+  const type = source === "chatgpt" ? "gpt" : source;
+  return `<span class="ask-ai-reply-tag ${type}">${escapeHtml(label)}</span>`;
+}
+
+function fallbackCopyText(value) {
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.top = "0";
+  field.style.left = "0";
+  field.style.opacity = "0";
+  document.body.appendChild(field);
+  field.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  field.remove();
+  return copied;
+}
+
+function normalizeAskAICopyText(value) {
+  return String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+async function copyAskAIMessage(messageId) {
+  const message = state.askAI.messages.find((item) => item.id === messageId);
+  const text = normalizeAskAICopyText(message?.content);
+  if (!text) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else if (!fallbackCopyText(text)) {
+      throw new Error("copy_failed");
+    }
+    showToast("Question copied.");
+  } catch {
+    showToast("Copy failed.", { variant: "error" });
+  }
+}
+
+function resizeAskAIInput(input) {
+  if (!input) return;
+  const form = input.closest(".ask-ai-form");
+  input.style.height = "auto";
+  const styles = window.getComputedStyle(input);
+  const lineHeight = Number.parseFloat(styles.lineHeight) || 22;
+  const maxHeight = Number.parseFloat(styles.maxHeight) || 160;
+  const isMultiline = Boolean(input.value.trim()) && input.scrollHeight > lineHeight * 1.65;
+  form?.classList.toggle("has-multiline", isMultiline);
+  const nextHeight = Math.min(input.scrollHeight, maxHeight);
+  input.style.height = `${nextHeight}px`;
+  input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+}
+
 function statusKey(status) {
   return String(status || "neutral")
     .trim()
@@ -4004,10 +4388,14 @@ function askAICopy() {
 
 function renderAskAIMessage(message) {
   const isUser = message.role === "user";
+  const safeContent = escapeHtml(message.content);
   return `
     <div class="ask-ai-message ${isUser ? "user" : "assistant"}">
-      <span class="ask-ai-message-role">${isUser ? "You" : "Ask AI"}</span>
-      <p>${escapeHtml(message.content)}</p>
+      <span class="ask-ai-message-meta">
+        <span class="ask-ai-message-role">${isUser ? "You" : "Ask AI"}</span>
+        ${renderAskAIReplyTag(message)}
+      </span>
+      ${isUser ? `<p>${safeContent}</p><button class="ask-ai-message-copy" type="button" data-action="copy-ask-ai-message" data-message-id="${escapeHtml(message.id)}" aria-label="Copy question">${icon.copy}<span>Copy</span></button>` : `<div class="ask-ai-message-content">${renderAskAIContent(message.content)}</div>`}
     </div>
   `;
 }
@@ -9207,7 +9595,7 @@ function openResetDataModal() {
   pushHistoryEntry();
 }
 
-function resetDemoData() {
+async function resetDemoData() {
   state.data = normalizeData(cloneData());
   state.sequence = 0;
   state.page = "dashboard";
@@ -9216,17 +9604,20 @@ function resetDemoData() {
   state.filters = defaultFilters();
   state.notificationClearedIds = [];
   state.notificationPanelOpen = false;
+  resetAskAIForDemo();
   ensureActionCenterData();
-  saveData();
+  saveLocalSnapshot();
   renderAtTop();
   replaceHistoryEntry();
   showToast("Demo data reset.");
+  await resetBackendDemoSnapshot();
 }
 
 function focusAskAIInput() {
   window.requestAnimationFrame(() => {
     const input = document.querySelector("[data-ask-ai-input]");
     if (!input) return;
+    resizeAskAIInput(input);
     input.focus({ preventScroll: true });
     input.setSelectionRange?.(input.value.length, input.value.length);
     const messages = document.querySelector(".ask-ai-messages");
@@ -9277,6 +9668,7 @@ function closeAskAI() {
 
 function updateAskAISendState(input) {
   if (!input) return;
+  resizeAskAIInput(input);
   const form = input.closest("form");
   const button = form?.querySelector(".ask-ai-send");
   if (button) button.disabled = !input.value.trim() || state.askAI.isTyping;
@@ -9287,6 +9679,7 @@ function applyAskAISuggestion(prompt) {
   const input = document.querySelector("[data-ask-ai-input]");
   if (input) {
     input.value = state.askAI.inputValue;
+    resizeAskAIInput(input);
     updateAskAISendState(input);
     input.focus({ preventScroll: true });
   } else {
@@ -9477,6 +9870,11 @@ document.addEventListener("click", (event) => {
       render();
       if (result.active) focusAskAIInput();
     }
+    return;
+  }
+
+  if (action === "copy-ask-ai-message") {
+    copyAskAIMessage(actionButton.dataset.messageId);
     return;
   }
 
@@ -10021,6 +10419,7 @@ document.addEventListener("submit", async (event) => {
     ensureActionCenterData({ persist: true });
     renderAtTop();
     pushHistoryEntry();
+    hydrateBackendSnapshot({ force: true });
     return;
   }
 
@@ -10360,3 +10759,4 @@ window.addEventListener("storage", (event) => {
 
 replaceHistoryEntry();
 render();
+hydrateBackendSnapshot();

@@ -1,0 +1,15 @@
+{
+  "name": "estateflow-property-portal",
+  "private": true,
+  "scripts": {
+    "start:ai": "node server.mjs",
+    "test:interactions": "node tests/interaction-audit.mjs",
+    "security:scan": "node scripts/security-scan.mjs",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "convex:ai-files": "convex ai-files install"
+  },
+  "devDependencies": {
+    "convex": "latest"
+  }
+}
