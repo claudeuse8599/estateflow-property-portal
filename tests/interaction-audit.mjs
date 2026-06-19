@@ -135,7 +135,7 @@ assert.match(app, /<header class="topbar">/, "Dashboard and interior pages shoul
 assert.match(app, /<p class="page-kicker">\$\{state\.role === "tenant" \? "Tenant Portal" : "Management Portal"\}<\/p>/, "All pages should show the same role kicker above the page title.");
 assert.doesNotMatch(app, /dashboard-topbar/, "Dashboard pages should not use a separate topbar spacing mode.");
 assert.doesNotMatch(app, /class="sidebar-role"/, "Sidebar should not repeat the user role between the brand and profile card.");
-assert.match(index, /config\.js\?v=dashboard-system-20260619-6[\s\S]*app\.js\?v=dashboard-system-20260619-6/, "Index should load public config before the app bundle.");
+assert.match(index, /config\.js\?v=dashboard-system-20260620-1[\s\S]*app\.js\?v=dashboard-system-20260620-1/, "Index should load public config before the app bundle.");
 assert.match(config, /backendMode:\s*"convex"/, "Public config should connect GitHub Pages to the Convex backend after setup.");
 assert.match(config, /convexHttpUrl:\s*"https:\/\/fast-duck-582\.convex\.site"/, "Public config should use the production Convex HTTP actions URL.");
 assert.match(config, /askAiMode:\s*"api"/, "Ask AI should use the Convex API route after backend setup.");
@@ -198,7 +198,7 @@ assert.match(app, /source:\s*String\(data\.source \|\| ""\)/, "Ask AI client sho
 assert.match(app, /function mockAskAIResponse/, "Ask AI demo response should be isolated from UI rendering.");
 assert.match(app, /async function askAI\(\{ message, role, pageContext, dashboardData, history, conversationHistory, chatId \}\)/, "Ask AI should expose one future API integration function with chat session context.");
 assert.match(app, /const ASK_AI_API_ENDPOINT = "\/api\/ask-ai"/, "Ask AI API mode should call only the internal server route.");
-assert.match(app, /function askAIConfiguredForApi\(\)/, "Ask AI should stay in demo mode unless API mode is explicitly enabled.");
+assert.match(app, /function askAIConfiguredForApi\(\)[\s\S]*return convexBackendEnabled\(\)[\s\S]*backendConfigValue\("askAiMode", ""\)\.toLowerCase\(\) === ASK_AI_API_MODE/, "Ask AI should use API mode whenever the Convex backend is configured.");
 assert.match(app, /async function askAIClient\(payload\)/, "Ask AI should isolate the internal API client from UI rendering.");
 assert.match(app, /function askAIEndpoint\(\)[\s\S]*convexBackendEnabled\(\) \? convexRoute\("ask-ai"\) : ASK_AI_API_ENDPOINT/, "Ask AI API mode should use Convex on GitHub Pages or the internal proxy elsewhere.");
 assert.match(app, /fetch\(askAIEndpoint\(\)/, "Ask AI API mode should fetch only the selected server-side endpoint.");
@@ -788,7 +788,7 @@ assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[\s\S]*gap:\s*8px/, "Renewal contract action row should fit four actions on one line at desktop width.");
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row \.button\s*\{[\s\S]*height:\s*38px;[\s\S]*min-height:\s*38px;[\s\S]*padding-inline:\s*9px;[\s\S]*font-size:\s*12px/, "Renewal contract buttons should use compact dashboard sizing.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260619-6/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /dashboard-system-20260620-1/g, "Index should load the latest cache-busted assets.");
 assert.match(apiAskAI, /const MAX_BODY_BYTES = 16 \* 1024/, "Ask AI API should cap request body size.");
 assert.match(apiAskAI, /const MAX_MESSAGE_LENGTH = 1500/, "Ask AI API should limit incoming message length.");
 assert.match(apiAskAI, /const MAX_HISTORY_ITEMS = 8/, "Ask AI API should limit conversation history sent to the provider.");
@@ -1022,7 +1022,7 @@ assert.match(securityDoc, /Treat every committed file as public/, "Security docs
 assert.match(securityDoc, /\/api\/ask-ai/, "Security docs should document the server-side Ask AI route.");
 assert.match(securityDoc, /Convex Backend[\s\S]*convexHttpUrl[\s\S]*safe to expose/, "Security docs should distinguish public Convex URL from secrets.");
 assert.match(securityChecklist, /No real `\.env` files are tracked/, "Security checklist should include env-file review.");
-assert.match(securityChecklist, /GitHub Pages remains in demo mode/, "Security checklist should keep the public site in demo mode.");
+assert.match(securityChecklist, /GitHub Pages calls only the configured Convex HTTP URL/, "Security checklist should keep the public site on the Convex backend path.");
 assert.match(securityScan, /Security scan passed\. No high-confidence secrets found\./, "Security scan should provide a clean pass message.");
 const publicSecuritySurface = [
   app,

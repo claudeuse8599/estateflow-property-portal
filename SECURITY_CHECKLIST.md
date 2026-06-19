@@ -12,7 +12,7 @@ Use this checklist before each public publish.
 
 ## Ask AI
 
-- [ ] GitHub Pages remains in demo mode.
+- [ ] GitHub Pages calls only the configured Convex HTTP URL.
 - [ ] API mode calls only the internal `/api/ask-ai` route.
 - [ ] GitHub Pages API mode calls only the configured Convex HTTP URL.
 - [ ] `/api/ask-ai` validates body size, message length, history length, role, and page context.

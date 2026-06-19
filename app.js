@@ -1603,6 +1603,7 @@ function mockAskAIResponse({ role, pageContext }) {
         role: "assistant",
         content: `${roleCopy} You are viewing ${pageContext.title}.`,
         tone: "demo",
+        source: "demo",
         createdAt: new Date().toISOString()
       });
     }, ASK_AI_TYPING_DELAY);
@@ -1618,7 +1619,8 @@ function safeAskAIHistory(history = []) {
 }
 
 function askAIConfiguredForApi() {
-  return backendConfigValue("askAiMode", "").toLowerCase() === ASK_AI_API_MODE
+  return convexBackendEnabled()
+    || backendConfigValue("askAiMode", "").toLowerCase() === ASK_AI_API_MODE
     || window.ESTATEFLOW_ASK_AI_MODE === ASK_AI_API_MODE
     || document.documentElement.dataset.askAiMode === ASK_AI_API_MODE;
 }
@@ -4014,10 +4016,17 @@ function renderAskAIContent(content) {
 
 function renderAskAIReplyTag(message) {
   if (message.role !== "assistant") return "";
-  const source = message.source === "classifier" ? "classifier" : message.source === "security" ? "security" : "chatgpt";
+  const source = message.source === "classifier"
+    ? "classifier"
+    : message.source === "security"
+      ? "security"
+      : message.source === "demo"
+        ? "demo"
+        : "chatgpt";
   const labels = {
     classifier: "blocked by classifier",
     security: "blocked by security layer",
+    demo: "demo mode",
     chatgpt: "answered by ChatGPT"
   };
   const label = labels[source] || labels.chatgpt;
