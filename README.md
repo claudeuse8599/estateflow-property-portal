@@ -28,3 +28,29 @@ Any email and password will open the selected demo portal.
 - Demo data persists in browser local storage.
 - The Data Reset button restores the original seeded data.
 - Payment, document, notification, and request flows are demo-only.
+- Ask AI runs in demo mode on GitHub Pages.
+
+## Ask AI API Readiness
+
+The public GitHub Pages site is static, so it cannot safely hold an AI API key. The repository includes a server-side `/api/ask-ai` route for hosts that support backend/serverless functions.
+
+To connect a real provider later:
+
+1. Deploy the app on a server-capable host.
+2. Copy `.env.example` to private hosting environment variables.
+3. Add the real `AI_API_KEY` only in the hosting secret manager.
+4. Set `AI_MODEL`, `AI_API_BASE_URL`, and `AI_ALLOWED_ORIGINS`.
+5. Switch the frontend to API mode with a public flag after the backend is live.
+
+Never put a real key in `app.js`, `index.html`, `styles.css`, local storage, or any browser-exposed environment variable.
+
+## Security Checks
+
+Before publishing public updates, run:
+
+```bash
+node scripts/security-scan.mjs
+node tests/interaction-audit.mjs
+```
+
+See `SECURITY.md` and `SECURITY_CHECKLIST.md` for the full public-repo checklist.

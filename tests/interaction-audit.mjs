@@ -5,6 +5,13 @@ const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
 const designSystem = readFileSync(new URL("../DESIGN_SYSTEM.md", import.meta.url), "utf8");
+const apiAskAI = readFileSync(new URL("../api/ask-ai.js", import.meta.url), "utf8");
+const envExample = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
+const gitignore = readFileSync(new URL("../.gitignore", import.meta.url), "utf8");
+const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+const securityDoc = readFileSync(new URL("../SECURITY.md", import.meta.url), "utf8");
+const securityChecklist = readFileSync(new URL("../SECURITY_CHECKLIST.md", import.meta.url), "utf8");
+const securityScan = readFileSync(new URL("../scripts/security-scan.mjs", import.meta.url), "utf8");
 
 function uniqueMatches(pattern, source) {
   return [...new Set([...source.matchAll(pattern)].map((match) => match[1]))].sort();
@@ -44,13 +51,13 @@ const expectedActions = [
   "cancel-complaint",
   "cancel-maintenance",
   "cancel-suggestion",
-  "clear-ask-ai",
   "clear-notifications",
   "close-modal",
   "close-ask-ai",
   "confirm-action-center",
   "confirm-demo-payment",
   "confirm-reset-data",
+  "delete-ask-ai-session",
   "dismiss-ask-ai-nudge",
   "dismiss-toast",
   "download-doc",
@@ -149,7 +156,11 @@ assert.doesNotMatch(app, /function renderAskAIActivationOverlay\(\)/, "Ask AI sh
 assert.match(app, /function askAIIcon\(\)/, "Ask AI should use an original inline SVG icon.");
 assert.match(app, /function mockAskAIResponse/, "Ask AI demo response should be isolated from UI rendering.");
 assert.match(app, /async function askAI\(\{ message, role, pageContext, dashboardData, history, conversationHistory, chatId \}\)/, "Ask AI should expose one future API integration function with chat session context.");
-assert.doesNotMatch(app, /fetch\(/, "Ask AI UI-only demo should not make network fetch calls.");
+assert.match(app, /const ASK_AI_API_ENDPOINT = "\/api\/ask-ai"/, "Ask AI API mode should call only the internal server route.");
+assert.match(app, /function askAIConfiguredForApi\(\)/, "Ask AI should stay in demo mode unless API mode is explicitly enabled.");
+assert.match(app, /async function askAIClient\(payload\)/, "Ask AI should isolate the internal API client from UI rendering.");
+assert.match(app, /fetch\(ASK_AI_API_ENDPOINT/, "Ask AI API mode should fetch the internal proxy endpoint.");
+assert.doesNotMatch(app, /https:\/\/api\.openai\.com|AI_API_KEY|Authorization:\s*`?Bearer/, "Frontend should not contain provider URLs, private key names, or authorization headers.");
 assert.match(app, /data-form="ask-ai"/, "Ask AI should include a submittable assistant form.");
 assert.match(app, /data-ask-ai-input/, "Ask AI should expose a focused question input.");
 assert.match(app, /data-action="toggle-ask-ai"/, "Ask AI notch should toggle the workspace.");
@@ -180,7 +191,11 @@ assert.match(app, /function syncAskAINotchHoverState\(\)[\s\S]*document\.element
 assert.match(app, /document\.addEventListener\(\s*"pointermove"[\s\S]*syncAskAINotchHoverState\(\)/, "Ask AI notch should track pointer position for reliable hover recovery.");
 assert.doesNotMatch(app, /class="ask-ai-panel \$\{expanded \? "expanded" : ""\}"/, "Ask AI compact side panel should no longer render from the main flow.");
 assert.match(app, /data-action="ask-ai-suggestion"/, "Ask AI prompt chips should be wired.");
-assert.match(app, /data-action="clear-ask-ai"/, "Ask AI panel should expose a focused clear chat action.");
+assert.doesNotMatch(app, /data-action="clear-ask-ai"/, "Ask AI composer should not keep a separate Clear Chat action.");
+assert.doesNotMatch(app, /Clear chat/, "Ask AI composer should not render the old Clear Chat text button.");
+assert.match(app, /function deleteAskAISession\(sessionId\)/, "Ask AI should delete stored chat sessions directly from Recents.");
+assert.match(app, /class="ask-ai-session-row \$\{active \? "active" : ""\}"[\s\S]*data-action="select-ask-ai-session"[\s\S]*data-action="delete-ask-ai-session"/, "Ask AI Recents should pair session selection with a row-level delete button.");
+assert.match(app, /if \(action === "delete-ask-ai-session"\)[\s\S]*deleteAskAISession\(actionButton\.dataset\.id\)[\s\S]*showToast\("Chat deleted\."\)/, "Ask AI Recents delete button should remove the session and confirm with a toast.");
 assert.match(app, /event\.key === "Escape" && state\.askAI\.isOpen/, "Escape should close Ask AI when open.");
 assert.match(app, /event\.key === "Enter" && !event\.shiftKey/, "Ask AI input should submit on Enter while allowing Shift+Enter.");
 assert.doesNotMatch(styles, /\.ask-ai-entry/, "Ask AI sidebar entry styling should be removed with the old launcher.");
@@ -247,13 +262,15 @@ assert.match(styles, /body\.ask-ai-scroll-locked[\s\S]*position: fixed;[\s\S]*to
 assert.match(styles, /\.ask-ai-panel\.expanded[\s\S]*overscroll-behavior: contain;/, "Ask AI expanded workspace should contain trackpad and wheel momentum.");
 assert.match(styles, /\.ask-ai-workspace-sidebar[\s\S]*border-right: 1px solid var\(--line\)/, "Ask AI workspace should have an internal chat history sidebar.");
 assert.match(styles, /\.ask-ai-menu-item[\s\S]*grid-template-columns: 22px minmax\(0, 1fr\)/, "Ask AI workspace actions should render as minimal icon rows.");
-assert.match(styles, /\.ask-ai-session-item\s*\{[\s\S]*display: block;[\s\S]*min-height: 34px/, "Ask AI recents should use compact title-only rows.");
+assert.match(styles, /\.ask-ai-session-row\s*\{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 28px;[\s\S]*min-height: 34px/, "Ask AI recents should use compact rows with space for contextual deletion.");
+assert.match(styles, /\.ask-ai-session-row:hover \.ask-ai-session-delete,[\s\S]*\.ask-ai-session-row:focus-within \.ask-ai-session-delete\s*\{[\s\S]*opacity: 1;[\s\S]*pointer-events: auto/, "Ask AI Recents trash action should appear on hover and keyboard focus.");
+assert.match(styles, /\.ask-ai-session-delete:hover,[\s\S]*\.ask-ai-session-delete:focus-visible\s*\{[\s\S]*color: var\(--status-danger-text\)/, "Ask AI Recents delete action should have a clear destructive hover/focus state.");
 assert.match(styles, /\.ask-ai-workspace-main[\s\S]*grid-template-rows: auto minmax\(0, 1fr\) auto/, "Ask AI workspace should keep the header, scrollable messages, and composer in stable rows.");
 assert.match(styles, /\.ask-ai-workspace-form[\s\S]*width: min\(calc\(100% - 48px\), 900px\)/, "Ask AI expanded composer should be spacious and centered.");
 assert.match(styles, /\.ask-ai-panel-actions/, "Ask AI panel controls should be grouped in the panel header.");
 assert.match(styles, /\.ask-ai-panel[\s\S]*right: 24px;[\s\S]*width: clamp\(420px, 34vw, 520px\);/, "Ask AI desktop panel should open as a roomy right-side drawer.");
 assert.match(styles, /\.ask-ai-panel[\s\S]*grid-template-rows: auto auto auto minmax\(0, 1fr\) auto;/, "Ask AI panel should reserve a flexible message area.");
-assert.match(styles, /\.ask-ai-clear/, "Ask AI clear chat action should have panel styling.");
+assert.doesNotMatch(styles, /\.ask-ai-clear/, "Ask AI should remove old Clear Chat styling after moving deletion to Recents.");
 assert.doesNotMatch(styles, /\.ask-ai-activation/, "Ask AI activation overlay styles should be removed.");
 assert.doesNotMatch(styles, /@keyframes ask-ai-sweep/, "Ask AI activation sweep animation should be removed.");
 assert.doesNotMatch(styles, /@keyframes ask-ai-sparkle/, "Ask AI activation sparkle animation should be removed.");
@@ -717,6 +734,55 @@ assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[\s\S]*gap:\s*8px/, "Renewal contract action row should fit four actions on one line at desktop width.");
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row \.button\s*\{[\s\S]*height:\s*38px;[\s\S]*min-height:\s*38px;[\s\S]*padding-inline:\s*9px;[\s\S]*font-size:\s*12px/, "Renewal contract buttons should use compact dashboard sizing.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260619-3/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /dashboard-system-20260619-4/g, "Index should load the latest cache-busted assets.");
+assert.match(apiAskAI, /const MAX_BODY_BYTES = 16 \* 1024/, "Ask AI API should cap request body size.");
+assert.match(apiAskAI, /const MAX_MESSAGE_LENGTH = 1000/, "Ask AI API should limit incoming message length.");
+assert.match(apiAskAI, /const MAX_HISTORY_ITEMS = 12/, "Ask AI API should limit conversation history sent to the provider.");
+assert.match(apiAskAI, /const RATE_LIMIT_WINDOW_MS = 60 \* 1000/, "Ask AI API should define a rate-limit window.");
+assert.match(apiAskAI, /const RATE_LIMIT_MAX_REQUESTS = 20/, "Ask AI API should define a request limit.");
+assert.match(apiAskAI, /process\.env\.AI_API_KEY/, "Ask AI API should read the provider key only from server environment variables.");
+assert.match(apiAskAI, /process\.env\.AI_MODEL/, "Ask AI API should read the model only from server environment variables.");
+assert.match(apiAskAI, /process\.env\.AI_ALLOWED_ORIGINS/, "Ask AI API should use configured allowed origins.");
+assert.match(apiAskAI, /if \(req\.method === "OPTIONS"\)/, "Ask AI API should support CORS preflight.");
+assert.match(apiAskAI, /if \(req\.method !== "POST"\)/, "Ask AI API should reject non-POST requests.");
+assert.match(apiAskAI, /validatePayload\(body\)/, "Ask AI API should validate the request payload before provider calls.");
+assert.match(apiAskAI, /Authorization: `Bearer \$\{apiKey\}`/, "Ask AI provider authorization should be generated server-side.");
+assert.match(apiAskAI, /AI_NOT_CONFIGURED/, "Ask AI API should fail safely when server secrets are missing.");
+assert.doesNotMatch(apiAskAI, /console\.(log|debug|dir|trace)\([^)]*process\.env/, "Ask AI API should not log environment values.");
+assert.doesNotMatch(app, /process\.env|import\.meta\.env/, "Frontend should not read environment variables directly.");
+assert.match(envExample, /AI_API_KEY=replace_with_your_server_side_key/, ".env.example should include only a placeholder API key.");
+assert.match(envExample, /ASK_AI_MODE=demo/, ".env.example should keep demo mode as the default.");
+assert.doesNotMatch(envExample, /VITE_|NEXT_PUBLIC_|REACT_APP_/, ".env.example should not suggest browser-exposed private key variables.");
+assert.match(gitignore, /^\.env$/m, ".gitignore should ignore real .env files.");
+assert.match(gitignore, /^\.env\.local$/m, ".gitignore should ignore local env files.");
+assert.match(gitignore, /^\*\.pem$/m, ".gitignore should ignore private key files.");
+assert.match(gitignore, /^\*\.log$/m, ".gitignore should ignore logs that can capture secrets.");
+assert.match(readme, /GitHub Pages site is static[\s\S]*cannot safely hold an AI API key/, "README should explain why GitHub Pages stays demo-only.");
+assert.match(securityDoc, /Treat every committed file as public/, "Security docs should warn that the repo is public.");
+assert.match(securityDoc, /\/api\/ask-ai/, "Security docs should document the server-side Ask AI route.");
+assert.match(securityChecklist, /No real `\.env` files are tracked/, "Security checklist should include env-file review.");
+assert.match(securityChecklist, /GitHub Pages remains in demo mode/, "Security checklist should keep the public site in demo mode.");
+assert.match(securityScan, /Security scan passed\. No high-confidence secrets found\./, "Security scan should provide a clean pass message.");
+const publicSecuritySurface = [
+  app,
+  index,
+  styles,
+  readme,
+  envExample,
+  apiAskAI,
+  securityDoc,
+  securityChecklist,
+  gitignore
+].join("\n");
+const highConfidenceSecretPatterns = [
+  /(^|[^A-Za-z0-9])sk-(proj-)?[A-Za-z0-9_-]{35,}/,
+  /AIza[0-9A-Za-z_-]{30,}/,
+  /ghp_[0-9A-Za-z_]{30,}/,
+  /github_pat_[0-9A-Za-z_]{30,}/,
+  /xox[baprs]-[0-9A-Za-z-]{30,}/
+];
+for (const pattern of highConfidenceSecretPatterns) {
+  assert.doesNotMatch(publicSecuritySurface, pattern, "Public files should not contain high-confidence secret values.");
+}
 
 console.log("Interaction audit checks passed.");

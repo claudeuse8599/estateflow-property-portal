@@ -1,3 +1,23 @@
+# Environment secrets. Keep .env.example committed, never real values.
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Private keys and certificates.
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+
+# Logs can accidentally capture secrets.
+*.log
+logs/
+
+# Local machine files.
+.DS_Store
+
 # Original generated hero image kept locally; the app uses the optimized JPG.
 assets/login-hero.png
-.DS_Store
