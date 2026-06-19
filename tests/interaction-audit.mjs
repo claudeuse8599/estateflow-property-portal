@@ -135,7 +135,7 @@ assert.match(app, /<header class="topbar">/, "Dashboard and interior pages shoul
 assert.match(app, /<p class="page-kicker">\$\{state\.role === "tenant" \? "Tenant Portal" : "Management Portal"\}<\/p>/, "All pages should show the same role kicker above the page title.");
 assert.doesNotMatch(app, /dashboard-topbar/, "Dashboard pages should not use a separate topbar spacing mode.");
 assert.doesNotMatch(app, /class="sidebar-role"/, "Sidebar should not repeat the user role between the brand and profile card.");
-assert.match(index, /config\.js\?v=dashboard-system-20260620-1[\s\S]*app\.js\?v=dashboard-system-20260620-1/, "Index should load public config before the app bundle.");
+assert.match(index, /config\.js\?v=dashboard-system-20260620-2[\s\S]*app\.js\?v=dashboard-system-20260620-2/, "Index should load public config before the app bundle.");
 assert.match(config, /backendMode:\s*"convex"/, "Public config should connect GitHub Pages to the Convex backend after setup.");
 assert.match(config, /convexHttpUrl:\s*"https:\/\/fast-duck-582\.convex\.site"/, "Public config should use the production Convex HTTP actions URL.");
 assert.match(config, /askAiMode:\s*"api"/, "Ask AI should use the Convex API route after backend setup.");
@@ -195,6 +195,7 @@ assert.match(styles, /\.ask-ai-message\.user::after\s*\{[\s\S]*bottom: -54px;[\s
 assert.match(styles, /\.ask-ai-message-copy\s*\{[\s\S]*opacity 160ms ease 1000ms[\s\S]*visibility 0s linear 1160ms/, "Ask AI user message copy action should linger briefly after pointer exit.");
 assert.match(app, /blocked:\s*Boolean\(data\.blocked\)/, "Ask AI client should preserve blocked metadata from the API.");
 assert.match(app, /source:\s*String\(data\.source \|\| ""\)/, "Ask AI client should preserve source metadata from the API.");
+assert.match(app, /function isDemoAskAIFallbackContent\(content = ""\)[\s\S]*once an API is connected[\s\S]*source: isDemoFallback \? "demo"/, "Ask AI should retag stale saved demo fallback replies instead of labeling them as ChatGPT.");
 assert.match(app, /function mockAskAIResponse/, "Ask AI demo response should be isolated from UI rendering.");
 assert.match(app, /async function askAI\(\{ message, role, pageContext, dashboardData, history, conversationHistory, chatId \}\)/, "Ask AI should expose one future API integration function with chat session context.");
 assert.match(app, /const ASK_AI_API_ENDPOINT = "\/api\/ask-ai"/, "Ask AI API mode should call only the internal server route.");
@@ -788,7 +789,7 @@ assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[\s\S]*gap:\s*8px/, "Renewal contract action row should fit four actions on one line at desktop width.");
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row \.button\s*\{[\s\S]*height:\s*38px;[\s\S]*min-height:\s*38px;[\s\S]*padding-inline:\s*9px;[\s\S]*font-size:\s*12px/, "Renewal contract buttons should use compact dashboard sizing.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260620-1/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /dashboard-system-20260620-2/g, "Index should load the latest cache-busted assets.");
 assert.match(apiAskAI, /const MAX_BODY_BYTES = 16 \* 1024/, "Ask AI API should cap request body size.");
 assert.match(apiAskAI, /const MAX_MESSAGE_LENGTH = 1500/, "Ask AI API should limit incoming message length.");
 assert.match(apiAskAI, /const MAX_HISTORY_ITEMS = 8/, "Ask AI API should limit conversation history sent to the provider.");

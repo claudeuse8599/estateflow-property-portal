@@ -1259,16 +1259,22 @@ function askAISessionsStorageKey(role = state.role) {
   return `askAI:${askAIStorageRole(role)}:sessions`;
 }
 
+function isDemoAskAIFallbackContent(content = "") {
+  return String(content).includes("once an API is connected");
+}
+
 function normalizeAskAIMessage(message = {}) {
+  const content = String(message.content || "").trim();
+  const isDemoFallback = message.role === "assistant" && isDemoAskAIFallbackContent(content);
   const blocked = Boolean(message.blocked || message.source === "security" || message.source === "classifier");
   return {
     id: message.id || nextId("ai-message"),
     role: message.role === "assistant" ? "assistant" : "user",
-    content: String(message.content || "").trim(),
+    content,
     createdAt: message.createdAt || new Date().toISOString(),
     status: message.status || "sent",
     tone: message.tone || "",
-    source: message.source || (message.role === "assistant" ? (blocked ? "security" : "chatgpt") : ""),
+    source: isDemoFallback ? "demo" : message.source || (message.role === "assistant" ? (blocked ? "security" : "chatgpt") : ""),
     blocked,
     reason: message.reason || "",
     intent: message.intent || ""
