@@ -1884,6 +1884,12 @@ button:focus-visible {
   color: #b45309;
 }
 
+.ask-ai-reply-tag.demo {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
 .ask-ai-message p {
   margin: 0;
   font-size: 13px;
