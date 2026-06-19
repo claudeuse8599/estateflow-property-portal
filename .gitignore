@@ -16,6 +16,9 @@
 *.log
 logs/
 
+# Dependencies and package-manager local state.
+node_modules/
+
 # Local machine files.
 .DS_Store
 

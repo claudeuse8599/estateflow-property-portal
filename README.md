@@ -33,27 +33,31 @@ Any email and password will open the selected demo portal.
 
 ## Notes
 
-- Demo data persists in browser local storage.
-- Convex support is available as an optional shared backend for internal MVP data.
+- Demo data persists locally first and syncs to the configured Convex backend.
+- Convex stores the shared internal MVP snapshot for tenant and management portals.
 - The Data Reset button restores the original seeded data.
 - Payment, document, notification, and request flows are demo-only.
-- Ask AI runs in demo mode on GitHub Pages until Convex API mode is configured.
+- Ask AI runs through the Convex backend on GitHub Pages so the API key stays server-side.
 
-## Optional Convex Backend
+## Convex Backend
 
 GitHub Pages can continue hosting the frontend while Convex stores shared tenant/company data.
 
-By default, `config.js` keeps the app in local mode:
-
-```js
-backendMode: "local"
-```
-
-After deploying Convex, switch it to:
+The live `config.js` uses the production Convex HTTP actions URL:
 
 ```js
 backendMode: "convex"
-convexHttpUrl: "https://your-deployment.convex.site"
+convexHttpUrl: "https://fast-duck-582.convex.site"
+askAiMode: "api"
+```
+
+The `convexHttpUrl` value is public and safe to expose. Private values such as `OPENAI_API_KEY` live only in Convex environment variables.
+
+For a local-only fallback, switch `config.js` back to:
+
+```js
+backendMode: "local"
+askAiMode: "demo"
 ```
 
 See `CONVEX_SETUP.md` for deployment steps, environment variables, and the later auth plan.
@@ -64,14 +68,13 @@ The public GitHub Pages site is static, so it cannot safely hold an AI API key. 
 
 Both server routes include dashboard-only scope checks, tenant/management role boundaries, prompt-injection blocking, duplicate/rate limiting, and usage limits based on actual LLM processing time. The MVP backend only allows `gpt-5.4-nano`.
 
-To connect a real provider later:
+To rotate or reconnect the provider:
 
-1. Deploy Convex or another server-capable backend.
-2. Copy `.env.example` values to private hosting environment variables.
-3. Add the real `AI_API_KEY` only in the backend secret manager.
-4. Keep `AI_MODEL=gpt-5.4-nano`, or omit it to use the locked default.
-5. Set `ASK_AI_USAGE_LIMIT_MS` and rate-limit values for the demo window.
-6. Switch the frontend to API mode with a public flag after the backend is live.
+1. Update the private `OPENAI_API_KEY` only in Convex environment variables.
+2. Keep `AI_MODEL=gpt-5.4-nano`, or omit it to use the locked default.
+3. Keep `ASK_AI_USAGE_LIMIT_MS` and rate-limit values set for the demo window.
+4. Redeploy Convex if backend function code changes.
+5. Keep GitHub Pages free of private keys.
 
 Never put a real key in `app.js`, `index.html`, `styles.css`, local storage, or any browser-exposed environment variable.
 

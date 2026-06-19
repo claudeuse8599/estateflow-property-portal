@@ -18,8 +18,8 @@ GitHub Pages cannot protect private keys. Convex stores the data and calls the L
 - No real auth yet.
 - One shared internal app snapshot is stored by `appId`.
 - Tenant and management portals read/write the same snapshot.
-- Ask AI remains demo by default.
-- Ask AI can call Convex `/estateflow/ask-ai` when `askAiMode` is set to `api`.
+- The GitHub Pages app is configured to use the production Convex HTTP actions URL.
+- Ask AI calls Convex `/estateflow/ask-ai` because `askAiMode` is set to `api`.
 - Ask AI requests are classified server-side before any LLM call.
 - Tenant and management prompts receive different minimal dashboard context.
 - Usage is tracked by actual LLM processing time, not by how long the chat panel stays open.
@@ -67,21 +67,15 @@ Do not put these private values in frontend files.
 
 ## Connect GitHub Pages
 
-After Convex is deployed, update `config.js`:
+The live `config.js` is configured as:
 
 ```js
 window.ESTATEFLOW_CONFIG = {
   appId: "estateflow-mvp",
   backendMode: "convex",
-  convexHttpUrl: "https://your-deployment.convex.site",
-  askAiMode: "demo"
+  convexHttpUrl: "https://fast-duck-582.convex.site",
+  askAiMode: "api"
 };
-```
-
-To enable real Ask AI responses after Convex has private LLM env vars:
-
-```js
-askAiMode: "api"
 ```
 
 The `convexHttpUrl` value is public. It is not an API key.

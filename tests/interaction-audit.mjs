@@ -136,9 +136,9 @@ assert.match(app, /<p class="page-kicker">\$\{state\.role === "tenant" \? "Tenan
 assert.doesNotMatch(app, /dashboard-topbar/, "Dashboard pages should not use a separate topbar spacing mode.");
 assert.doesNotMatch(app, /class="sidebar-role"/, "Sidebar should not repeat the user role between the brand and profile card.");
 assert.match(index, /config\.js\?v=dashboard-system-20260619-6[\s\S]*app\.js\?v=dashboard-system-20260619-6/, "Index should load public config before the app bundle.");
-assert.match(config, /backendMode:\s*"local"/, "Public config should keep GitHub Pages local-only by default.");
-assert.match(config, /convexHttpUrl:\s*""/, "Public config should not ship with a Convex deployment URL before setup.");
-assert.match(config, /askAiMode:\s*"demo"/, "Ask AI should remain demo by default on GitHub Pages.");
+assert.match(config, /backendMode:\s*"convex"/, "Public config should connect GitHub Pages to the Convex backend after setup.");
+assert.match(config, /convexHttpUrl:\s*"https:\/\/fast-duck-582\.convex\.site"/, "Public config should use the production Convex HTTP actions URL.");
+assert.match(config, /askAiMode:\s*"api"/, "Ask AI should use the Convex API route after backend setup.");
 assert.match(app, /function convexBackendEnabled\(\)[\s\S]*backendMode\(\) === "convex"[\s\S]*convexHttpUrl\(\)/, "Convex backend should require explicit convex mode and URL.");
 assert.match(app, /function saveLocalSnapshot\(\)[\s\S]*localStorage\.setItem\([\s\S]*DATA_STORE_KEY/, "Data should continue saving locally first.");
 assert.match(app, /function saveData\(\)[\s\S]*saveLocalSnapshot\(\);[\s\S]*queueBackendSync\(\)/, "Data saves should queue optional Convex sync without breaking local persistence.");
@@ -1017,7 +1017,7 @@ assert.match(gitignore, /^\.env\.local$/m, ".gitignore should ignore local env f
 assert.match(gitignore, /^\*\.pem$/m, ".gitignore should ignore private key files.");
 assert.match(gitignore, /^\*\.log$/m, ".gitignore should ignore logs that can capture secrets.");
 assert.match(readme, /GitHub Pages site is static[\s\S]*cannot safely hold an AI API key/, "README should explain why GitHub Pages stays demo-only.");
-assert.match(readme, /Optional Convex Backend[\s\S]*backendMode: "convex"[\s\S]*convexHttpUrl/, "README should document optional Convex backend setup.");
+assert.match(readme, /Convex Backend[\s\S]*backendMode: "convex"[\s\S]*convexHttpUrl/, "README should document the live Convex backend setup.");
 assert.match(securityDoc, /Treat every committed file as public/, "Security docs should warn that the repo is public.");
 assert.match(securityDoc, /\/api\/ask-ai/, "Security docs should document the server-side Ask AI route.");
 assert.match(securityDoc, /Convex Backend[\s\S]*convexHttpUrl[\s\S]*safe to expose/, "Security docs should distinguish public Convex URL from secrets.");
