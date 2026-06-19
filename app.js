@@ -23,6 +23,7 @@ const icon = {
   download: lineIcon('<path d="M12 4v10.5"/><path d="m7.5 10 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/>'),
   expand: lineIcon('<path d="M8.5 4H4v4.5"/><path d="M15.5 4H20v4.5"/><path d="M8.5 20H4v-4.5"/><path d="M15.5 20H20v-4.5"/><path d="m4 4 5.5 5.5"/><path d="M20 4 14.5 9.5"/><path d="m4 20 5.5-5.5"/><path d="m20 20-5.5-5.5"/>'),
   collapse: lineIcon('<path d="M10 4v6H4"/><path d="M14 4v6h6"/><path d="M10 20v-6H4"/><path d="M14 20v-6h6"/>'),
+  trash: lineIcon('<path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6.5 7l.8 13h9.4l.8-13"/><path d="M9 7V4.8h6V7"/>'),
   close: lineIcon('<path d="m6 6 12 12"/><path d="M18 6 6 18"/>')
 };
 
@@ -52,6 +53,11 @@ const DATA_STORE_VERSION = 1;
 const ASK_AI_MESSAGE_LIMIT = 24;
 const ASK_AI_SESSION_LIMIT = 12;
 const ASK_AI_TYPING_DELAY = 720;
+const ASK_AI_API_ENDPOINT = "/api/ask-ai";
+const ASK_AI_API_MODE = "api";
+const ASK_AI_MAX_CLIENT_HISTORY = 12;
+const ASK_AI_SAFE_ERROR = "AI response could not be loaded. Try again.";
+const ASK_AI_NOT_CONFIGURED_ERROR = "AI is not configured yet.";
 const ASK_AI_NUDGE_CONFIG = {
   initialDelayMs: 12000,
   minIntervalMs: 35000,
@@ -1276,6 +1282,39 @@ function startNewAskAIChat() {
   saveAskAISessions();
 }
 
+function deleteAskAISession(sessionId) {
+  persistActiveAskAISession();
+  const deletedSession = state.askAI.sessions.find((session) => session.id === sessionId);
+  if (!deletedSession) return { deleted: false, active: false };
+
+  const deletedActive = state.askAI.activeSessionId === sessionId;
+  state.askAI.sessions = state.askAI.sessions.filter((session) => session.id !== sessionId);
+
+  if (!state.askAI.sessions.length) {
+    state.askAI.sessions = [createAskAISession(state.role)];
+  }
+
+  if (deletedActive || !state.askAI.sessions.some((session) => session.id === state.askAI.activeSessionId)) {
+    state.askAI.activeSessionId = state.askAI.sessions[0].id;
+    state.askAI.error = null;
+    state.askAI.isTyping = false;
+    syncAskAIStateFromSession();
+  }
+
+  saveAskAISessions();
+  if (deletedActive) {
+    try {
+      localStorage.setItem(
+        askAIStorageKey(state.role),
+        JSON.stringify(state.askAI.messages.slice(-ASK_AI_MESSAGE_LIMIT))
+      );
+    } catch {
+      // Ask AI remains usable if browser storage is unavailable.
+    }
+  }
+  return { deleted: true, active: deletedActive };
+}
+
 function filteredAskAISessions() {
   const query = state.askAI.search.trim().toLowerCase();
   if (!query) return state.askAI.sessions;
@@ -1336,9 +1375,78 @@ function mockAskAIResponse({ role, pageContext }) {
   });
 }
 
-// Future API integration point. Do not connect an API yet.
+function safeAskAIHistory(history = []) {
+  return (Array.isArray(history) ? history : [])
+    .map(normalizeAskAIMessage)
+    .filter((message) => message.content)
+    .slice(-ASK_AI_MAX_CLIENT_HISTORY)
+    .map(({ role, content, createdAt }) => ({ role, content, createdAt }));
+}
+
+function askAIConfiguredForApi() {
+  return window.ESTATEFLOW_ASK_AI_MODE === ASK_AI_API_MODE
+    || document.documentElement.dataset.askAiMode === ASK_AI_API_MODE;
+}
+
+async function askAIClient(payload) {
+  const message = String(payload.message || "").trim();
+  const conversationHistory = safeAskAIHistory(payload.conversationHistory || payload.history);
+  const lastHistoryMessage = conversationHistory[conversationHistory.length - 1];
+  const safeConversationHistory = lastHistoryMessage?.role === "user" && lastHistoryMessage.content === message
+    ? conversationHistory.slice(0, -1)
+    : conversationHistory;
+  const request = {
+    message,
+    role: payload.role,
+    pageContext: payload.pageContext || {},
+    conversationHistory: safeConversationHistory
+  };
+
+  const response = await fetch(ASK_AI_API_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request)
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    const error = new Error("Ask AI request failed");
+    error.safeMessage = data?.error === "AI_NOT_CONFIGURED"
+      ? ASK_AI_NOT_CONFIGURED_ERROR
+      : ASK_AI_SAFE_ERROR;
+    throw error;
+  }
+
+  return {
+    message: String(data.message || "").trim()
+  };
+}
+
 async function askAI({ message, role, pageContext, dashboardData, history, conversationHistory, chatId }) {
-  return mockAskAIResponse({ message, role, pageContext, dashboardData, history, conversationHistory, chatId });
+  if (!askAIConfiguredForApi()) {
+    return mockAskAIResponse({ message, role, pageContext, dashboardData, history, conversationHistory, chatId });
+  }
+
+  const response = await askAIClient({ message, role, pageContext, dashboardData, history, conversationHistory, chatId });
+  if (!response.message) {
+    const error = new Error("Ask AI returned an empty response");
+    error.safeMessage = ASK_AI_SAFE_ERROR;
+    throw error;
+  }
+
+  return {
+    id: nextId("ai"),
+    role: "assistant",
+    content: response.message,
+    tone: "api",
+    createdAt: new Date().toISOString()
+  };
 }
 
 const storedSnapshot = loadStoredSnapshot();
@@ -3914,14 +4022,20 @@ function renderAskAISuggestionButton(prompt) {
 
 function renderAskAISessionItem(session) {
   const active = session.id === state.askAI.activeSessionId;
+  const title = session.title || askAIChatTitle(session.messages);
   return `
-    <button class="ask-ai-session-item ${active ? "active" : ""}" type="button" data-action="select-ask-ai-session" data-id="${escapeHtml(session.id)}" aria-current="${active ? "true" : "false"}">
-      <span>${escapeHtml(session.title || askAIChatTitle(session.messages))}</span>
-    </button>
+    <div class="ask-ai-session-row ${active ? "active" : ""}" role="listitem">
+      <button class="ask-ai-session-item" type="button" data-action="select-ask-ai-session" data-id="${escapeHtml(session.id)}" aria-current="${active ? "true" : "false"}">
+        <span>${escapeHtml(title)}</span>
+      </button>
+      <button class="ask-ai-session-delete" type="button" data-action="delete-ask-ai-session" data-id="${escapeHtml(session.id)}" aria-label="Delete chat ${escapeHtml(title)}">
+        ${icon.trash}
+      </button>
+    </div>
   `;
 }
 
-function renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState, isWorkspace = false }) {
+function renderAskAIComposer({ placeholder, hasInput, askAIState, isWorkspace = false }) {
   const composerClass = classNames("ask-ai-form", isWorkspace && "ask-ai-workspace-form", "ask-ai-composer");
   return `
     <div class="ask-ai-composer-shell ${isWorkspace ? "workspace" : "panel"}">
@@ -3941,12 +4055,11 @@ function renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState,
           <button class="ask-ai-send" type="submit" aria-label="Send Ask AI message" ${!hasInput || askAIState.isTyping ? "disabled" : ""}>${icon.waveform}</button>
         </div>
       </form>
-      <button class="ask-ai-clear" type="button" data-action="clear-ask-ai" ${clearDisabled ? "disabled" : ""}>Clear chat</button>
     </div>
   `;
 }
 
-function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled }) {
+function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput }) {
   const askAIState = state.askAI;
   const activeSession = activeAskAISession();
   const filteredSessions = filteredAskAISessions();
@@ -4001,7 +4114,7 @@ function renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clea
           ${askAIState.isTyping ? renderAskAITypingMessage() : ""}
           ${askAIState.error ? `<div class="ask-ai-error" role="alert">${escapeHtml(askAIState.error)}</div>` : ""}
         </div>
-        ${renderAskAIComposer({ placeholder, hasInput, clearDisabled, askAIState, isWorkspace: true })}
+        ${renderAskAIComposer({ placeholder, hasInput, askAIState, isWorkspace: true })}
       </div>
     </aside>
   `;
@@ -4055,8 +4168,7 @@ function renderAskAIPanel() {
   if (!askAIState.sessions.length) ensureAskAIMessages();
   const { helper, placeholder, suggestions } = askAICopy();
   const hasInput = askAIState.inputValue.trim().length > 0;
-  const clearDisabled = askAIState.messages.length === 0 && !askAIState.inputValue.trim();
-  return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput, clearDisabled });
+  return renderAskAIWorkspace({ helper, placeholder, suggestions, hasInput });
 }
 
 function classNames(...parts) {
@@ -9224,9 +9336,9 @@ async function submitAskAIMessage(form) {
     state.askAI.isTyping = false;
     render();
     focusAskAIInput();
-  } catch {
+  } catch (error) {
     state.askAI.isTyping = false;
-    state.askAI.error = "AI response could not be loaded. Try again.";
+    state.askAI.error = error?.safeMessage || ASK_AI_SAFE_ERROR;
     render();
     focusAskAIInput();
   }
@@ -9358,20 +9470,18 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  if (action === "ask-ai-suggestion") {
-    applyAskAISuggestion(actionButton.dataset.prompt);
+  if (action === "delete-ask-ai-session") {
+    const result = deleteAskAISession(actionButton.dataset.id);
+    if (result.deleted) {
+      showToast("Chat deleted.");
+      render();
+      if (result.active) focusAskAIInput();
+    }
     return;
   }
 
-  if (action === "clear-ask-ai") {
-    state.askAI.messages = [];
-    state.askAI.inputValue = "";
-    state.askAI.error = null;
-    state.askAI.isTyping = false;
-    saveAskAIMessages();
-    showToast("AI chat cleared.");
-    render();
-    focusAskAIInput();
+  if (action === "ask-ai-suggestion") {
+    applyAskAISuggestion(actionButton.dataset.prompt);
     return;
   }
 
