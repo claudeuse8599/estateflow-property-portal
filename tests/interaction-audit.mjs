@@ -839,6 +839,16 @@ assert.equal(
   "tenant_rent",
   "Tenant historical rent questions should stay in the tenant rent intent."
 );
+const naturalMaintenanceClassification = askAIInternal.classifyAskAIRequest({
+  message: "If I have a problem with my AC and I want the landlord to fix it, what do I do?",
+  role: "tenant",
+  pageType: "dashboard"
+});
+assert.deepEqual(
+  { allowed: naturalMaintenanceClassification.allowed, intent: naturalMaintenanceClassification.intent },
+  { allowed: true, intent: "tenant_maintenance" },
+  "Natural tenant maintenance wording should pass the hard guard and reach the classifier."
+);
 assert.match(
   askAIInternal.normalizeAssistantText("Pay rent from **Rent**. 1. Open **Rent**. 2. Click **Pay Rent**. **Result:** Status updates."),
   /\*\*Rent\*\*\.\n1\. Open \*\*Rent\*\*\.\n2\. Click \*\*Pay Rent\*\*\.\n\*\*Result:\*\* Status updates\./,
@@ -919,9 +929,9 @@ assert.equal(
   "Prompt-injection and hidden-prompt requests should be blocked before provider calls."
 );
 assert.equal(
-  askAIInternal.classifyAskAIRequest({ message: "Give me a football score", role: "manager", pageType: "dashboard" }).reason,
-  "out_of_scope",
-  "Unrelated prompts should be blocked before provider calls."
+  askAIInternal.classifyAskAIRequest({ message: "Give me a football score", role: "manager", pageType: "dashboard" }).allowed,
+  true,
+  "Unrelated non-sensitive prompts should pass the hard guard so the classifier can make the scope decision."
 );
 const tenantMaintenanceKnowledge = askAIInternal.selectDashboardKnowledge({ role: "tenant", intent: "tenant_maintenance", pageType: "maintenance" });
 assert.equal(tenantMaintenanceKnowledge.role, "tenant", "Tenant knowledge should stay scoped to tenant role.");
@@ -986,6 +996,7 @@ assert.match(convexHttp, /const ALLOWED_AI_MODELS = new Set\(\[DEFAULT_AI_MODEL\
 assert.match(convexHttp, /process\.env\.AI_API_KEY \|\| process\.env\.OPENAI_API_KEY/, "Convex Ask AI should support either server-side key env name.");
 assert.match(convexHttp, /function getTrustedUserContext/, "Convex Ask AI should centralize the temporary role context bridge.");
 assert.match(convexHttp, /function classifyAskAIRequest/, "Convex Ask AI should classify requests before provider calls.");
+assert.doesNotMatch(convexHttp, /const allowedTerms|const outOfScopePatterns|!includesAny\(text, allowedTerms\)/, "Convex Ask AI should not use a broad rigid keyword pre-filter before the classifier.");
 assert.match(convexHttp, /function buildLLMContext/, "Convex Ask AI should build a minimal authorized context from the snapshot.");
 assert.match(convexHttp, /const TENANT_DASHBOARD_KNOWLEDGE = \{[\s\S]*tenant_submit_maintenance/, "Convex Ask AI should include tenant-only workflow knowledge.");
 assert.match(convexHttp, /const MANAGEMENT_DASHBOARD_KNOWLEDGE = \{[\s\S]*manager_review_payment/, "Convex Ask AI should include management-only workflow knowledge.");

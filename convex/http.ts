@@ -527,15 +527,6 @@ function classifyAskAIRequest({ message, role, pageType }: { message: string; ro
     return { allowed: false, reason: "sensitive_request", localResponse: SAFE_RESPONSES.sensitive, intent: "sensitive_request" };
   }
 
-  const outOfScopePatterns = [
-    /\b(weather|sports|football|recipe|movie|music|bitcoin|crypto|stock\s+pick|politics|celebrity|dating|travel\s+plan)\b/,
-    /\b(write|debug|compile)\s+(code|javascript|python|app)\b/,
-    /\bhomework|essay|poem|joke|story\b/
-  ];
-  if (outOfScopePatterns.some((pattern) => pattern.test(text))) {
-    return { allowed: false, reason: "out_of_scope", localResponse: SAFE_RESPONSES.outOfScope, intent: "out_of_scope" };
-  }
-
   if (role === "tenant") {
     const tenantForbiddenPatterns = [
       /\b(all|other|every)\s+tenant(s)?\b/,
@@ -555,24 +546,6 @@ function classifyAskAIRequest({ message, role, pageType }: { message: string; ro
     if (tenantForbiddenPatterns.some((pattern) => pattern.test(text))) {
       return { allowed: false, reason: "role_forbidden", localResponse: SAFE_RESPONSES.roleForbidden, intent: "role_forbidden" };
     }
-  }
-
-  const allowedTerms = role === "manager"
-    ? [
-      "dashboard", "portal", "tenant", "rent", "payment", "proof", "cheque", "maintenance", "renewal",
-      "contract", "document", "notification", "action", "finance", "income", "expense", "portfolio",
-      "property", "occupancy", "map", "complaint", "suggestion", "open", "show", "summarize", "help",
-      "next", "where", "how", "status", "button", "page", "navigate"
-    ]
-    : [
-      "dashboard", "portal", "rent", "payment", "pay", "proof", "cheque", "receipt", "contract",
-      "renewal", "renew", "maintenance", "repair", "document", "notification", "action", "complaint",
-      "suggestion", "open", "show", "summarize", "help", "next", "where", "how", "status", "button", "page",
-      "navigate", "unit"
-    ];
-
-  if (!includesAny(text, allowedTerms) && text.split(" ").length > 7) {
-    return { allowed: false, reason: "out_of_scope", localResponse: SAFE_RESPONSES.dashboardOnly, intent: "out_of_scope" };
   }
 
   return {
