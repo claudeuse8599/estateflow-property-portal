@@ -165,6 +165,14 @@ body.ask-ai-scroll-locked {
   width: 100%;
 }
 
+body.ask-ai-scroll-locked .sidebar {
+  border-right-color: transparent;
+}
+
+body.ask-ai-scroll-locked .sidebar::before {
+  border-bottom-color: transparent;
+}
+
 body {
   --ask-ai-layout-offset: 0px;
   --dashboard-header-shelf: 164px;
@@ -189,6 +197,10 @@ body[data-ask-ai-notch-state] {
     pointer-events: none;
     backdrop-filter: blur(22px) saturate(1.18);
     -webkit-backdrop-filter: blur(22px) saturate(1.18);
+  }
+
+  body.ask-ai-scroll-locked[data-ask-ai-notch-state]::before {
+    display: none;
   }
 }
 

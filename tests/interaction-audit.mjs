@@ -135,7 +135,7 @@ assert.match(app, /<header class="topbar">/, "Dashboard and interior pages shoul
 assert.match(app, /<p class="page-kicker">\$\{state\.role === "tenant" \? "Tenant Portal" : "Management Portal"\}<\/p>/, "All pages should show the same role kicker above the page title.");
 assert.doesNotMatch(app, /dashboard-topbar/, "Dashboard pages should not use a separate topbar spacing mode.");
 assert.doesNotMatch(app, /class="sidebar-role"/, "Sidebar should not repeat the user role between the brand and profile card.");
-assert.match(index, /config\.js\?v=dashboard-system-20260620-2[\s\S]*app\.js\?v=dashboard-system-20260620-2/, "Index should load public config before the app bundle.");
+assert.match(index, /config\.js\?v=dashboard-system-20260620-3[\s\S]*app\.js\?v=dashboard-system-20260620-3/, "Index should load public config before the app bundle.");
 assert.match(config, /backendMode:\s*"convex"/, "Public config should connect GitHub Pages to the Convex backend after setup.");
 assert.match(config, /convexHttpUrl:\s*"https:\/\/fast-duck-582\.convex\.site"/, "Public config should use the production Convex HTTP actions URL.");
 assert.match(config, /askAiMode:\s*"api"/, "Ask AI should use the Convex API route after backend setup.");
@@ -305,6 +305,9 @@ assert.match(styles, /\.ask-ai-panel\.expanded[\s\S]*--ask-ai-workspace-inset: 1
 assert.match(styles, /\.ask-ai-panel\.expanded\.ask-ai-workspace[\s\S]*grid-template-columns: var\(--ask-ai-workspace-sidebar-width\) minmax\(0, 1fr\)/, "Ask AI expanded workspace should keep a compact sidebar beside the main chat using one shared sidebar width token.");
 assert.match(styles, /html\.ask-ai-scroll-locked,[\s\S]*body\.ask-ai-scroll-locked[\s\S]*overflow: hidden;/, "Ask AI expanded workspace should prevent background page scrolling.");
 assert.match(styles, /body\.ask-ai-scroll-locked[\s\S]*position: fixed;[\s\S]*top: var\(--ask-ai-scroll-y, 0\);/, "Ask AI expanded workspace should freeze the page in place.");
+assert.match(styles, /body\.ask-ai-scroll-locked \.sidebar\s*\{[\s\S]*border-right-color: transparent;/, "Ask AI expanded workspace should hide the background sidebar divider so it does not create a second misaligned line.");
+assert.match(styles, /body\.ask-ai-scroll-locked \.sidebar::before\s*\{[\s\S]*border-bottom-color: transparent;/, "Ask AI expanded workspace should hide the background sidebar shelf divider behind the overlay.");
+assert.match(styles, /body\.ask-ai-scroll-locked\[data-ask-ai-notch-state\]::before\s*\{[\s\S]*display: none;/, "Ask AI expanded workspace should hide the background header shelf while the full chat is open.");
 assert.match(styles, /\.ask-ai-panel\.expanded[\s\S]*overscroll-behavior: contain;/, "Ask AI expanded workspace should contain trackpad and wheel momentum.");
 assert.match(styles, /\.ask-ai-workspace-sidebar[\s\S]*border-right: 1px solid var\(--line\)/, "Ask AI workspace should have an internal chat history sidebar.");
 assert.match(styles, /\.ask-ai-workspace-brand\s*\{[\s\S]*min-height: var\(--ask-ai-workspace-header-height\);[\s\S]*height: var\(--ask-ai-workspace-header-height\);[\s\S]*border-bottom: 1px solid var\(--line\)/, "Ask AI sidebar brand row should share the main header height and divider.");
@@ -791,7 +794,7 @@ assert.match(styles, /\.contract-action-row \.contract-action-button\s*\{[\s\S]*
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row\s*\{[\s\S]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);[\s\S]*gap:\s*8px/, "Renewal contract action row should fit four actions on one line at desktop width.");
 assert.match(styles, /\.renewal-contract-layout \.contract-action-row \.button\s*\{[\s\S]*height:\s*38px;[\s\S]*min-height:\s*38px;[\s\S]*padding-inline:\s*9px;[\s\S]*font-size:\s*12px/, "Renewal contract buttons should use compact dashboard sizing.");
 assert.match(styles, /\.renewal-timeline-empty\s*\{[\s\S]*min-height:\s*122px/, "Renewal timeline empty state should keep the card compact.");
-assert.match(index, /dashboard-system-20260620-2/g, "Index should load the latest cache-busted assets.");
+assert.match(index, /dashboard-system-20260620-3/g, "Index should load the latest cache-busted assets.");
 assert.match(apiAskAI, /const MAX_BODY_BYTES = 16 \* 1024/, "Ask AI API should cap request body size.");
 assert.match(apiAskAI, /const MAX_MESSAGE_LENGTH = 1500/, "Ask AI API should limit incoming message length.");
 assert.match(apiAskAI, /const MAX_HISTORY_ITEMS = 8/, "Ask AI API should limit conversation history sent to the provider.");
