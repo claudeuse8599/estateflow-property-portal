@@ -1272,7 +1272,7 @@ button:focus-visible {
 
 .ask-ai-panel.expanded {
   --ask-ai-workspace-inset: 16px;
-  --ask-ai-workspace-sidebar-width: clamp(232px, 18vw, 260px);
+  --ask-ai-workspace-sidebar-width: calc(var(--sidebar) - var(--ask-ai-workspace-inset) - 1px);
   --ask-ai-workspace-header-height: 96px;
   inset: var(--ask-ai-workspace-inset);
   z-index: 92;
